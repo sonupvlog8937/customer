@@ -126,7 +126,7 @@ export const ProductDetails = () => {
                   <span
                     className={`link text-[17px] cursor-pointer font-[500] ${activeTab === 1 && "text-primary"
                       }`}
-                    onClick={() => setActiveTab(1)}
+                    onClick={() => setActiveTab(0)}
                     ref={reviewSec}
                   >
                     Reviews ({reviewsCount})
@@ -136,12 +136,12 @@ export const ProductDetails = () => {
                   <span
                     className={`link text-[17px] cursor-pointer font-[500] ${activeTab === 0 && "text-primary"
                       }`}
-                    onClick={() => setActiveTab(0)}
+                    onClick={() => setActiveTab(1)}
                   >
                     Description
                   </span>
                 </div>
-                {activeTab === 1 && (
+                {activeTab === 0 && (
                   <div className="shadow-none lg:shadow-md w-full sm:w-[80%] py-0  lg:py-5 px-0 lg:px-8 rounded-md">
                     {
                       productData?.length !== 0 && <Reviews productId={productData?._id} setReviewsCount={setReviewsCount} />
@@ -152,7 +152,7 @@ export const ProductDetails = () => {
                 
 
 
-                {activeTab === 0 && (
+                {activeTab === 1 && (
                   <div className="shadow-md w-full py-5 px-8 rounded-md text-[14px]">
                     {
                       productData?.description
