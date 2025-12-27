@@ -124,7 +124,7 @@ export const ProductDetails = () => {
               <div className="container pt-10">
                 <div className="flex items-center gap-8 mb-5">
                   <span
-                    className={`link text-[17px] cursor-pointer font-[500] ${activeTab === 1 && "text-primary"
+                    className={`link text-[17px] cursor-pointer font-[500] ${activeTab === 0 && "text-primary"
                       }`}
                     onClick={() => setActiveTab(0)}
                     ref={reviewSec}
@@ -134,7 +134,7 @@ export const ProductDetails = () => {
 
 
                   <span
-                    className={`link text-[17px] cursor-pointer font-[500] ${activeTab === 0 && "text-primary"
+                    className={`link text-[17px] cursor-pointer font-[500] ${activeTab === 1 && "text-primary"
                       }`}
                     onClick={() => setActiveTab(1)}
                   >
