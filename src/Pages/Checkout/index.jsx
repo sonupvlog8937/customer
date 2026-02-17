@@ -402,7 +402,7 @@ const Checkout = () => {
               </div>
 
               <div className="flex items-center flex-col gap-3 mb-2">
-                <Button type="submit" className="btn-org btn-lg w-full flex gap-2 items-center"><BsFillBagCheckFill className="text-[20px]" /> Checkout</Button>
+                <Button type="submit" className="btn-org btn-lg w-full flex gap-2 items-center"><BsFillBagCheckFill className="text-[20px]" /> Pay On Online</Button>
 
                 <div id="paypal-button-container" className={`${userData?.address_details?.length === 0 ? 'pointer-events-none' : ''}`}></div>
 
