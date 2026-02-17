@@ -144,7 +144,7 @@ const Header = () => {
               href="/69945eb739ee2939e52f76a6.apk"
               download
               style={{
-                padding: "12px 20px",
+                padding: "8px 20px",
                 background: "#fd7200",
                 color: "#fff",
                 borderRadius: "6px",
