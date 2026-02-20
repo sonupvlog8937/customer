@@ -155,7 +155,7 @@ const Header = () => {
         onClick={handleClick}
         className={`download-btn ${loading ? "loading" : ""}`}
       >
-        {loading ? "⬇ Downloading..." : "📲 App"}
+        {loading ? "loading" : "📲 App"}
       </a>
 
             <div className={`col2 fixed top-0 left-0 w-full h-full lg:w-[40%] lg:static p-2 lg:p-0 bg-white z-50 ${context?.windowWidth > 992 && '!block'} ${context?.openSearchPanel === true ? 'block' : 'hidden'}`}>
