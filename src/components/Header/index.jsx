@@ -22,6 +22,7 @@ import { fetchDataFromApi } from "../../utils/api";
 import { LuMapPin } from "react-icons/lu";
 import { useEffect } from "react";
 import { HiOutlineMenu } from "react-icons/hi";
+import "./Navigation/style.css"
 
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
@@ -39,16 +40,24 @@ const Header = () => {
 
   const [isOpenCatPanel, setIsOpenCatPanel] = useState(false);
 
+  const [loading, setLoading] = useState(false);
   const context = useContext(MyContext);
 
   const history = useNavigate();
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const handleClick = () => {
+    setLoading(true);
+
+    // Optional: loading ko thoda time baad hata sakte ho
+    setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+  };
+
 
 
   const location = useLocation();
@@ -141,19 +150,13 @@ const Header = () => {
               </Link>
             </div>
             <a
-              href="/6994d2e839ee2939e5327855.apk"
-              download
-              style={{
-                padding: "8px 20px",
-                background: "#fd7200",
-                color: "#fff",
-                borderRadius: "6px",
-                textDecoration: "none",
-                fontWeight: "bold"
-              }}
-            >
-            📲 App
-            </a>
+        href="/6994d2e839ee2939e5327855.apk"
+        download
+        onClick={handleClick}
+        className={`download-btn ${loading ? "loading" : ""}`}
+      >
+        {loading ? "⬇ Downloading..." : "📲 App"}
+      </a>
 
             <div className={`col2 fixed top-0 left-0 w-full h-full lg:w-[40%] lg:static p-2 lg:p-0 bg-white z-50 ${context?.windowWidth > 992 && '!block'} ${context?.openSearchPanel === true ? 'block' : 'hidden'}`}>
               <Search />
