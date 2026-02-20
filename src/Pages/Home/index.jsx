@@ -243,11 +243,11 @@ const Home = () => {
 
             <div className="col2">
               <p className="mb-0 mt-0 font-[500] text-center">
-                Free Delivery Now On Your First Order and over $200
+                Free Delivery Now On Your First Order and over ₹200
               </p>
             </div>
 
-            <p className="font-bold text-[20px] lg:text-[25px]">- Only $200*</p>
+            <p className="font-bold text-[20px] lg:text-[25px]">- Only ₹200*</p>
           </div>
 
           {
