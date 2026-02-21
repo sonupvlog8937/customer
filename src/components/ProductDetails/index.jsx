@@ -18,6 +18,7 @@ export const ProductDetailsComponent = (props) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedTabName, setSelectedTabName] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isVariantLoading, setIsVariantLoading] = useState(false);
   const [tabError, setTabError] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
@@ -32,8 +33,15 @@ export const ProductDetailsComponent = (props) => {
 
 
   const handleClickActiveTab = (index, name) => {
+    if (productActionIndex === index) return;
+
+    setIsVariantLoading(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setProductActionIndex(index)
     setSelectedTabName(name)
+    setTimeout(() => {
+      setIsVariantLoading(false);
+    }, 450);
   }
 
 
@@ -245,6 +253,7 @@ export const ProductDetailsComponent = (props) => {
                       "!bg-primary !text-white" : ""
                       }  ${tabError === true && 'error'}`}
                     onClick={() => handleClickActiveTab(index, item)}
+                    disabled={isVariantLoading === true}
                   >
                     {item}
                   </Button>
@@ -273,6 +282,7 @@ export const ProductDetailsComponent = (props) => {
                       "!bg-primary !text-white" : ""
                       } ${tabError === true && 'error'}`}
                     onClick={() => handleClickActiveTab(index, item)}
+                    disabled={isVariantLoading === true}
                   >
                     {item}
                   </Button>
@@ -301,6 +311,7 @@ export const ProductDetailsComponent = (props) => {
                       "!bg-primary !text-white" : ""
                       }  ${tabError === true && 'error'}`}
                     onClick={() => handleClickActiveTab(index, item)}
+                    disabled={isVariantLoading === true}
                   >
                     {item}
                   </Button>
@@ -339,6 +350,13 @@ export const ProductDetailsComponent = (props) => {
           <span className="text-[13px] text-[rgba(0,0,0,0.7)]">
             {props?.item?.colorOptions?.[selectedColorIndex]?.name}
           </span>
+        </div>
+      }
+      {
+        isVariantLoading === true &&
+        <div className="flex items-center gap-2 mt-3 text-[13px] text-gray-600">
+          <CircularProgress size={16} />
+          Updating product option...
         </div>
       }
 
