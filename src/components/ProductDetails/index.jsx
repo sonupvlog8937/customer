@@ -21,6 +21,7 @@ export const ProductDetailsComponent = (props) => {
   const [tabError, setTabError] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
 
   const context = useContext(MyContext);
 
@@ -87,7 +88,8 @@ export const ProductDetailsComponent = (props) => {
       brand: product?.brand,
       size: props?.item?.size?.length !== 0 ? selectedTabName : '',
       weight: props?.item?.productWeight?.length !== 0 ? selectedTabName : '',
-      ram: props?.item?.productRam?.length !== 0 ? selectedTabName : ''
+      ram: props?.item?.productRam?.length !== 0 ? selectedTabName : '',
+      color: props?.item?.colorOptions?.length !== 0 ? props?.item?.colorOptions?.[selectedColorIndex]?.name || '' : ''
 
     }
 
@@ -142,6 +144,16 @@ export const ProductDetailsComponent = (props) => {
     }
   }
 
+  useEffect(() => {
+    setSelectedColorIndex(0);
+
+    if (props?.item?.colorOptions?.length !== 0) {
+      const defaultImages = props?.item?.colorOptions?.[0]?.images;
+      props?.onColorChange?.(defaultImages);
+    } else {
+      props?.onColorChange?.(props?.item?.images || []);
+    }
+  }, [props?.item?._id]);
 
   const handleAddToMyList = (item) => {
     if (context?.userData === null) {
@@ -301,7 +313,34 @@ export const ProductDetailsComponent = (props) => {
         </div>
       }
 
-
+      {
+        props?.item?.colorOptions?.length !== 0 &&
+        <div className="flex items-center gap-3 mt-4">
+          <span className="text-[16px]">COLOUR:</span>
+          <div className="flex items-center gap-2">
+            {
+              props?.item?.colorOptions?.map((colorItem, index) => {
+                return (
+                  <button
+                    key={`${colorItem?.name}-${index}`}
+                    type="button"
+                    title={colorItem?.name}
+                    className={`w-[24px] h-[24px] rounded-full border-2 ${selectedColorIndex === index ? 'border-primary' : 'border-[rgba(0,0,0,0.2)]'}`}
+                    style={{ background: colorItem?.code || '#ddd' }}
+                    onClick={() => {
+                      setSelectedColorIndex(index);
+                      props?.onColorChange?.(colorItem?.images);
+                    }}
+                  ></button>
+                )
+              })
+            }
+          </div>
+          <span className="text-[13px] text-[rgba(0,0,0,0.7)]">
+            {props?.item?.colorOptions?.[selectedColorIndex]?.name}
+          </span>
+        </div>
+      }
 
       <p className="text-[14px] mt-5 mb-2 text-[#000]">
         Free Shipping (Est. Delivery Time 2-3 Days)

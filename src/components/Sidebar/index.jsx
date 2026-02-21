@@ -17,6 +17,7 @@ import { MdOutlineFilterAlt } from "react-icons/md";
 
 export const Sidebar = (props) => {
   const [isOpenCategoryFilter, setIsOpenCategoryFilter] = useState(true);
+  const [availableColors, setAvailableColors] = useState([]);
 
   const [filters, setFilters] = useState({
     catId: [],
@@ -25,6 +26,7 @@ export const Sidebar = (props) => {
     minPrice: '',
     maxPrice: '',
     rating: '',
+    colors: [],
     page: 1,
     limit: 25
   })
@@ -57,7 +59,15 @@ export const Sidebar = (props) => {
       setFilters((prev) => ({
         ...prev,
         subCatId: [],
-        thirdsubCatId: []
+        thirdsubCatId: [],
+        colors: []
+      }))
+    }
+
+    if (field === "subCatId" || field === "thirdsubCatId") {
+      setFilters((prev) => ({
+        ...prev,
+        colors: []
       }))
     }
 
@@ -154,6 +164,22 @@ export const Sidebar = (props) => {
     }))
   }, [price]);
 
+  useEffect(() => {
+    const colorMap = new Map();
+
+    props?.productsData?.products?.forEach((product) => {
+      product?.colorOptions?.forEach((colorItem) => {
+        if (colorItem?.name && !colorMap.has(colorItem?.name)) {
+          colorMap.set(colorItem?.name, colorItem?.code || "");
+        }
+      })
+    })
+
+    setAvailableColors(Array.from(colorMap, ([name, code]) => ({ name, code })));
+  }, [props?.productsData]);
+
+
+
 
   return (
     <aside className="sidebar py-3  lg:py-5 static lg:sticky top-[130px] z-[50] pr-0 lg:pr-5">
@@ -191,6 +217,44 @@ export const Sidebar = (props) => {
             </div>
           </Collapse>
         </div>
+
+        {
+          availableColors?.length !== 0 &&
+          <div className="box mt-4">
+            <h3 className="w-full mb-3 text-[16px] font-[600] flex items-center pr-5">
+              Filter By Colour
+            </h3>
+
+            <div className="flex flex-col">
+              {
+                availableColors?.map((color) => {
+                  return (
+                    <FormControlLabel
+                      key={color?.name}
+                      value={color?.name}
+                      control={<Checkbox />}
+                      checked={filters?.colors?.includes(color?.name)}
+                      label={
+                        <span className="flex items-center gap-2">
+                          {
+                            color?.code &&
+                            <span
+                              className="w-[14px] h-[14px] rounded-full border border-[rgba(0,0,0,0.2)]"
+                              style={{ background: color?.code }}
+                            ></span>
+                          }
+                          <span>{color?.name}</span>
+                        </span>
+                      }
+                      onChange={() => handleCheckboxChange('colors', color?.name)}
+                      className="w-full"
+                    />
+                  )
+                })
+              }
+            </div>
+          </div>
+        }
 
         <div className="box mt-4">
           <h3 className="w-full mb-3 text-[16px] font-[600] flex items-center pr-5">

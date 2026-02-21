@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import InnerImageZoom from "react-inner-image-zoom";
 import "react-inner-image-zoom/lib/InnerImageZoom/styles.css";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -20,6 +20,16 @@ export const ProductZoom = (props) => {
     zoomSliderSml.current.swiper.slideTo(index);
     zoomSliderBig.current.swiper.slideTo(index);
   }
+
+  useEffect(() => {
+    setSlideIndex(0);
+    if (zoomSliderSml?.current?.swiper) {
+      zoomSliderSml.current.swiper.slideTo(0);
+    }
+    if (zoomSliderBig?.current?.swiper) {
+      zoomSliderBig.current.swiper.slideTo(0);
+    }
+  }, [props?.images]);
 
   return (
     <>
