@@ -5,12 +5,12 @@ import Badge from "@mui/material/Badge";
 import { styled } from "@mui/material/styles";
 import IconButton from "@mui/material/IconButton";
 import { MdOutlineShoppingCart } from "react-icons/md";
-import { IoGitCompareOutline } from "react-icons/io5";
 import { FaRegHeart } from "react-icons/fa6";
 import Tooltip from "@mui/material/Tooltip";
 import Navigation from "./Navigation";
 import { useAppContext } from "../../hooks/useAppContext";
 import { Button } from "@mui/material";
+import { IoGitCompareOutline, IoSearch } from "react-icons/io5";
 import { FaRegUser } from "react-icons/fa";
 
 import Menu from "@mui/material/Menu";
@@ -314,15 +314,12 @@ const Header = () => {
 
 
                 <li>
-                  <Tooltip title="Cart">
+                  <Tooltip title="Search">
                     <IconButton
-                      aria-label="cart"
-                      onClick={() => context.setOpenCartPanel(true)}
+                      aria-label="search"
+                      onClick={() => context?.setOpenSearchPanel(true)}
                     >
-
-                      <StyledBadge badgeContent={context?.cartData?.length !== 0 ? context?.cartData?.length : 0} color="secondary">
-                        <MdOutlineShoppingCart />
-                      </StyledBadge>
+                      <IoSearch />
                     </IconButton>
                   </Tooltip>
                 </li>
