@@ -172,7 +172,8 @@ function App() {
       brand: product?.brand,
       size: product?.size,
       weight: product?.weight,
-      ram: product?.ram
+      ram: product?.ram,
+      color: product?.color
     }
 
 

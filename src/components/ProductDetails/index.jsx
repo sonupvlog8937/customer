@@ -373,7 +373,7 @@ export const ProductDetailsComponent = (props) => {
             isLoading === true ? <CircularProgress /> :
               <>
                 {
-                  isAdded === true ? <><FaCheckDouble /> Added</> :
+                  isAdded === true ? <><FaCheckDouble /> One More Add to Cart</> :
                     <>
                       <MdOutlineShoppingCart className="text-[22px]" /> Add to Cart
                     </>
