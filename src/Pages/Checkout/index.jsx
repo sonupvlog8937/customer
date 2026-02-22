@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Button } from "@mui/material";
 import { BsFillBagCheckFill } from "react-icons/bs";
-import { MyContext } from '../../App';
+import { useAppContext } from "../../hooks/useAppContext";
 import { FaPlus } from "react-icons/fa6";
 import Radio from '@mui/material/Radio';
 import { deleteData, fetchDataFromApi, postData } from "../../utils/api";
@@ -22,7 +22,7 @@ const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState("");
   const [totalAmount, setTotalAmount] = useState();
   const [isLoading, setIsloading] = useState(false);
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   const history = useNavigate();
 

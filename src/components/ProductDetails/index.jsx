@@ -1,11 +1,11 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import { QtyBox } from "../QtyBox";
 import Rating from "@mui/material/Rating";
 import { MdOutlineShoppingCart } from "react-icons/md";
 import { FaRegHeart } from "react-icons/fa";
 import { IoGitCompareOutline } from "react-icons/io5";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 import CircularProgress from '@mui/material/CircularProgress';
 import { postData } from "../../utils/api";
 import { FaCheckDouble } from "react-icons/fa";
@@ -24,7 +24,7 @@ export const ProductDetailsComponent = (props) => {
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
 
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   const handleSelecteQty = (qty) => {
     setQuantity(qty);

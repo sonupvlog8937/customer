@@ -7,12 +7,12 @@ import { BsBagCheck } from "react-icons/bs";
 import { FiUser } from "react-icons/fi";
 import { NavLink } from "react-router";
 import { MdOutlineFilterAlt } from "react-icons/md";
-import { MyContext } from '../../../App';
+import { useAppContext } from "../../../hooks/useAppContext";
 import { useLocation } from "react-router-dom";
 
 const MobileNav = () => {
 
-    const context = useContext(MyContext)
+    const context = useAppContext()
 
     const location = useLocation();
 

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Search from "../Search";
 import Badge from "@mui/material/Badge";
@@ -9,7 +9,7 @@ import { IoGitCompareOutline } from "react-icons/io5";
 import { FaRegHeart } from "react-icons/fa6";
 import Tooltip from "@mui/material/Tooltip";
 import Navigation from "./Navigation";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 import { Button } from "@mui/material";
 import { FaRegUser } from "react-icons/fa";
 
@@ -41,7 +41,7 @@ const Header = () => {
   const [isOpenCatPanel, setIsOpenCatPanel] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   const history = useNavigate();
 

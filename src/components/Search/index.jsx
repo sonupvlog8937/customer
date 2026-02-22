@@ -1,8 +1,8 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import "../Search/style.css";
 import Button from "@mui/material/Button";
 import { IoSearch } from "react-icons/io5";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 import { useNavigate } from "react-router-dom";
 import { postData } from "../../utils/api";
 import CircularProgress from '@mui/material/CircularProgress';
@@ -12,7 +12,7 @@ const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   const history = useNavigate();
 

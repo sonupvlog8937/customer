@@ -19,7 +19,7 @@ import BlogItem from "../../components/BlogItem";
 import HomeBannerV2 from "../../components/HomeSliderV2";
 import BannerBoxV2 from "../../components/bannerBoxV2";
 import { fetchDataFromApi } from "../../utils/api";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 import ProductLoading from "../../components/ProductLoading";
 import BannerLoading from "../../components/LoadingSkeleton/bannerLoading";
 import { Button } from "@mui/material";
@@ -39,7 +39,7 @@ const Home = () => {
   const [randomCatProducts, setRandomCatProducts] = useState([]);
 
 
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
 
   useEffect(() => {

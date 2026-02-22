@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import "../Sidebar/style.css";
@@ -9,7 +9,7 @@ import { FaAngleUp } from "react-icons/fa6";
 import RangeSlider from "react-range-slider-input";
 import "react-range-slider-input/dist/style.css";
 import Rating from "@mui/material/Rating";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 import { useLocation } from "react-router-dom";
 import { postData } from "../../utils/api";
 import { MdOutlineFilterAlt } from "react-icons/md";
@@ -35,7 +35,7 @@ export const Sidebar = (props) => {
 
   const [price, setPrice] = useState([0, 60000]);
 
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   const location = useLocation();
 

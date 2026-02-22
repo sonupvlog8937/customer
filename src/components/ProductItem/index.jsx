@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../ProductItem/style.css";
 import { Link } from "react-router-dom";
 import Rating from "@mui/material/Rating";
@@ -6,7 +6,7 @@ import Button from "@mui/material/Button";
 import { FaRegHeart } from "react-icons/fa";
 import { IoGitCompareOutline } from "react-icons/io5";
 import { MdZoomOutMap } from "react-icons/md";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 import { MdOutlineShoppingCart } from "react-icons/md";
 import { FaMinus } from "react-icons/fa6";
 import { FaPlus } from "react-icons/fa6";
@@ -30,7 +30,7 @@ const ProductItem = (props) => {
   const [isLoading, setIsLoading] = useState(false);
 
 
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   const addToCart = (product, userId, quantity) => {
 
@@ -224,13 +224,13 @@ const ProductItem = (props) => {
 
           </div>
         </Link> */}
-<Link to={`/product/${props?.item?._id}`} className="link transition-all">
-           <div className="img h-[200px] overflow-hidden">
+        <Link to={`/product/${props?.item?._id}`} className="link transition-all">
+          <div className="img h-[200px] overflow-hidden">
             <img
               src={props?.item?.images[0]}
               className="w-full"
             /></div>
-          </Link>
+        </Link>
 
 
         {

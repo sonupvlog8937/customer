@@ -11,7 +11,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Pagination from "@mui/material/Pagination";
 import ProductLoadingGrid from "../../components/ProductLoading/productLoadingGrid";
 import { postData } from "../../utils/api";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 
 const SearchPage = () => {
   const [itemView, setItemView] = useState("grid");
@@ -25,7 +25,7 @@ const SearchPage = () => {
 
   const [selectedSortVal, setSelectedSortVal] = useState("Name, A to Z");
 
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   useEffect(() => {
     window.scrollTo(0, 0);

@@ -1,11 +1,11 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import InnerImageZoom from "react-inner-image-zoom";
 import "react-inner-image-zoom/lib/InnerImageZoom/styles.css";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 import CircularProgress from "@mui/material/CircularProgress";
 
 export const ProductZoom = (props) => {
@@ -15,7 +15,7 @@ export const ProductZoom = (props) => {
   const zoomSliderBig = useRef();
   const zoomSliderSml = useRef();
 
-  const context = useContext(MyContext);
+   const context = useAppContext();
 
   const handleImageChange = (index) => {
     if (slideIndex === index) return;

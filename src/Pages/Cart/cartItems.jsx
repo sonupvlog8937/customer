@@ -6,7 +6,7 @@ import { GoTriangleDown } from "react-icons/go";
 import Rating from "@mui/material/Rating";
 import { IoCloseSharp } from "react-icons/io5";
 import { deleteData, editData, fetchDataFromApi } from "../../utils/api";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 
 const CartItems = (props) => {
   const [sizeanchorEl, setSizeAnchorEl] = useState(null);
@@ -19,7 +19,7 @@ const CartItems = (props) => {
 
   const numbers = Array.from({ length: 20 }, () => Math.floor(Math.random() * 10) + 1);
 
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   const handleClickSize = (event) => {
     setSizeAnchorEl(event.currentTarget);

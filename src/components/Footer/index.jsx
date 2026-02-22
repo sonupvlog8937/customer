@@ -16,7 +16,7 @@ import { FaInstagram } from "react-icons/fa";
 
 import Drawer from "@mui/material/Drawer";
 import CartPanel from "../CartPanel";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 
 
 import Button from "@mui/material/Button";
@@ -29,7 +29,7 @@ import AddAddress from "../../Pages/MyAccount/addAddress";
 
 
 const Footer = () => {
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   return (
     <>

@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import { BsFillBagCheckFill } from "react-icons/bs";
 import CartItems from "./cartItems";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 import { fetchDataFromApi } from "../../utils/api";
 import { Link } from "react-router-dom";
 
@@ -12,7 +12,7 @@ const CartPage = () => {
   const [productSizeData, setProductSizeData] = useState([]);
   const [productRamsData, setProductRamsData] = useState([]);
   const [productWeightData, setProductWeightData] = useState([]);
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   useEffect(() => {
 

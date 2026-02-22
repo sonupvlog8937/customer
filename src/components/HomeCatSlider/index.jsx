@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -6,11 +6,11 @@ import 'swiper/css/free-mode';
 
 import { Navigation,FreeMode } from "swiper/modules";
 import { Link } from "react-router-dom";
-import { MyContext } from "../../App";
+import { useAppContext } from "../../hooks/useAppContext";
 
 const HomeCatSlider = (props) => {
 
-  const context = useContext(MyContext);
+  const context = useAppContext();
 
   return (
     <div className="homeCatSlider pt-0 lg:pt-4 py-4 lg:py-8">

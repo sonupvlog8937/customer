@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import Rating from "@mui/material/Rating";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import { MyContext } from '../../App';
+import { useAppContext } from "../../hooks/useAppContext";
 import { fetchDataFromApi, postData } from '../../utils/api';
 import CircularProgress from '@mui/material/CircularProgress';
 export const Reviews = (props) => {
@@ -20,7 +20,7 @@ export const Reviews = (props) => {
 
     const [reviewsData, setReviewsData] = useState([])
 
-    const context = useContext(MyContext);
+    const context = useAppContext();
 
     useEffect(() => {
         setReviews(() => ({
