@@ -373,9 +373,9 @@ export const ProductDetailsComponent = (props) => {
             isLoading === true ? <CircularProgress /> :
               <>
                 {
-                  isAdded === true ? <><IoGitCompareOutline className="text-[22px]" /> One More Cart</> :
+                  isAdded === true ? <><MdOutlineShoppingCart className="text-[22px]" /> One More Cart</> :
                     <>
-                      <IoGitCompareOutline className="text-[22px]" /> Add to Cart
+                      <MdOutlineShoppingCart className="text-[22px]" /> Add to Cart
                     </>
                 }
 
