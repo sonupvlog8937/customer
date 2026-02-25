@@ -41,6 +41,7 @@ export const ProductDetailsComponent = (props) => {
     if (productActionIndex === index) return;
 
     setIsVariantLoading(true);
+     setTabError(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
     setProductActionIndex(index)
     setSelectedTabName(name)
@@ -168,6 +169,7 @@ export const ProductDetailsComponent = (props) => {
 
       } else {
         setTabError(true);
+        context?.alertBox("error", "Please, first select size");
       }
     } else {
       setIsLoading(true);
@@ -361,6 +363,10 @@ export const ProductDetailsComponent = (props) => {
 
 
           </div>
+          {
+            tabError === true &&
+            <span className="text-[12px] text-red-600">Please, first select size</span>
+          }
         </div>
       }
 
