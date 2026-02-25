@@ -6,7 +6,7 @@ import { FaPlus } from "react-icons/fa6";
 import Radio from '@mui/material/Radio';
 import { deleteData, fetchDataFromApi, postData } from "../../utils/api";
 import axios from 'axios';
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import CircularProgress from '@mui/material/CircularProgress';
 
 const VITE_APP_RAZORPAY_KEY_ID = import.meta.env.VITE_APP_RAZORPAY_KEY_ID;
@@ -25,6 +25,10 @@ const Checkout = () => {
   const context = useAppContext();
 
   const history = useNavigate();
+  const location = useLocation();
+  const buyNowItem = location?.state?.buyNowItem;
+  const isBuyNowCheckout = Boolean(buyNowItem);
+  const checkoutItems = isBuyNowCheckout ? [buyNowItem] : context?.cartData;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -36,8 +40,8 @@ const Checkout = () => {
 
   useEffect(() => {
     setTotalAmount(
-      context.cartData?.length !== 0 ?
-        context.cartData?.map(item => parseInt(item.price) * item.quantity)
+       checkoutItems?.length !== 0 ?
+        checkoutItems?.map(item => parseInt(item.price) * item.quantity)
           .reduce((total, value) => total + value, 0) : 0)
       ?.toLocaleString('en-US', { style: 'currency', currency: 'INR' }
       );
@@ -47,7 +51,7 @@ const Checkout = () => {
     //     .reduce((total, value) => total + value, 0) : 0)
     //   ?.toLocaleString('en-US', { style: 'currency', currency: 'INR' })
 
-  }, [context.cartData])
+  }, [checkoutItems])
 
 
 
@@ -118,7 +122,7 @@ const Checkout = () => {
 
     const info = {
       userId: user?._id,
-      products: context?.cartData,
+      products: checkoutItems,
       payment_status: "COMPLETE",
       delivery_address: selectedAddress,
       totalAmount: totalAmount,
@@ -146,9 +150,11 @@ const Checkout = () => {
     ).then((res) => {
       context.alertBox("success", res?.data?.message);
       history("/order/success");
-      deleteData(`/api/cart/emptyCart/${context?.userData?._id}`).then((res) => {
-        context?.getCartItems();
-      })
+            if (!isBuyNowCheckout) {
+        deleteData(`/api/cart/emptyCart/${context?.userData?._id}`).then((res) => {
+          context?.getCartItems();
+        })
+      }
     });
 
 
@@ -195,7 +201,7 @@ const Checkout = () => {
 
           const payLoad = {
             userId: user?._id,
-            products: context?.cartData,
+                products: checkoutItems,
             paymentId: paymentId,
             payment_status: "COMPLETED",
             delivery_address: selectedAddress,
@@ -211,9 +217,11 @@ const Checkout = () => {
           postData(`/api/order/create`, payLoad).then((res) => {
             context.alertBox("success", res?.message);
             if (res?.error === false) {
-              deleteData(`/api/cart/emptyCart/${user?._id}`).then((res) => {
-                context?.getCartItems();
-              })
+              if (!isBuyNowCheckout) {
+                deleteData(`/api/cart/emptyCart/${user?._id}`).then((res) => {
+                  context?.getCartItems();
+                })
+              }
               history("/order/success");
             } else {
               history("/order/failed");
@@ -248,7 +256,7 @@ const Checkout = () => {
     if (userData?.address_details?.length !== 0) {
       const payLoad = {
         userId: user?._id,
-        products: context?.cartData,
+        products: checkoutItems,
         paymentId: '',
         payment_status: "CASH ON DELIVERY",
         delivery_address: selectedAddress,
@@ -265,10 +273,14 @@ const Checkout = () => {
         context.alertBox("success", res?.message);
 
         if (res?.error === false) {
-          deleteData(`/api/cart/emptyCart/${user?._id}`).then((res) => {
-            context?.getCartItems();
+         if (!isBuyNowCheckout) {
+            deleteData(`/api/cart/emptyCart/${user?._id}`).then((res) => {
+              context?.getCartItems();
+              setIsloading(false);
+            })
+          } else {
             setIsloading(false);
-          })
+          }
         } else {
           context.alertBox("error", res?.message);
         }
@@ -374,7 +386,7 @@ const Checkout = () => {
               <div className="mb-5 scroll max-h-[250px] overflow-y-scroll overflow-x-hidden pr-2">
 
                 {
-                  context?.cartData?.length !== 0 && context?.cartData?.map((item, index) => {
+                 checkoutItems?.length !== 0 && checkoutItems?.map((item, index) => {
                     return (
                       <div className="flex items-center justify-between py-2" key={index}>
                         <div className="part1 flex items-center gap-3">

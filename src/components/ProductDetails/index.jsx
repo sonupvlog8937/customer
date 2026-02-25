@@ -232,7 +232,7 @@ export const ProductDetailsComponent = (props) => {
     setDeliveryMessage(
       isServiceable
         ? "Delivery available. Usually ships within 24 hours with easy returns."
-        : "Delivery unavailable for this pincode currently. Please try another address."
+        : "Delivery available. Usually ships within 24 hours with easy returns."
     );
     
     setIsCheckingPinCode(false);
@@ -248,14 +248,11 @@ export const ProductDetailsComponent = (props) => {
 
     setIsBuyingNow(true);
     const productItem = createProductItem(props?.item, quantity);
-    const response = await postData("/api/cart/add", productItem);
-
-    if (response?.error === false) {
-      await context?.getCartItems();
-      navigate("/checkout");
-    } else {
-      context?.alertBox("error", response?.message || "Unable to process buy now");
-    }
+    navigate("/checkout", {
+      state: {
+        buyNowItem: productItem,
+      },
+    });
 
     setIsBuyingNow(false);
 
