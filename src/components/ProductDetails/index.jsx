@@ -11,7 +11,7 @@ import { postData } from "../../utils/api";
 import { FaCheckDouble } from "react-icons/fa";
 import { IoMdHeart } from "react-icons/io";
 import { FaRegClock } from "react-icons/fa6";
-
+import { useNavigate } from "react-router-dom";
 
 
 export const ProductDetailsComponent = (props) => {
@@ -28,8 +28,11 @@ export const ProductDetailsComponent = (props) => {
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [pinCode, setPinCode] = useState("");
   const [deliveryMessage, setDeliveryMessage] = useState("");
+  const [isCheckingPinCode, setIsCheckingPinCode] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
 
   const context = useAppContext();
+  const navigate = useNavigate();
 
   const handleSelecteQty = (qty) => {
     setQuantity(qty);
@@ -107,6 +110,45 @@ export const ProductDetailsComponent = (props) => {
 
   }, [context?.myListData])
 
+    const validateVariantSelection = () => {
+    if (props?.item?.size?.length !== 0 || props?.item?.productWeight?.length !== 0 || props?.item?.productRam?.length !== 0) {
+      if (selectedTabName === null) {
+        setTabError(true);
+        context?.alertBox("error", "Please, first select size");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  const createProductItem = (product, selectedQty) => ({
+    _id: product?._id,
+    productTitle: product?.name,
+    image: selectedVariantImages?.[0] || product?.images?.[0],
+    rating: product?.rating,
+    price: activePrice,
+    oldPrice: activeOldPrice,
+    discount: activeDiscount,
+    quantity: selectedQty,
+    subTotal: parseInt(activePrice * selectedQty),
+    productId: product?._id,
+    countInStock: product?.countInStock,
+    brand: product?.brand,
+    size: props?.item?.size?.length > 0 ? selectedTabName : '',
+    weight: props?.item?.productWeight?.length > 0 ? selectedTabName : '',
+    ram: props?.item?.productRam?.length > 0 ? selectedTabName : '',
+    color:
+      props?.item?.colorOptions?.length > 0
+        ? props?.item?.colorOptions?.[selectedColorIndex]?.name || ''
+        : '',
+    style:
+      props?.item?.styleOptions?.length > 0
+        ? props?.item?.styleOptions?.[selectedStyleIndex]?.name || ''
+        : '',
+  });
+
+
   const addToCart = (product, userId, quantity) => {
 
 
@@ -115,83 +157,31 @@ export const ProductDetailsComponent = (props) => {
       return false;
     }
 
-    const productItem = {
-  _id: product?._id,
-  productTitle: product?.name,
-  image: selectedVariantImages?.[0] || product?.images?.[0],
-  rating: product?.rating,
-  price: activePrice,
-  oldPrice: activeOldPrice,
-  discount: activeDiscount,
-  quantity: quantity,
-  subTotal: parseInt(activePrice * quantity),
-  productId: product?._id,
-  countInStock: product?.countInStock,
-  brand: product?.brand,
-  size: props?.item?.size?.length > 0 ? selectedTabName : '',
-  weight: props?.item?.productWeight?.length > 0 ? selectedTabName : '',
-  ram: props?.item?.productRam?.length > 0 ? selectedTabName : '',
-  color:
-    props?.item?.colorOptions?.length > 0
-      ? props?.item?.colorOptions?.[selectedColorIndex]?.name || ''
-      : '',
-  style:
-    props?.item?.styleOptions?.length > 0
-      ? props?.item?.styleOptions?.[selectedStyleIndex]?.name || ''
-      : '',
-};
+ if (!validateVariantSelection()) return;
+
+    const productItem = createProductItem(product, quantity);
 
 
 
 
-    if (props?.item?.size?.length !== 0 || props?.item?.productWeight?.length !== 0 || props?.item?.productRam?.length !== 0) {
-      if (selectedTabName !== null) {
-        setIsLoading(true);
+    setIsLoading(true);
+    postData("/api/cart/add", productItem).then((res) => {
+      if (res?.error === false) {
+        context?.alertBox("success", res?.message);
 
-        postData("/api/cart/add", productItem).then((res) => {
-          if (res?.error === false) {
-            context?.alertBox("success", res?.message);
-
-            context?.getCartItems();
-            setTimeout(() => {
-              setIsLoading(false);
-              setIsAdded(true)
-            }, 500);
-
-          } else {
-            context?.alertBox("error", res?.message);
-            setTimeout(() => {
-              setIsLoading(false);
-            }, 500);
-          }
-
-        })
+        context?.getCartItems();
+        setTimeout(() => {
+          setIsLoading(false);
+          setIsAdded(true)
+        }, 500);
 
       } else {
-        setTabError(true);
-        context?.alertBox("error", "Please, first select size");
+        context?.alertBox("error", res?.message);
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 500);
       }
-    } else {
-      setIsLoading(true);
-      postData("/api/cart/add", productItem).then((res) => {
-        if (res?.error === false) {
-          context?.alertBox("success", res?.message);
-
-          context?.getCartItems();
-          setTimeout(() => {
-            setIsLoading(false);
-            setIsAdded(true)
-          }, 500);
-
-        } else {
-          context?.alertBox("error", res?.message);
-          setTimeout(() => {
-            setIsLoading(false);
-          }, 500);
-        }
-
-      })
-    }
+    })
   }
 
   useEffect(() => {
@@ -215,18 +205,60 @@ export const ProductDetailsComponent = (props) => {
     props?.onColorChange?.(selectedVariantImages);
   }, [selectedVariantImages]);
 
-  const checkPinCode = () => {
+   const checkPinCode = async () => {
     if (!/^\d{6}$/.test(pinCode)) {
       setDeliveryMessage("Please enter a valid 6-digit pincode.");
       return;
     }
 
-    const isServiceable = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(pinCode[0]);
+     setIsCheckingPinCode(true);
+
+    let isServiceable = false;
+
+    try {
+      const response = await postData("/api/pincode/check", {
+        pincode: pinCode,
+        productId: props?.item?._id,
+      });
+
+      if (typeof response?.serviceable === "boolean") {
+        isServiceable = response.serviceable;
+      } else {
+        isServiceable = Number(pinCode[pinCode.length - 1]) % 2 === 0;
+      }
+    } catch (error) {
+      isServiceable = Number(pinCode[pinCode.length - 1]) % 2 === 0;
+    }
     setDeliveryMessage(
       isServiceable
         ? "Delivery available. Usually ships within 24 hours with easy returns."
         : "Delivery unavailable for this pincode currently. Please try another address."
     );
+    
+    setIsCheckingPinCode(false);
+  }
+
+  const handleBuyNow = async () => {
+    if (context?.userData?._id === undefined) {
+      context?.alertBox("error", "you are not login please login first");
+      return;
+    }
+
+    if (!validateVariantSelection()) return;
+
+    setIsBuyingNow(true);
+    const productItem = createProductItem(props?.item, quantity);
+    const response = await postData("/api/cart/add", productItem);
+
+    if (response?.error === false) {
+      await context?.getCartItems();
+      navigate("/checkout");
+    } else {
+      context?.alertBox("error", response?.message || "Unable to process buy now");
+    }
+
+    setIsBuyingNow(false);
+
   }
 
 
@@ -534,7 +566,9 @@ export const ProductDetailsComponent = (props) => {
             placeholder="Enter 6-digit pincode"
             className="border rounded-md h-[36px] px-2 text-[13px] w-[190px]"
           />
-          <Button className="!h-[36px] !min-w-[80px] !text-[12px]" variant="outlined" onClick={checkPinCode}>Check</Button>
+          <Button className="!h-[36px] !min-w-[90px] !text-[12px]" variant="outlined" onClick={checkPinCode} disabled={isCheckingPinCode}>
+            {isCheckingPinCode ? <CircularProgress size={14} /> : "Check"}
+          </Button>
         </div>
         {
           deliveryMessage && <p className="text-[12px] mt-2 text-[rgba(0,0,0,0.7)]">{deliveryMessage}</p>
@@ -546,12 +580,12 @@ export const ProductDetailsComponent = (props) => {
         <span className="text-[12px] bg-[#f3f9ff] rounded-md px-2 py-2">✅ 100% secure payments</span>
         <span className="text-[12px] bg-[#f3f9ff] rounded-md px-2 py-2">✅ Quality verified by experts</span>
       </div>
-      <div className="flex items-center gap-4 py-4">
+      <div className="flex items-center flex-col gap-3 mb-2">
         <div className="qtyBoxWrapper w-[70px]">
           <QtyBox handleSelecteQty={handleSelecteQty} />
         </div>
 
-        <Button className="btn-org flex gap-2 !min-w-[150px]" onClick={() => addToCart(props?.item, context?.userData?._id, quantity)}>
+        <Button className="btn-org btn-lg w-full flex gap-2 items-center" onClick={() => addToCart(props?.item, context?.userData?._id, quantity)}>
           {
             isLoading === true ? <CircularProgress /> :
               <>
@@ -565,6 +599,9 @@ export const ProductDetailsComponent = (props) => {
               </>
           }
 
+        </Button>
+         <Button className="btn-dark btn-lg w-full flex gap-2 items-center" onClick={handleBuyNow} disabled={isBuyingNow}>
+          {isBuyingNow ? <CircularProgress size={18} /> : "Buy Now"}
         </Button>
       </div>
 
