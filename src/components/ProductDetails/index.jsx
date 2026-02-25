@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Button from "@mui/material/Button";
 import { QtyBox } from "../QtyBox";
 import Rating from "@mui/material/Rating";
@@ -10,6 +10,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { postData } from "../../utils/api";
 import { FaCheckDouble } from "react-icons/fa";
 import { IoMdHeart } from "react-icons/io";
+import { FaRegClock } from "react-icons/fa6";
 
 
 
@@ -23,6 +24,10 @@ export const ProductDetailsComponent = (props) => {
   const [isAdded, setIsAdded] = useState(false);
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
+  const [selectedStyleIndex, setSelectedStyleIndex] = useState(0);
+  const [showSizeChart, setShowSizeChart] = useState(false);
+  const [pinCode, setPinCode] = useState("");
+  const [deliveryMessage, setDeliveryMessage] = useState("");
 
   const context = useAppContext();
 
@@ -44,6 +49,34 @@ export const ProductDetailsComponent = (props) => {
     }, 450);
   }
 
+  const selectedColor = props?.item?.colorOptions?.[selectedColorIndex] || null;
+  const selectedStyle = props?.item?.styleOptions?.[selectedStyleIndex] || null;
+
+  const selectedVariantImages = useMemo(() => {
+    if (selectedStyle?.images?.length) return selectedStyle.images;
+    if (selectedColor?.images?.length) return selectedColor.images;
+    return props?.item?.images || [];
+  }, [selectedStyle, selectedColor, props?.item?.images]);
+
+  const activePrice = useMemo(() => {
+    const variantPrice = selectedStyle?.price ?? selectedColor?.price;
+    const sizePrice = props?.item?.sizePriceMap?.[selectedTabName]?.price;
+    return Number(variantPrice ?? sizePrice ?? props?.item?.price ?? 0);
+  }, [selectedStyle, selectedColor, selectedTabName, props?.item?.sizePriceMap, props?.item?.price]);
+
+  const activeOldPrice = useMemo(() => {
+    const variantOldPrice = selectedStyle?.oldPrice ?? selectedColor?.oldPrice;
+    const sizeOldPrice = props?.item?.sizePriceMap?.[selectedTabName]?.oldPrice;
+    return Number(variantOldPrice ?? sizeOldPrice ?? props?.item?.oldPrice ?? 0);
+  }, [selectedStyle, selectedColor, selectedTabName, props?.item?.sizePriceMap, props?.item?.oldPrice]);
+
+  const activeDiscount = useMemo(() => {
+    if (activeOldPrice > activePrice && activeOldPrice > 0) {
+      return Math.round(((activeOldPrice - activePrice) / activeOldPrice) * 100);
+    }
+    return props?.item?.discount || 0;
+  }, [activeOldPrice, activePrice, props?.item?.discount]);
+
 
   useEffect(() => {
     const item = context?.cartData?.filter((cartItem) =>
@@ -56,7 +89,7 @@ export const ProductDetailsComponent = (props) => {
       setIsAdded(false)
     }
 
-  }, [isAdded])
+  }, [context?.cartData, props?.item?._id])
 
 
   useEffect(() => {
@@ -82,24 +115,31 @@ export const ProductDetailsComponent = (props) => {
     }
 
     const productItem = {
-      _id: product?._id,
-      productTitle: product?.name,
-      image: product?.images[0],
-      rating: product?.rating,
-      price: product?.price,
-      oldPrice: product?.oldPrice,
-      discount: product?.discount,
-      quantity: quantity,
-      subTotal: parseInt(product?.price * quantity),
-      productId: product?._id,
-      countInStock: product?.countInStock,
-      brand: product?.brand,
-      size: props?.item?.size?.length !== 0 ? selectedTabName : '',
-      weight: props?.item?.productWeight?.length !== 0 ? selectedTabName : '',
-      ram: props?.item?.productRam?.length !== 0 ? selectedTabName : '',
-      color: props?.item?.colorOptions?.length !== 0 ? props?.item?.colorOptions?.[selectedColorIndex]?.name || '' : ''
+  _id: product?._id,
+  productTitle: product?.name,
+  image: selectedVariantImages?.[0] || product?.images?.[0],
+  rating: product?.rating,
+  price: activePrice,
+  oldPrice: activeOldPrice,
+  discount: activeDiscount,
+  quantity: quantity,
+  subTotal: parseInt(activePrice * quantity),
+  productId: product?._id,
+  countInStock: product?.countInStock,
+  brand: product?.brand,
+  size: props?.item?.size?.length > 0 ? selectedTabName : '',
+  weight: props?.item?.productWeight?.length > 0 ? selectedTabName : '',
+  ram: props?.item?.productRam?.length > 0 ? selectedTabName : '',
+  color:
+    props?.item?.colorOptions?.length > 0
+      ? props?.item?.colorOptions?.[selectedColorIndex]?.name || ''
+      : '',
+  style:
+    props?.item?.styleOptions?.length > 0
+      ? props?.item?.styleOptions?.[selectedStyleIndex]?.name || ''
+      : '',
+};
 
-    }
 
 
 
@@ -155,13 +195,38 @@ export const ProductDetailsComponent = (props) => {
   useEffect(() => {
     setSelectedColorIndex(0);
 
-    if (props?.item?.colorOptions?.length !== 0) {
-      const defaultImages = props?.item?.colorOptions?.[0]?.images;
-      props?.onColorChange?.(defaultImages);
+    setSelectedStyleIndex(0);
+    setShowSizeChart(false);
+    setPinCode("");
+    setDeliveryMessage("");
+
+    if (props?.item?.styleOptions?.length !== 0) {
+      props?.onColorChange?.(props?.item?.styleOptions?.[0]?.images || props?.item?.images || []);
+    } else if (props?.item?.colorOptions?.length !== 0) {
+      props?.onColorChange?.(props?.item?.colorOptions?.[0]?.images || props?.item?.images || []);
     } else {
       props?.onColorChange?.(props?.item?.images || []);
     }
   }, [props?.item?._id]);
+
+  useEffect(() => {
+    props?.onColorChange?.(selectedVariantImages);
+  }, [selectedVariantImages]);
+
+  const checkPinCode = () => {
+    if (!/^\d{6}$/.test(pinCode)) {
+      setDeliveryMessage("Please enter a valid 6-digit pincode.");
+      return;
+    }
+
+    const isServiceable = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(pinCode[0]);
+    setDeliveryMessage(
+      isServiceable
+        ? "Delivery available. Usually ships within 24 hours with easy returns."
+        : "Delivery unavailable for this pincode currently. Please try another address."
+    );
+  }
+
 
   const handleAddToMyList = (item) => {
     if (context?.userData === null) {
@@ -217,11 +282,15 @@ export const ProductDetailsComponent = (props) => {
       <div className="flex flex-col sm:flex-row md:flex-row lg:flex-row items-start sm:items-center gap-4 mt-4">
         <div className="flex items-center gap-4">
           <span className="oldPrice line-through text-gray-500 text-[20px] font-[500]">
-            &#x20b9;{props?.item?.oldPrice}
+            &#x20b9;{activeOldPrice}
           </span>
           <span className="price text-primary text-[20px]  font-[600]">
-            &#x20b9;{props?.item?.price}
+           &#x20b9;{activePrice}
           </span>
+           {
+            activeDiscount > 0 &&
+            <span className="text-[12px] font-[600] bg-green-100 text-green-700 rounded-full px-2 py-1">{activeDiscount}% OFF</span>
+          }
         </div>
 
         <div className="flex items-center gap-4">
@@ -324,6 +393,28 @@ export const ProductDetailsComponent = (props) => {
         </div>
       }
 
+       {
+        props?.item?.styleOptions?.length !== 0 &&
+        <div className="flex items-center gap-3 mt-4">
+          <span className="text-[16px]">STYLE:</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {
+              props?.item?.styleOptions?.map((styleItem, index) => {
+                return (
+                  <Button
+                    key={`${styleItem?.name}-${index}`}
+                    className={`${selectedStyleIndex === index ? "!bg-primary !text-white" : ""}`}
+                    onClick={() => setSelectedStyleIndex(index)}
+                  >
+                    {styleItem?.name}
+                  </Button>
+                )
+              })
+            }
+          </div>
+        </div>
+      }
+
       {
         props?.item?.colorOptions?.length !== 0 &&
         <div className="flex items-center gap-3 mt-4">
@@ -340,7 +431,7 @@ export const ProductDetailsComponent = (props) => {
                     style={{ background: colorItem?.code || '#ddd' }}
                     onClick={() => {
                       setSelectedColorIndex(index);
-                      props?.onColorChange?.(colorItem?.images);
+                     
                     }}
                   ></button>
                 )
@@ -350,6 +441,39 @@ export const ProductDetailsComponent = (props) => {
           <span className="text-[13px] text-[rgba(0,0,0,0.7)]">
             {props?.item?.colorOptions?.[selectedColorIndex]?.name}
           </span>
+        </div>
+      }
+       {
+        props?.item?.size?.length !== 0 &&
+        <div className="mt-3">
+          <button className="text-primary text-[14px] font-[600] underline" onClick={() => setShowSizeChart((prev) => !prev)}>
+            {showSizeChart ? "Hide" : "View"} Size Chart
+          </button>
+
+          {
+            showSizeChart &&
+            <div className="border rounded-md mt-3 overflow-hidden max-w-[420px]">
+              <div className="grid grid-cols-3 bg-[#f6f6f6] text-[12px] font-[600]">
+                <span className="p-2 border-r">Size</span>
+                <span className="p-2 border-r">India/UK</span>
+                <span className="p-2">Foot Length (cm)</span>
+              </div>
+              {
+                props?.item?.size?.map((sizeItem, index) => {
+                  const sizeNumber = Number(String(sizeItem).replace(/\D/g, "")) || index + 5;
+                  const footLength = (22 + (sizeNumber - 5) * 0.6).toFixed(1);
+
+                  return (
+                    <div key={`${sizeItem}-${index}`} className="grid grid-cols-3 text-[12px] border-t">
+                      <span className="p-2 border-r">{sizeItem}</span>
+                      <span className="p-2 border-r">{sizeItem}</span>
+                      <span className="p-2">{footLength}</span>
+                    </div>
+                  )
+                })
+              }
+            </div>
+          }
         </div>
       }
       {
@@ -363,6 +487,59 @@ export const ProductDetailsComponent = (props) => {
       <p className="text-[14px] mt-5 mb-2 text-[#000]">
         Free Shipping (Est. Delivery Time 2-3 Days)
       </p>
+       <div className="flex items-center gap-2 text-[13px] text-[rgba(0,0,0,0.75)] mb-3">
+  <FaRegClock className="text-[14px]" />
+  Order now and get it between{" "}
+  <strong>
+    {new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString(
+      "en-IN",
+      {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        timeZone: "Asia/Kolkata",
+      }
+    )}
+  </strong>{" "}
+  -{" "}
+  <strong>
+    {new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString(
+      "en-IN",
+      {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        timeZone: "Asia/Kolkata",
+      }
+    )}
+  </strong>
+</div>
+
+
+      <div className="bg-[#f9fafb] rounded-md p-3 mb-3">
+        <p className="text-[13px] font-[600] mb-2">Check delivery availability</p>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={pinCode}
+            onChange={(e) => setPinCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            placeholder="Enter 6-digit pincode"
+            className="border rounded-md h-[36px] px-2 text-[13px] w-[190px]"
+          />
+          <Button className="!h-[36px] !min-w-[80px] !text-[12px]" variant="outlined" onClick={checkPinCode}>Check</Button>
+        </div>
+        {
+          deliveryMessage && <p className="text-[12px] mt-2 text-[rgba(0,0,0,0.7)]">{deliveryMessage}</p>
+        }
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+        <span className="text-[12px] bg-[#f3f9ff] rounded-md px-2 py-2">✅ Easy 7-day exchange</span>
+        <span className="text-[12px] bg-[#f3f9ff] rounded-md px-2 py-2">✅ 100% secure payments</span>
+        <span className="text-[12px] bg-[#f3f9ff] rounded-md px-2 py-2">✅ Quality verified by experts</span>
+      </div>
       <div className="flex items-center gap-4 py-4">
         <div className="qtyBoxWrapper w-[70px]">
           <QtyBox handleSelecteQty={handleSelecteQty} />
