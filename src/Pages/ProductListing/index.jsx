@@ -1,6 +1,5 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Sidebar } from "../../components/Sidebar";
-import Breadcrumbs from "@mui/material/Breadcrumbs";
 import ProductItem from "../../components/ProductItem";
 import ProductItemListView from "../../components/ProductItemListView";
 import Button from "@mui/material/Button";
@@ -24,8 +23,48 @@ const ProductListing = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   const [selectedSortVal, setSelectedSortVal] = useState("Name, A to Z");
-
+const [activeTab, setActiveTab] = useState("all");
+  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedSizes, setSelectedSizes] = useState([]);
   const context = useAppContext();
+
+  const isBrandedProduct = (product) => {
+    const brandName = product?.brand?.trim()?.toLowerCase();
+    return brandName && brandName !== "no brand" && brandName !== "generic";
+  }
+
+  const filteredProducts = useMemo(() => {
+    const allProducts = productsData?.products || [];
+
+    return allProducts.filter((product) => {
+      if (activeTab === "branded" && !isBrandedProduct(product)) {
+        return false;
+      }
+
+      if (activeTab === "classic" && isBrandedProduct(product)) {
+        return false;
+      }
+
+      if (selectedBrands.length > 0) {
+        const productBrand = product?.brand?.trim();
+        if (!selectedBrands.includes(productBrand)) {
+          return false;
+        }
+      }
+
+      if (selectedSizes.length > 0) {
+        const productSizes = product?.size || [];
+        const hasMatchingSize = productSizes.some((size) => selectedSizes.includes(size));
+
+        if (!hasMatchingSize) {
+          return false;
+        }
+      }
+
+      return true;
+    })
+  }, [productsData, activeTab, selectedBrands, selectedSizes]);
+
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -67,6 +106,10 @@ const ProductListing = () => {
               setIsLoading={setIsLoading}
               page={page}
               setTotalPages={setTotalPages}
+              selectedBrands={selectedBrands}
+              setSelectedBrands={setSelectedBrands}
+              selectedSizes={selectedSizes}
+              setSelectedSizes={setSelectedSizes}
             />
           </div>
 
@@ -97,7 +140,7 @@ const ProductListing = () => {
                 </Button>
 
                 <span className="text-[14px] hidden sm:block md:block lg:block font-[500] pl-3 text-[rgba(0,0,0,0.7)]">
-                  There are {productsData?.products?.length !== 0 ? productsData?.products?.length : 0}  products.
+                  There are {filteredProducts?.length !== 0 ? filteredProducts?.length : 0} products.
                 </span>
               </div>
 
@@ -161,6 +204,29 @@ const ProductListing = () => {
                 </Menu>
               </div>
             </div>
+             <div className="flex items-center gap-2 mb-4">
+              <Button
+                onClick={() => setActiveTab("all")}
+                className={`!text-[12px] !capitalize !rounded-full !border ${activeTab === "all" ? "!bg-[#ff5252] !text-white !border-[#ff5252]" : "!bg-white !text-[#333] !border-[rgba(0,0,0,0.25)]"}`}
+              >
+                All
+              </Button>
+
+              <Button
+                onClick={() => setActiveTab("branded")}
+                className={`!text-[12px] !capitalize !rounded-full !border ${activeTab === "branded" ? "!bg-[#ff5252] !text-white !border-[#ff5252]" : "!bg-white !text-[#333] !border-[rgba(0,0,0,0.25)]"}`}
+              >
+                Branded
+              </Button>
+
+              <Button
+                onClick={() => setActiveTab("classic")}
+                className={`!text-[12px] !capitalize !rounded-full !border ${activeTab === "classic" ? "!bg-[#ff5252] !text-white !border-[#ff5252]" : "!bg-white !text-[#333] !border-[rgba(0,0,0,0.25)]"}`}
+              >
+                Classic
+              </Button>
+            </div>
+
 
             <div
               className={`grid ${itemView === "grid"
@@ -175,7 +241,7 @@ const ProductListing = () => {
                     isLoading === true ? <ProductLoadingGrid view={itemView} />
                       :
 
-                      productsData?.products?.length !== 0 && productsData?.products?.map((item, index) => {
+                     filteredProducts?.length !== 0 && filteredProducts?.map((item, index) => {
                         return (
                           <ProductItem key={index} item={item} />
                         )
@@ -191,7 +257,7 @@ const ProductListing = () => {
                     isLoading === true ? <ProductLoadingGrid view={itemView} />
                       :
 
-                      productsData?.products?.length !== 0 && productsData?.products?.map((item, index) => {
+                     filteredProducts?.length !== 0 && filteredProducts?.map((item, index) => {
                         return (
                           <ProductItemListView key={index} item={item} />
                         )
