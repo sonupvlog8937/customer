@@ -18,8 +18,6 @@ import { MdOutlineFilterAlt } from "react-icons/md";
 export const Sidebar = (props) => {
   const [isOpenCategoryFilter, setIsOpenCategoryFilter] = useState(true);
   const [availableColors, setAvailableColors] = useState([]);
-  const [availableBrands, setAvailableBrands] = useState([]);
-  const [availableSizes, setAvailableSizes] = useState([]);
 
   const [filters, setFilters] = useState({
     catId: [],
@@ -180,25 +178,6 @@ export const Sidebar = (props) => {
     setAvailableColors(Array.from(colorMap, ([name, code]) => ({ name, code })));
   }, [props?.productsData]);
 
- useEffect(() => {
-    const brandSet = new Set();
-    const sizeSet = new Set();
-
-    props?.productsData?.products?.forEach((product) => {
-      if (product?.brand?.trim()) {
-        brandSet.add(product?.brand?.trim());
-      }
-
-      product?.size?.forEach((size) => {
-        if (size?.trim()) {
-          sizeSet.add(size?.trim());
-        }
-      })
-    })
-
-    setAvailableBrands(Array.from(brandSet));
-    setAvailableSizes(Array.from(sizeSet));
-  }, [props?.productsData]);
 
 
 
@@ -238,60 +217,6 @@ export const Sidebar = (props) => {
             </div>
           </Collapse>
         </div>
-
-          {
-          availableBrands?.length !== 0 &&
-          <div className="box mt-4">
-            <h3 className="w-full mb-3 text-[16px] font-[600] flex items-center pr-5">
-              Filter By Brand
-            </h3>
-
-            <div className="flex flex-col px-3">
-              {
-                availableBrands?.map((brand) => {
-                  return (
-                    <FormControlLabel
-                      key={brand}
-                      value={brand}
-                      control={<Checkbox />}
-                      checked={props?.selectedBrands?.includes(brand)}
-                      label={brand}
-                      onChange={() => props?.setSelectedBrands((prev) => prev?.includes(brand) ? prev.filter((item) => item !== brand) : [...prev, brand])}
-                      className="w-full"
-                    />
-                  )
-                })
-              }
-            </div>
-          </div>
-        }
-
-        {
-          availableSizes?.length !== 0 &&
-          <div className="box mt-4">
-            <h3 className="w-full mb-3 text-[16px] font-[600] flex items-center pr-5">
-              Filter By Size
-            </h3>
-
-            <div className="flex flex-col px-3">
-              {
-                availableSizes?.map((size) => {
-                  return (
-                    <FormControlLabel
-                      key={size}
-                      value={size}
-                      control={<Checkbox />}
-                      checked={props?.selectedSizes?.includes(size)}
-                      label={size}
-                      onChange={() => props?.setSelectedSizes((prev) => prev?.includes(size) ? prev.filter((item) => item !== size) : [...prev, size])}
-                      className="w-full"
-                    />
-                  )
-                })
-              }
-            </div>
-          </div>
-        }
 
         {
           availableColors?.length !== 0 &&

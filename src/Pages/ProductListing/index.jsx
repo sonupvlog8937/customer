@@ -11,6 +11,7 @@ import Pagination from "@mui/material/Pagination";
 import ProductLoadingGrid from "../../components/ProductLoading/productLoadingGrid";
 import { postData } from "../../utils/api";
 import { useAppContext } from "../../hooks/useAppContext";
+import { MdOutlineFilterAlt } from "react-icons/md";
 
 const ProductListing = () => {
   const [itemView, setItemView] = useState("grid");
@@ -204,7 +205,13 @@ const [activeTab, setActiveTab] = useState("all");
                 </Menu>
               </div>
             </div>
-             <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                 <Button
+                onClick={() => context?.setOpenFilter(true)}
+                className="!text-[12px] !capitalize !rounded-full !border !bg-white !text-[#333] !border-[rgba(0,0,0,0.25)]"
+              >
+                <MdOutlineFilterAlt className="mr-1" size={20}/><b className="text-[14px]">Filters</b> 
+              </Button>
               <Button
                 onClick={() => setActiveTab("all")}
                 className={`!text-[12px] !capitalize !rounded-full !border ${activeTab === "all" ? "!bg-[#ff5252] !text-white !border-[#ff5252]" : "!bg-white !text-[#333] !border-[rgba(0,0,0,0.25)]"}`}

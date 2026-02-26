@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { postData } from "../../utils/api";
 import CircularProgress from "@mui/material/CircularProgress";
 import { IoTimeOutline } from "react-icons/io5";
+import { IoClose } from "react-icons/io5";
 
 const TRENDING_TERMS = [
   "shirt",
@@ -39,6 +40,7 @@ const Search = () => {
   const history = useNavigate();
   const searchWrapperRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
+    const inputRef = useRef(null);
 
   const normalizedSuggestions = useMemo(() => {
     return liveSuggestions
@@ -92,6 +94,12 @@ const Search = () => {
     performSearch(suggestion);
   };
 
+  const onClearSearch = () => {
+    setSearchQuery("");
+    setLiveSuggestions([]);
+    setIsDropdownOpen(true);
+  };
+
   const onKeyDownInput = (e) => {
     if (e.key === "Enter") {
       performSearch();
@@ -110,6 +118,14 @@ const Search = () => {
       document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);
+
+  useEffect(() => {
+    if (context?.openSearchPanel) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }
+  }, [context?.openSearchPanel]);
 
   useEffect(() => {
     if (debounceTimeoutRef.current) {
@@ -141,8 +157,9 @@ const Search = () => {
   return (
     <div ref={searchWrapperRef} className="searchContainer relative w-[100%]">
       <div className="searchBox w-[100%] h-[50px] bg-[#e5e5e5] rounded-[8px] relative p-2 border border-transparent focus-within:border-[#0d6efd]">
-        <IoSearch className="absolute left-[14px] top-[14px] text-[22px] text-[#666]" />
+        <IoSearch className="absolute left-[14px] top-[14px] text-[22px] text-[#666] cursor-pointer" onClick={() => inputRef.current?.focus()} />
         <input
+         ref={inputRef}
           type="text"
           placeholder="Search for Products, Brands and More"
           className="w-full h-[35px] focus:outline-none bg-inherit pl-10 pr-14 text-[15px]"
@@ -151,6 +168,16 @@ const Search = () => {
           onChange={onChangeInput}
           onKeyDown={onKeyDownInput}
         />
+         {searchQuery.trim().length > 0 && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            className="absolute top-[11px] right-[46px] z-50 text-[#666] hover:text-black"
+            onClick={onClearSearch}
+          >
+            <IoClose className="text-[20px]" />
+          </button>
+        )}
         <Button
           className="!absolute top-[8px] right-[5px] z-50 !w-[37px] !min-w-[37px] h-[37px] !rounded-full !text-black"
           onClick={() => performSearch()}
