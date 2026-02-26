@@ -27,12 +27,27 @@ const ProductListing = () => {
 const [activeTab, setActiveTab] = useState("all");
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
+   const [selectedProductTypes, setSelectedProductTypes] = useState([]);
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
+  const [selectedSaleOnly, setSelectedSaleOnly] = useState(false);
   const context = useAppContext();
+  const resetAllFilters = () => {
+    setSelectedBrands([]);
+    setSelectedSizes([]);
+    setSelectedProductTypes([]);
+    setSelectedPriceRanges([]);
+    setSelectedSaleOnly(false);
+    setActiveTab("all");
+  };
+
+  const getProductType = (product) => {
+    return product?.productType || product?.thirdSubCatName || product?.subCatName || product?.catName || "";
+  };
 
   const isBrandedProduct = (product) => {
     const brandName = product?.brand?.trim()?.toLowerCase();
     return brandName && brandName !== "no brand" && brandName !== "generic";
-  }
+  };
 
   const filteredProducts = useMemo(() => {
     const allProducts = productsData?.products || [];
@@ -62,14 +77,40 @@ const [activeTab, setActiveTab] = useState("all");
         }
       }
 
+       if (selectedProductTypes.length > 0) {
+        const productType = getProductType(product);
+
+          if (!selectedProductTypes.includes(productType)) {
+          return false;
+        }
+      }
+
+      if (selectedPriceRanges.length > 0) {
+        const productPrice = Number(product?.price || 0);
+        const hasMatchingPriceRange = selectedPriceRanges.some((range) => {
+          const [minPrice, maxPrice] = range.split("-").map(Number);
+          return productPrice >= minPrice && productPrice <= maxPrice;
+        });
+
+        if (!hasMatchingPriceRange) {
+          return false;
+        }
+      }
+
+      if (selectedSaleOnly && !Number(product?.discount || 0)) {
+        return false;
+      }
+
       return true;
-    })
-  }, [productsData, activeTab, selectedBrands, selectedSizes]);
+    });
+  }, [productsData, activeTab, selectedBrands, selectedSizes, selectedProductTypes, selectedPriceRanges, selectedSaleOnly]);
+
+
 
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [])
+  }, []);
 
 
   const open = Boolean(anchorEl);
@@ -91,8 +132,8 @@ const [activeTab, setActiveTab] = useState("all");
     }).then((res) => {
       setProductsData(res);
       setAnchorEl(null);
-    })
-  }
+    });
+  };
 
   return (
     <section className=" pb-0">
@@ -111,6 +152,13 @@ const [activeTab, setActiveTab] = useState("all");
               setSelectedBrands={setSelectedBrands}
               selectedSizes={selectedSizes}
               setSelectedSizes={setSelectedSizes}
+              selectedProductTypes={selectedProductTypes}
+              setSelectedProductTypes={setSelectedProductTypes}
+              selectedPriceRanges={selectedPriceRanges}
+              setSelectedPriceRanges={setSelectedPriceRanges}
+              selectedSaleOnly={selectedSaleOnly}
+              setSelectedSaleOnly={setSelectedSaleOnly}
+              onResetAllFilters={resetAllFilters}
             />
           </div>
 
