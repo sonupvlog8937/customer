@@ -19,6 +19,8 @@ export const Reviews = (props) => {
     const [loading, setLoading] = useState(false);
 
     const [reviewsData, setReviewsData] = useState([])
+    const [currentPage, setCurrentPage] = useState(1);
+    const reviewsPerPage = 5;
 
     const context = useAppContext();
 
@@ -79,9 +81,13 @@ export const Reviews = (props) => {
             if (res?.error === false) {
                 setReviewsData(res.reviews)
                 props.setReviewsCount(res.reviews.length)
+                setCurrentPage(1);
             }
         })
     }
+
+    const totalPages = Math.ceil((reviewsData?.length || 0) / reviewsPerPage);
+    const paginatedReviews = reviewsData?.slice((currentPage - 1) * reviewsPerPage, currentPage * reviewsPerPage);
 
     return (
         <div className="w-full productReviewsContainer">
@@ -91,7 +97,7 @@ export const Reviews = (props) => {
                 reviewsData?.length !== 0 &&
                 <div className="reviewScroll w-full max-h-[300px] overflow-y-scroll overflow-x-hidden mt-5 pr-5">
                     {
-                        reviewsData?.map((review, index) => {
+                        paginatedReviews?.map((review, index) => {
                             return (
                                 <div key={index} className="review pt-5 pb-5 border-b border-[rgba(0,0,0,0.1)] w-full flex items-center justify-between">
                                     <div className="info w-[80%] flex items-center gap-3">
@@ -131,6 +137,32 @@ export const Reviews = (props) => {
                 </div>
             }
 
+            {
+                totalPages > 1 &&
+                <div className="flex items-center justify-end gap-2 mt-4">
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    >
+                        Prev
+                    </Button>
+
+                    <span className="text-[13px] text-[rgba(0,0,0,0.7)]">Page {currentPage} of {totalPages}</span>
+
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    >
+                        Next
+                    </Button>
+                </div>
+            }
+
+
 
             <br />
 
@@ -162,9 +194,9 @@ export const Reviews = (props) => {
 
 
                         <Button type="submit" className="btn-org flex gap-2">
-                       
+
                             {
-                                loading === true && <CircularProgress size={15}/> 
+                                loading === true && <CircularProgress size={15} />
                             }
                             Submit Review</Button>
                     </div>
@@ -173,4 +205,3 @@ export const Reviews = (props) => {
         </div>
     )
 }
-
