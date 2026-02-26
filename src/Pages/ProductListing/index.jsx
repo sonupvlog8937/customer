@@ -30,6 +30,10 @@ const [activeTab, setActiveTab] = useState("all");
    const [selectedProductTypes, setSelectedProductTypes] = useState([]);
   const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
   const [selectedSaleOnly, setSelectedSaleOnly] = useState(false);
+  const [selectedStockStatus, setSelectedStockStatus] = useState("all");
+  const [selectedDiscountRanges, setSelectedDiscountRanges] = useState([]);
+  const [selectedWeights, setSelectedWeights] = useState([]);
+  const [selectedRamOptions, setSelectedRamOptions] = useState([]);
   const context = useAppContext();
   const resetAllFilters = () => {
     setSelectedBrands([]);
@@ -37,6 +41,10 @@ const [activeTab, setActiveTab] = useState("all");
     setSelectedProductTypes([]);
     setSelectedPriceRanges([]);
     setSelectedSaleOnly(false);
+    setSelectedStockStatus("all");
+    setSelectedDiscountRanges([]);
+    setSelectedWeights([]);
+    setSelectedRamOptions([]);
     setActiveTab("all");
   };
 
@@ -101,9 +109,41 @@ const [activeTab, setActiveTab] = useState("all");
         return false;
       }
 
+       if (selectedStockStatus === "inStock" && Number(product?.countInStock || 0) <= 0) {
+        return false;
+      }
+
+      if (selectedStockStatus === "outOfStock" && Number(product?.countInStock || 0) > 0) {
+        return false;
+      }
+
+      if (selectedDiscountRanges.length > 0) {
+        const productDiscount = Number(product?.discount || 0);
+        const matchesDiscountBand = selectedDiscountRanges.some((minimumDiscount) => productDiscount >= minimumDiscount);
+        if (!matchesDiscountBand) {
+          return false;
+        }
+      }
+
+      if (selectedWeights.length > 0) {
+        const productWeights = product?.productWeight || [];
+        const hasMatchingWeight = productWeights.some((weight) => selectedWeights.includes(weight));
+        if (!hasMatchingWeight) {
+          return false;
+        }
+      }
+
+      if (selectedRamOptions.length > 0) {
+        const productRamOptions = product?.productRam || [];
+        const hasMatchingRam = productRamOptions.some((ram) => selectedRamOptions.includes(ram));
+        if (!hasMatchingRam) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [productsData, activeTab, selectedBrands, selectedSizes, selectedProductTypes, selectedPriceRanges, selectedSaleOnly]);
+  }, [productsData, activeTab, selectedBrands, selectedSizes, selectedProductTypes, selectedPriceRanges, selectedSaleOnly, selectedStockStatus, selectedDiscountRanges, selectedWeights, selectedRamOptions]);
 
 
 
@@ -158,6 +198,14 @@ const [activeTab, setActiveTab] = useState("all");
               setSelectedPriceRanges={setSelectedPriceRanges}
               selectedSaleOnly={selectedSaleOnly}
               setSelectedSaleOnly={setSelectedSaleOnly}
+              selectedStockStatus={selectedStockStatus}
+              setSelectedStockStatus={setSelectedStockStatus}
+              selectedDiscountRanges={selectedDiscountRanges}
+              setSelectedDiscountRanges={setSelectedDiscountRanges}
+              selectedWeights={selectedWeights}
+              setSelectedWeights={setSelectedWeights}
+              selectedRamOptions={selectedRamOptions}
+              setSelectedRamOptions={setSelectedRamOptions}
               onResetAllFilters={resetAllFilters}
             />
           </div>
