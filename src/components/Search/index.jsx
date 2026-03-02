@@ -3,7 +3,7 @@ import "../Search/style.css";
 import Button from "@mui/material/Button";
 import { IoSearch } from "react-icons/io5";
 import { useAppContext } from "../../hooks/useAppContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { postData } from "../../utils/api";
 import CircularProgress from "@mui/material/CircularProgress";
 import { IoTimeOutline } from "react-icons/io5";
@@ -15,11 +15,11 @@ const TRENDING_TERMS = [
   "t shirts",
   "bag",
   "watches",
-  "touser",
+  "trouser",
 ];
 
 const POPULAR_TERMS = [
-  "formal paint",
+  "formal pant",
   "zara jeans",
   "formal shirt",
   "baggy jeans",
@@ -27,27 +27,46 @@ const POPULAR_TERMS = [
   "white shirt",
 ];
 
+const MAX_TYPEAHEAD_SUGGESTIONS = 7;
+
 const Search = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [querySuggestions, setQuerySuggestions] = useState([]);
+  const [suggestedProducts, setSuggestedProducts] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
-  const [liveSuggestions, setLiveSuggestions] = useState([]);
+  const [suggestedCorrection, setSuggestedCorrection] = useState("");
+  const [aiHintSummary, setAiHintSummary] = useState("");
+  const [aiHintHighlights, setAiHintHighlights] = useState([]);
 
   const context = useAppContext();
 
   const history = useNavigate();
+  const location = useLocation();
+  const STORAGE_KEY = "recent_searches_v1";
   const searchWrapperRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
-    const inputRef = useRef(null);
+  const inputRef = useRef(null);
 
   const normalizedSuggestions = useMemo(() => {
-    return liveSuggestions
-      ?.map((item) => item?.name)
+    return querySuggestions
+      ?.map((item) => item?.toLowerCase()?.trim())
       .filter(Boolean)
-      .slice(0, 8);
-  }, [liveSuggestions]);
+      .slice(0, 10);
+  }, [querySuggestions]);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      if (Array.isArray(saved)) {
+        setRecentSearches(saved.slice(0, 6));
+      }
+    } catch (error) {
+      setRecentSearches([]);
+    }
+  }, []);
 
   const performSearch = (query = searchQuery) => {
     const trimmedQuery = query.trim();
@@ -71,14 +90,16 @@ const Search = () => {
 
       setRecentSearches((prev) => {
         const uniqueValues = [trimmedQuery, ...prev.filter((item) => item !== trimmedQuery)];
-        return uniqueValues.slice(0, 4);
+        const nextValues = uniqueValues.slice(0, 6);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextValues));
+        return nextValues;
       });
 
       setTimeout(() => {
         setIsLoading(false);
         setIsDropdownOpen(false);
         context?.setOpenSearchPanel(false);
-        history("/search");
+        history(`/search?query=${encodeURIComponent(trimmedQuery)}&page=1`);
       }, 500);
     });
   };
@@ -96,7 +117,11 @@ const Search = () => {
 
   const onClearSearch = () => {
     setSearchQuery("");
-    setLiveSuggestions([]);
+    setQuerySuggestions([]);
+    setSuggestedProducts([]);
+    setSuggestedCorrection("");
+    setAiHintSummary("");
+    setAiHintHighlights([]);
     setIsDropdownOpen(true);
   };
 
@@ -105,6 +130,12 @@ const Search = () => {
       performSearch();
     }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const queryValue = params.get("query") || "";
+    setSearchQuery(queryValue);
+  }, [location.search]);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -133,7 +164,11 @@ const Search = () => {
     }
 
     if (searchQuery.trim().length < 2) {
-      setLiveSuggestions([]);
+      setQuerySuggestions([]);
+      setSuggestedProducts([]);
+      setSuggestedCorrection("");
+      setAiHintSummary("");
+      setAiHintHighlights([]);
       return;
     }
 
@@ -143,7 +178,11 @@ const Search = () => {
         limit: 8,
         query: searchQuery.trim(),
       }).then((res) => {
-        setLiveSuggestions(res?.products || []);
+        setQuerySuggestions(res?.suggestions || []);
+        setSuggestedProducts(res?.suggestionProducts || []);
+        setSuggestedCorrection(res?.correctedQuery || "");
+        setAiHintSummary(res?.aiInsights?.summary || "");
+        setAiHintHighlights((res?.aiInsights?.highlights || []).slice(0, 2));
       });
     }, 300);
 
@@ -154,12 +193,43 @@ const Search = () => {
     };
   }, [searchQuery]);
 
+  const predictiveSuggestions = useMemo(() => {
+    return [...new Set(normalizedSuggestions)].slice(0, 10);
+  }, [normalizedSuggestions]);
+
+   const typeaheadSuggestions = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) return [];
+
+    const fallbackPool = [
+      ...recentSearches,
+      ...TRENDING_TERMS,
+      ...POPULAR_TERMS,
+      ...suggestedProducts.map((item) => item?.name || ""),
+    ];
+
+    const ranked = [...predictiveSuggestions, ...fallbackPool]
+      .map((item) => item?.toString().trim())
+      .filter(Boolean)
+      .filter((item) => item.toLowerCase().includes(normalizedQuery));
+
+    return [...new Set(ranked)].slice(0, MAX_TYPEAHEAD_SUGGESTIONS);
+  }, [searchQuery, recentSearches, predictiveSuggestions, suggestedProducts]);
+
+
+  const hasLiveSuggestions =
+    typeaheadSuggestions.length > 0 ||
+    suggestedProducts.length > 0 ||
+    Boolean(suggestedCorrection) ||
+    Boolean(aiHintSummary);
+
   return (
     <div ref={searchWrapperRef} className="searchContainer relative w-[100%]">
       <div className="searchBox w-[100%] h-[50px] bg-[#e5e5e5] rounded-[8px] relative p-2 border border-transparent focus-within:border-[#0d6efd]">
         <IoSearch className="absolute left-[14px] top-[14px] text-[22px] text-[#666] cursor-pointer" onClick={() => inputRef.current?.focus()} />
         <input
-         ref={inputRef}
+          ref={inputRef}
           type="text"
           placeholder="Search for Products, Brands and More"
           className="w-full h-[35px] focus:outline-none bg-inherit pl-10 pr-14 text-[15px]"
@@ -168,7 +238,7 @@ const Search = () => {
           onChange={onChangeInput}
           onKeyDown={onKeyDownInput}
         />
-         {searchQuery.trim().length > 0 && (
+        {searchQuery.trim().length > 0 && (
           <button
             type="button"
             aria-label="Clear search"
@@ -188,9 +258,32 @@ const Search = () => {
 
       {isDropdownOpen && (
         <div className="searchDropdown absolute top-[56px] left-0 w-full bg-[#efefef] rounded-[8px] shadow-lg z-[200] p-3 max-h-[75vh] overflow-y-auto">
-          {normalizedSuggestions.length > 0 ? (
+          {searchQuery.trim().length > 0 && hasLiveSuggestions ? (
             <ul className="searchSuggestionsList">
-              {normalizedSuggestions.map((item) => (
+              {suggestedCorrection && suggestedCorrection !== searchQuery.trim().toLowerCase() && (
+                <li>
+                  <button type="button" className="didYouMeanBtn" onClick={() => onSelectSuggestion(suggestedCorrection)}>
+                    <span className="font-[500] text-[14px] text-[#6a6a6a]">Did you mean</span>
+                    <span className="font-[700]">{suggestedCorrection}</span>
+                  </button>
+                </li>
+              )}
+              {aiHintSummary && (
+                <li>
+                  <div className="rounded-[8px] bg-[#e8f2ff] p-2 mb-1">
+                    <p className="text-[11px] uppercase tracking-[0.08em] text-[#2e63b8] font-[700]">AI suggestion</p>
+                    <p className="text-[12px] text-[#1e1e1e]">{aiHintSummary}</p>
+                    {aiHintHighlights.length > 0 && (
+                      <ul className="mt-1 text-[11px] text-[#3f3f3f] list-disc pl-4">
+                        {aiHintHighlights.map((hint) => (
+                          <li key={hint}>{hint}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              )}
+              {typeaheadSuggestions.map((item) => (
                 <li key={item}>
                   <button type="button" onClick={() => onSelectSuggestion(item)}>
                     <IoSearch className="text-[20px] text-[#3d3d3d]" />
@@ -198,6 +291,26 @@ const Search = () => {
                   </button>
                 </li>
               ))}
+               {suggestedProducts.length > 0 && (
+                <li className="mt-2 pt-2 border-t border-[#d0d0d0]">
+                  <h4 className="searchSectionTitle">Suggested products</h4>
+                  <div className="flex flex-col gap-2 mt-2">
+                    {suggestedProducts.map((product) => (
+                      <button
+                        key={product?._id || product?.name}
+                        type="button"
+                        className="text-left bg-white/70 rounded-[8px] p-2 hover:bg-white transition"
+                        onClick={() => onSelectSuggestion(product?.name || "")}
+                      >
+                        <p className="text-[13px] font-[600] leading-[1.2]">{product?.name}</p>
+                        {product?.brand && (
+                          <p className="text-[11px] text-[#5b5b5b] mt-[2px]">Brand: {product?.brand}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </li>
+              )}
             </ul>
           ) : (
             <>

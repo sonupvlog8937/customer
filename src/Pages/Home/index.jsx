@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import HomeSlider from "../../components/HomeSlider";
 import HomeCatSlider from "../../components/HomeCatSlider";
 import { LiaShippingFastSolid } from "react-icons/lia";
@@ -25,6 +25,9 @@ import BannerLoading from "../../components/LoadingSkeleton/bannerLoading";
 import { Button } from "@mui/material";
 import { MdArrowRightAlt } from "react-icons/md";
 import { Link } from "react-router-dom";
+import { HiOutlineShieldCheck } from "react-icons/hi";
+import { FiRefreshCcw } from "react-icons/fi";
+import { IoHeadsetOutline } from "react-icons/io5";
 
 const Home = () => {
   const [value, setValue] = useState(0);
@@ -43,37 +46,33 @@ const Home = () => {
 
 
   useEffect(() => {
-
+    let isMounted = true;
     window.scrollTo(0, 0);
 
-    fetchDataFromApi("/api/homeSlides").then((res) => {
-      setHomeSlidesData(res?.data)
-    })
-    fetchDataFromApi("/api/product/getAllProducts?page=1&limit=12").then((res) => {
-      setAllProductsData(res?.products)
-    })
+     Promise.all([
+      fetchDataFromApi("/api/homeSlides"),
+      fetchDataFromApi("/api/product/getAllProducts?page=1&limit=12"),
+      fetchDataFromApi("/api/product/getAllProducts"),
+      fetchDataFromApi("/api/product/getAllFeaturedProducts"),
+      fetchDataFromApi("/api/bannerV1"),
+      fetchDataFromApi("/api/bannerList2"),
+      fetchDataFromApi("/api/blog"),
+    ])
+      .then(([slides, products, bannerProducts, featured, bannerV1, bannerList2, blogs]) => {
+        if (!isMounted) return;
+        setHomeSlidesData(slides?.data || []);
+        setAllProductsData(products?.products || []);
+        setProductsBanners(bannerProducts?.products || []);
+        setFeaturedProducts(featured?.products || []);
+        setBannerV1Data(bannerV1?.data || []);
+        setBannerList2Data(bannerList2?.data || []);
+        setBlogData(blogs?.blogs || []);
+      });
 
-     fetchDataFromApi("/api/product/getAllProducts").then((res) => {
-      setProductsBanners(res?.products)
-    })
-
-    
-    fetchDataFromApi("/api/product/getAllFeaturedProducts").then((res) => {
-      setFeaturedProducts(res?.products)
-    })
-
-    fetchDataFromApi("/api/bannerV1").then((res) => {
-      setBannerV1Data(res?.data);
-    });
-
-    fetchDataFromApi("/api/bannerList2").then((res) => {
-      setBannerList2Data(res?.data);
-    });
-
-    fetchDataFromApi("/api/blog").then((res) => {
-      setBlogData(res?.blogs);
-    });
-  }, [])
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
 
 
@@ -88,28 +87,28 @@ const Home = () => {
       })
     }
 
-    const numbers = new Set();
-    while (numbers.size < context?.catData?.length - 1) {
+    const categoryIndexes = context?.catData
+      ?.map((_, index) => index)
+      ?.filter((index) => index !== 0)
+      ?.sort(() => Math.random() - 0.5)
+      ?.slice(0, 4);
 
-      const number = Math.floor(1 + Math.random() * 8);
-
-      // Add the number to the set (automatically ensures uniqueness)
-      numbers.add(number);
-    }
-
-
-    getRendomProducts(Array.from(numbers), context?.catData)
+      getRandomProducts(categoryIndexes || [], context?.catData)
 
   }, [context?.catData])
 
 
 
-  const getRendomProducts = (arr, catArr) => {
+  const getRandomProducts = (arr, catArr) => {
 
     const filterData = [];
 
     for (let i = 0; i < arr.length; i++) {
       let catId = catArr[arr[i]]?._id;
+
+       if (!catId) {
+        continue;
+      }
 
       fetchDataFromApi(`/api/product/getAllProductsByCatId/${catId}`).then((res) => {
         filterData.push({
@@ -117,7 +116,7 @@ const Home = () => {
           data: res?.products
         })
 
-        setRandomCatProducts(filterData)
+         setRandomCatProducts([...filterData])
       })
 
     }
@@ -145,13 +144,44 @@ const Home = () => {
   return (
     <>
 
-      {
-        homeSlidesData?.length === 0 && <BannerLoading />
-      }
+      {homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />}
 
-      {
+      <section className="pb-3 lg:pb-6 bg-white">
+        <div className="container">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+            <div className="rounded-md border border-slate-200 p-4 bg-slate-50">
+              <p className="text-[12px] uppercase text-slate-500 mb-1">Daily deals</p>
+              <h3 className="text-[18px] font-semibold">Upto 60% Off</h3>
+              <p className="text-[13px] text-slate-600 mb-0">Curated offers across top categories.</p>
+            </div>
+            <div className="rounded-md border border-slate-200 p-4 bg-slate-50 flex gap-2">
+              <HiOutlineShieldCheck className="text-[24px] text-emerald-600 mt-1" />
+              <div>
+                <h3 className="text-[16px] font-semibold mb-1">Secure Payments</h3>
+                <p className="text-[13px] text-slate-600 mb-0">Encrypted checkout with trusted gateways.</p>
+              </div>
+            </div>
+            <div className="rounded-md border border-slate-200 p-4 bg-slate-50 flex gap-2">
+              <FiRefreshCcw className="text-[22px] text-blue-600 mt-1" />
+              <div>
+                <h3 className="text-[16px] font-semibold mb-1">Easy Returns</h3>
+                <p className="text-[13px] text-slate-600 mb-0">Simple return policy for worry-free shopping.</p>
+              </div>
+            </div>
+            <div className="rounded-md border border-slate-200 p-4 bg-slate-50 flex gap-2">
+              <IoHeadsetOutline className="text-[24px] text-purple-600 mt-1" />
+              <div>
+                <h3 className="text-[16px] font-semibold mb-1">24/7 Support</h3>
+                <p className="text-[13px] text-slate-600 mb-0">Our team is always here to help you.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* {
         homeSlidesData?.lengtn !== 0 && <HomeSlider data={homeSlidesData} />
-      }
+      } */}
 
       {
         context?.catData?.length !== 0 && <HomeCatSlider data={context?.catData} />
@@ -219,10 +249,17 @@ const Home = () => {
           </div>
 
           <div className="part2 scrollableBox w-full lg:w-[30%] flex items-center gap-5 justify-between flex-row lg:flex-col">
-            <BannerBoxV2 info={bannerV1Data[bannerV1Data?.length - 1]?.alignInfo} image={bannerV1Data[bannerV1Data?.length - 1]?.images[0]} item={bannerV1Data[bannerV1Data?.length - 1]} />
-
-            <BannerBoxV2 info={bannerV1Data[bannerV1Data?.length - 2]?.alignInfo} image={bannerV1Data[bannerV1Data?.length - 2]?.images[0]} item={bannerV1Data[bannerV1Data?.length - 2]} />
-          </div>
+             {
+              bannerV1Data?.length > 1 ? (
+                <>
+                  <BannerBoxV2 image={bannerV1Data[bannerV1Data?.length - 1]?.images[0]} item={bannerV1Data[bannerV1Data?.length - 1]} />
+                  <BannerBoxV2 image={bannerV1Data[bannerV1Data?.length - 2]?.images[0]} item={bannerV1Data[bannerV1Data?.length - 2]} />
+                </>
+              ) : (
+                <BannerLoading />
+              )
+            }
+            </div>
 
         </div>
       </section>
@@ -233,22 +270,66 @@ const Home = () => {
 
       <section className="py-0 lg:py-4 pt-0 lg:pt-8 pb-0 bg-white">
         <div className="container">
-          <div className="freeShipping w-full md:w-[80%] m-auto py-4 p-4  border-2 border-[#ff5252] flex items-center justify-center lg:justify-between flex-col lg:flex-row rounded-md mb-7">
-            <div className="col1 flex items-center gap-4">
-              <LiaShippingFastSolid className="text-[30px] lg:text-[50px]" />
-              <span className="text-[16px] lg:text-[20px] font-[600] uppercase">
-                Free Shipping{" "}
-              </span>
-            </div>
+         <div className="w-full relative overflow-hidden">
 
-            <div className="col2">
-              <p className="mb-0 mt-0 font-[500] text-center">
-                Free Delivery Now On Your First Order and over ₹200
-              </p>
-            </div>
+  
+  <div className="relative w-full min-h-[300px] md:min-h-[380px] overflow-hidden rounded-3xl">
 
-            <p className="font-bold text-[20px] lg:text-[25px]">- Only ₹200*</p>
-          </div>
+  {/* Premium Background Image */}
+  <img
+    src="https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?q=80&w=2000&auto=format&fit=crop"
+    alt="Fast ecommerce delivery"
+    className="absolute inset-0 w-full h-full object-cover scale-105"
+  />
+
+  {/* Premium Gradient Overlay */}
+  <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/30"></div>
+
+  {/* Soft Blur Layer */}
+  <div className="absolute inset-0 backdrop-blur-[2px]"></div>
+
+  {/* Content */}
+  <div className="relative z-10 w-full px-6 md:px-16 lg:px-24 py-12 flex flex-col md:flex-row items-center justify-between gap-10 text-white">
+
+    {/* Left Section */}
+    <div className="flex items-start gap-5 max-w-[650px]">
+
+      <span className="bg-[#ff5252] text-white rounded-full p-4 shadow-2xl ring-4 ring-white/20">
+        <LiaShippingFastSolid className="text-[32px] md:text-[40px]" />
+      </span>
+
+      <div>
+        <h2 className="text-[26px] md:text-[42px] font-extrabold uppercase tracking-wide leading-tight">
+          Free & Fast Shipping
+        </h2>
+
+        <p className="text-[15px] md:text-[18px] text-gray-200 mt-3 leading-relaxed">
+          First order aur ₹200 se upar ki shopping par delivery bilkul free.  
+          Safe packaging, fast dispatch & trusted delivery partners.
+        </p>
+      </div>
+    </div>
+
+    {/* Right Section */}
+    <div className="flex flex-col items-center md:items-end gap-5">
+
+      <p className="text-[#ff5252] text-[30px] md:text-[44px] font-black drop-shadow-lg">
+        Only ₹200*
+      </p>
+
+      <Link to="/products">
+        <button className="px-10 py-3 bg-[#ff5252] text-white rounded-full font-bold shadow-xl hover:bg-white hover:text-black transition-all duration-300 transform hover:scale-105">
+          Shop Now
+        </button>
+      </Link>
+
+    </div>
+
+  </div>
+
+</div>
+
+</div>
 
           {
             bannerV1Data?.length !== 0 && <AdsBannerSliderV2 items={4} data={bannerV1Data} />
