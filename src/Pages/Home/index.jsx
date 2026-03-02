@@ -207,11 +207,11 @@ const Home = () => {
 
   return (
     <>
-      <section className="bg-gradient-to-r from-slate-950 to-slate-800 text-white py-2 text-center text-sm font-medium">
-        🚚 Free delivery above ₹200 | 🔒 100% secure checkout | 🎁 Use code <strong>SAVE20</strong> for extra 20% off
+      <section className="bg-gradient-to-r from-slate-950 to-slate-800 text-white py-2 pt-4 text-center text-sm font-medium">
+      🎁 Use code <strong>SAVE20</strong> for extra 20% off
       </section>
       {homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />}
-      <section className="py-4 bg-white">
+      {/* <section className="py-4 bg-white">
         <div className="container">
           <div className="rounded-2xl border border-slate-200 p-3 sm:p-4 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between shadow-sm">
             <div>
@@ -230,7 +230,7 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
       <section className="pb-3 lg:pb-6 bg-white">
         <div className="container">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">

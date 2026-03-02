@@ -23,7 +23,8 @@ import Address from "./Pages/MyAccount/address";
 import { OrderSuccess } from "./Pages/Orders/success";
 import { OrderFailed } from "./Pages/Orders/failed";
 import SearchPage from "./Pages/Search";
-
+import Blog from "./Pages/Blog";
+import BlogDetails from "./Pages/BlogDetails";
 
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -92,6 +93,8 @@ function App() {
           <Route path={"/order/failed"} exact={true} element={<OrderFailed />} />
           <Route path={"/address"} exact={true} element={<Address />} />
           <Route path={"/search"} exact={true} element={<SearchPage />} />
+          <Route path={"/blog"} exact={true} element={<Blog />} />
+          <Route path={"/blog/:id"} exact={true} element={<BlogDetails />} />
         </Routes>
         <Footer />
       </BrowserRouter>
