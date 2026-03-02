@@ -228,7 +228,7 @@ const Login = () => {
             <a className="link cursor-pointer text-[14px] font-[600]" onClick={forgotPassword}>Forgot Password?</a>
 
             <div className="flex items-center w-full mt-3 mb-3">
-            <Button type="submit" disabled={!valideValue} className="btn-org btn-lg w-full flex gap-3">
+            <Button type="submit" disabled={!valideValue} className="!bg-[#f1f1f1] btn-lg w-full flex gap-3">
               {
                 isLoading === true ? <CircularProgress color="inherit" />
                   :
@@ -243,7 +243,7 @@ const Login = () => {
 
             <p className="text-center font-[500]">Or continue with social account</p>
 
-            <Button className="flex gap-3 w-full !bg-[#f1f1f1] btn-lg !text-black"
+            <Button className="flex gap-3 w-full btn-org btn-lg !text-black"
             onClick={authWithGoogle}>
             <FcGoogle className="text-[20px]"/> Login with Google</Button>
 

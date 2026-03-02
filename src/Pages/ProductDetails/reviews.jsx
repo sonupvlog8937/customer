@@ -19,8 +19,8 @@ export const Reviews = (props) => {
     const [loading, setLoading] = useState(false);
 
     const [reviewsData, setReviewsData] = useState([])
-    const [currentPage, setCurrentPage] = useState(1);
-    const reviewsPerPage = 5;
+    const [visibleReviewsCount, setVisibleReviewsCount] = useState(5);
+    const reviewsPerClick = 5;
 
     const context = useAppContext();
 
@@ -81,23 +81,23 @@ export const Reviews = (props) => {
             if (res?.error === false) {
                 setReviewsData(res.reviews)
                 props.setReviewsCount(res.reviews.length)
-                setCurrentPage(1);
+                setVisibleReviewsCount(5);
             }
         })
     }
 
-    const totalPages = Math.ceil((reviewsData?.length || 0) / reviewsPerPage);
-    const paginatedReviews = reviewsData?.slice((currentPage - 1) * reviewsPerPage, currentPage * reviewsPerPage);
+    const visibleReviews = reviewsData?.slice(0, visibleReviewsCount);
+    const hasMoreReviews = visibleReviewsCount < (reviewsData?.length || 0);
 
     return (
         <div className="w-full productReviewsContainer">
-            <h2 className="text-[16px] lg:text-[18px]">Customer questions & answers</h2>
+            <h2 className="text-[16px] lg:text-[18px]">Customer Reviews</h2>
 
             {
                 reviewsData?.length !== 0 &&
-                <div className="reviewScroll w-full max-h-[300px] overflow-y-scroll overflow-x-hidden mt-5 pr-5">
+                <div className="reviewScroll w-full max-h-full overflow-y-scroll overflow-x-hidden mt-5 pr-5">
                     {
-                        paginatedReviews?.map((review, index) => {
+                        visibleReviews?.map((review, index) => {
                             return (
                                 <div key={index} className="review pt-5 pb-5 border-b border-[rgba(0,0,0,0.1)] w-full flex items-center justify-between">
                                     <div className="info w-[80%] flex items-center gap-3">
@@ -138,26 +138,15 @@ export const Reviews = (props) => {
             }
 
             {
-                totalPages > 1 &&
+                hasMoreReviews &&
                 <div className="flex items-center justify-end gap-2 mt-4">
                     <Button
+                        className='btn-org'
                         size="small"
                         variant="outlined"
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        onClick={() => setVisibleReviewsCount((prev) => prev + reviewsPerClick)}
                     >
-                        Prev
-                    </Button>
-
-                    <span className="text-[13px] text-[rgba(0,0,0,0.7)]">Page {currentPage} of {totalPages}</span>
-
-                    <Button
-                        size="small"
-                        variant="outlined"
-                        disabled={currentPage === totalPages}
-                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                    >
-                        Next
+                       Load More
                     </Button>
                 </div>
             }
