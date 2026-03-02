@@ -86,6 +86,9 @@ const AppContent = () => {
         <Route path="/order/failed" exact={true} element={<OrderFailed />} />
         <Route path="/address" exact={true} element={<Address />} />
         <Route path="/search" exact={true} element={<SearchPage />} />
+        <Route path={"/blog"} exact={true} element={<Blog />} />
+        <Route path={"/blog/:id"} exact={true} element={<BlogDetails />} />
+        <Route path={"/categories"} exact={true} element={<CategoriesPage />} />
       </Routes>
       <Footer />
     </>
