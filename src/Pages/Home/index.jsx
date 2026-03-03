@@ -229,6 +229,12 @@ const Home = () => {
                   <Link to="/products" className="inline-flex items-center justify-center h-[42px] px-5 rounded-md bg-[#ff5252] text-white text-[14px] font-semibold hover:bg-[#eb3f3f] transition-colors">Shop Now</Link>
                   <Link to="/categories" className="inline-flex items-center justify-center h-[42px] px-5 rounded-md border border-white/40 text-white text-[14px] font-semibold hover:bg-white/10 transition-colors">View catalog</Link>
                 </div>
+                 <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
+                  <p className="mb-2 text-[13px] text-slate-100">Hungry? Explore the new premium restaurant ordering experience.</p>
+                  <Link to="/products" className="inline-flex items-center gap-2 text-[14px] font-semibold text-white hover:text-yellow-200">
+                    Go to Shopping Zone <MdArrowRightAlt className="text-[20px]" />
+                  </Link>
+                </div>
               </div>
 
 
