@@ -226,8 +226,8 @@ const Home = () => {
                 <h1 className="text-[22px] lg:text-[34px] font-bold leading-tight">Premium products, better prices.</h1>
                 <p className="text-[14px] text-slate-200 mt-3">Explore handpicked collections with fast delivery, easy returns, and trusted quality.</p>
                 <div className="mt-5 flex gap-3">
-                  <Link to="/products" className="inline-flex items-center justify-center h-[42px] px-5 rounded-md bg-[#ff5252] text-white text-[14px] font-semibold hover:bg-[#eb3f3f] transition-colors">Shop Now</Link>
-                  <Link to="/categories" className="inline-flex items-center justify-center h-[42px] px-5 rounded-md border border-white/40 text-white text-[14px] font-semibold hover:bg-white/10 transition-colors">View catalog</Link>
+                  <a href="https://zeedaddycom.vercel.app" className="inline-flex items-center justify-center h-[42px] px-5 rounded-md bg-[#ff5252] text-white text-[14px] font-semibold hover:bg-[#eb3f3f] transition-colors">Go Restaurant</a>
+                  <a href="https://zeedaddycom.vercel.app" className="inline-flex items-center justify-center h-[42px] px-5 rounded-md border border-white/40 text-white text-[14px] font-semibold hover:bg-white/10 transition-colors">Go Grocery</a>
                 </div>
                 <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
                   <p className="mb-2 text-[13px] text-slate-100">
