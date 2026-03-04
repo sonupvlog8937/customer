@@ -229,10 +229,28 @@ const Home = () => {
                   <Link to="/products" className="inline-flex items-center justify-center h-[42px] px-5 rounded-md bg-[#ff5252] text-white text-[14px] font-semibold hover:bg-[#eb3f3f] transition-colors">Shop Now</Link>
                   <Link to="/categories" className="inline-flex items-center justify-center h-[42px] px-5 rounded-md border border-white/40 text-white text-[14px] font-semibold hover:bg-white/10 transition-colors">View catalog</Link>
                 </div>
-                 <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-                  <p className="mb-2 text-[13px] text-slate-100">Discover trending products, exclusive deals & lightning-fast delivery.</p>
-                  <a href="https://decemberadmin-2grx.vercel.app" className="inline-flex items-center gap-2 text-[14px] font-semibold text-white hover:text-yellow-200">
-                    Go to Shopping Zonewithsonu <MdArrowRightAlt className="text-[20px]" />
+                <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
+                  <p className="mb-2 text-[13px] text-slate-100">
+                    Craving something delicious? Order from top restaurants near you with lightning-fast delivery.
+                  </p>
+
+                  <a
+                    href="https://zeedaddycom.vercel.app"
+                    className="inline-flex items-center gap-2 text-[14px] font-semibold text-white hover:text-yellow-200"
+                  >
+                    Go to Restaurant Zone <MdArrowRightAlt className="text-[20px]" />
+                  </a>
+                </div>
+                <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
+                  <p className="mb-2 text-[13px] text-slate-100">
+                    Daily essentials delivered in minutes! Fresh groceries at the best prices.
+                  </p>
+
+                  <a
+                    href="https://zeedaddycom.vercel.app"
+                    className="inline-flex items-center gap-2 text-[14px] font-semibold text-white hover:text-yellow-200"
+                  >
+                    Go to Grocery Zone <MdArrowRightAlt className="text-[20px]" />
                   </a>
                 </div>
               </div>
