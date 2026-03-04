@@ -231,9 +231,9 @@ const Home = () => {
                 </div>
                  <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
                   <p className="mb-2 text-[13px] text-slate-100">Discover trending products, exclusive deals & lightning-fast delivery.</p>
-                  <Link to="decemberadmin-2grx.vercel.app" className="inline-flex items-center gap-2 text-[14px] font-semibold text-white hover:text-yellow-200">
+                  <a href="https://decemberadmin-2grx.vercel.app" className="inline-flex items-center gap-2 text-[14px] font-semibold text-white hover:text-yellow-200">
                     Go to Shopping Zonewithsonu <MdArrowRightAlt className="text-[20px]" />
-                  </Link>
+                  </a>
                 </div>
               </div>
 
