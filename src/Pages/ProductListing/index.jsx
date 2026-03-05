@@ -426,7 +426,7 @@ const ProductListing = () => {
                   :
                   filteredProducts?.length !== 0 && filteredProducts?.map((item, index) => {
                     return (
-                      <ProductItem key={index} item={item} />
+                       <ProductItem key={item?._id || index} item={item} />
                     )
                   })
 
