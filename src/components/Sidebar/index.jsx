@@ -662,7 +662,9 @@ export const Sidebar = (props) => {
       </div>
       <br />
       <div className="flex items-center gap-2 py-2">
-        <Button className="btn-org w-full !bg-[#ff5252] !text-white" onClick={handleApplyFilters}>Apply</Button>
+        <Button className="btn-org w-full !bg-[#ff5252] !text-white" onClick={handleApplyFilters}>
+          Apply  <span className="ml-1">({props.activeFiltersCount})</span>
+        </Button>
         <Button className="w-full !border !border-[#ff5252] !text-[#ff5252]" onClick={handleResetFilters}>Reset</Button>
       </div>
       <Button className="btn-org w-full !flex lg:!hidden mt-2" onClick={() => context?.setOpenFilter(false)}><MdOutlineFilterAlt size={20} /> Cancel</Button>
