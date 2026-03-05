@@ -22,6 +22,8 @@ const ProductListing = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const loadMoreRef = useRef(null);
+  const isFetchingRef = useRef(false);
+
 
   const [selectedSortVal, setSelectedSortVal] = useState("Best Seller");
   const [selectedSortType, setSelectedSortType] = useState("bestSeller");
@@ -250,7 +252,8 @@ const ProductListing = () => {
         const [entry] = entries;
         const hasMorePages = page < totalPages;
 
-        if (entry?.isIntersecting && !isLoading && hasMorePages) {
+        if (entry?.isIntersecting && !isFetchingRef.current && hasMorePages) {
+          isFetchingRef.current = true;
           setPage((prevPage) => prevPage + 1);
         }
       },
@@ -268,7 +271,11 @@ const ProductListing = () => {
       }
       observer.disconnect();
     };
-  }, [page, totalPages, isLoading]);
+  }, [page, totalPages]);
+
+  useEffect(() => {
+    isFetchingRef.current = isLoading;
+  }, [isLoading]);
 
 
   const open = Boolean(anchorEl);
@@ -431,7 +438,7 @@ const ProductListing = () => {
             {isLoading && page > 1 && (
               <div className="mt-4">
                 <ProductLoadingGrid view="grid" />
-                </div>
+              </div>
             )}
 
 

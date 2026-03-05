@@ -396,6 +396,23 @@ export const Sidebar = (props) => {
 
   }, [location]);
 
+  const appendUniqueProducts = (previousProducts = [], nextProducts = []) => {
+    const productMap = new Map();
+
+    [...previousProducts, ...nextProducts].forEach((product) => {
+      const key = product?._id || product?.id;
+
+      if (key) {
+        productMap.set(key, product);
+        return;
+      }
+
+      productMap.set(`${product?.name || "unknown"}-${productMap.size}`, product);
+    });
+
+    return Array.from(productMap.values());
+  };
+
 
 
   const filtesData = () => {
@@ -428,16 +445,16 @@ export const Sidebar = (props) => {
         query: queryText,
       }).then((res) => {
         context?.setSearchData(res);
-        if (props?.infiniteScroll && (props?.page || 1) > 1) {
+         if (props?.infiniteScroll && (props?.page || 1) > 1) {
           props.setProductsData((prevData) => ({
             ...res,
-            products: [...(prevData?.products || []), ...(res?.products || [])],
+            products: appendUniqueProducts(prevData?.products || [], res?.products || []),
           }));
         } else {
           props.setProductsData(res);
         }
         props.setIsLoading(false);
-       props.setTotalPages(res?.totalPages || 1);
+        props.setTotalPages(res?.totalPages || 1);
         if (!props?.infiniteScroll || (props?.page || 1) === 1) {
           window.scrollTo(0, 0);
         }
@@ -445,11 +462,11 @@ export const Sidebar = (props) => {
       return;
     }
 
-     postData(`/api/product/filters`, requestPayload).then((res) => {
+    postData(`/api/product/filters`, requestPayload).then((res) => {
       if (props?.infiniteScroll && (props?.page || 1) > 1) {
         props.setProductsData((prevData) => ({
           ...res,
-          products: [...(prevData?.products || []), ...(res?.products || [])],
+          products: appendUniqueProducts(prevData?.products || [], res?.products || []),
         }));
       } else {
         props.setProductsData(res);
@@ -461,7 +478,6 @@ export const Sidebar = (props) => {
       }
     })
 
-
   }
 
 
@@ -469,24 +485,7 @@ export const Sidebar = (props) => {
   useEffect(() => {
     filters.page = props.page;
     filtesData();
-   }, [
-    filters,
-    props.page,
-    props?.selectedSortType,
-    props?.selectedBrands,
-    props?.selectedSizes,
-    props?.selectedProductTypes,
-    props?.selectedPriceRanges,
-    props?.selectedSaleOnly,
-    props?.selectedStockStatus,
-    props?.selectedDiscountRanges,
-    props?.selectedWeights,
-    props?.selectedRamOptions,
-    props?.selectedColors,
-    props?.selectedRatingBands,
-    location.pathname,
-    location.search,
-  ])
+  }, [filters, props.page])
 
 
   useEffect(() => {
@@ -730,7 +729,7 @@ export const Sidebar = (props) => {
               options: availableWeights,
               selectedValues: props?.selectedWeights || [],
               onToggle: (weight) => handleMultiSelect(props?.selectedWeights, props?.setSelectedWeights, weight),
-               onApplySelection: (values) => props?.setSelectedWeights?.(values),
+              onApplySelection: (values) => props?.setSelectedDiscountRanges?.(values),
               getOptionKey: (weight) => weight,
               getOptionLabel: (weight) => weight
             })}
