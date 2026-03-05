@@ -249,7 +249,7 @@ const [selectedSortVal, setSelectedSortVal] = useState("Best Seller");
 
       <div className="bg-white p-2">
         <div className="container flex gap-3">
-          <div className={`sidebarWrapper fixed -bottom-[100%] left-0 w-fulllg:h-full lg:static lg:w-[20%] bg-white z-[102] lg:z-[100] p-3 lg:p-0  transition-all lg:opacity-100 opacity-0 ${context?.openFilter === true ? 'open' : ''}`}>
+          <div className={`sidebarWrapper fixed -bottom-[100%] left-0 w-full lg:h-full lg:static lg:w-[20%] bg-white z-[102] lg:z-[100] p-3 lg:p-0  transition-all lg:opacity-100 opacity-0 ${context?.openFilter === true ? 'open' : ''}`}>
             <Sidebar
               productsData={productsData}
               setProductsData={setProductsData}
