@@ -241,7 +241,7 @@ const SearchPage = () => {
           {
             context?.windowWidth < 992 &&
             <div className={`filter_overlay w-full h-full bg-[rgba(0,0,0,0.5)] fixed top-0 left-0 z-[101]  ${context?.openFilter === true ? 'block' : 'hidden'}`}
-              onClick={() => context?.setOpenFilter(false)}
+              onClick={()=>context?.setOpenFilter(false)}
             ></div>
           }
 
@@ -287,98 +287,57 @@ const SearchPage = () => {
                   }}
                 >
                   <MenuItem
-                    onClick={() => handleSortBy('name', 'asc', productsData, 'Name, A to Z')}
+                    onClick={() => handleSortBy('Best Seller', 'bestSeller')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Name, A to Z
+                     Best Seller
                   </MenuItem>
 
 
                   <MenuItem
-                    onClick={() => handleSortBy('name', 'desc', productsData, 'Name, Z to A')}
+                    onClick={() => handleSortBy('Latest', 'latest')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Name, Z to A
+                    Latest
                   </MenuItem>
 
 
                   <MenuItem
-                    onClick={() => handleSortBy('price', 'asc', productsData, 'Price, low to high')}
+                   onClick={() => handleSortBy('Popular', 'popular')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Price, low to high
+                    Popular
                   </MenuItem>
 
 
                   <MenuItem
-                    onClick={() => handleSortBy('price', 'desc', productsData, ' Price, high to low')}
+                   onClick={() => handleSortBy('Featured', 'featured')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Price, high to low
+                    Featured
                   </MenuItem>
 
                 </Menu>
               </div>
             </div>
-            {context?.searchData?.correctedQuery && (
-              <div className="bg-[#edf4ff] border border-[#c9dcff] rounded-md p-3 mb-4 text-[14px]">
-                Showing results for <span className="font-[700]">{context?.searchData?.correctedQuery}</span>
-              </div>
-            )}
+               
+       
 
-            {aiInsights?.summary && (
-              <div className="bg-[#101828] text-white rounded-md p-4 mb-4">
-                <p className="text-[13px] uppercase tracking-[0.08em] text-[#9cc5ff]">{aiInsights?.title || "AI Search Assistant"}</p>
-                <p className="text-[14px] mt-1">{aiInsights?.summary}</p>
-                {aiInsights?.highlights?.length > 0 && (
-                  <ul className="list-disc pl-5 mt-2 text-[13px] text-[#d5e6ff]">
-                    {aiInsights?.highlights?.map((point) => (
-                      <li key={point}>{point}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
 
             <div
-              className={`grid ${itemView === "grid"
-                ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-1"
-                } gap-4`}
+              
+                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
             >
-              {itemView === "grid" ? (
-                <>
+               {
+                isLoading === true ? <ProductLoadingGrid view="grid" />
+                  :
+                 filteredProducts?.length !== 0 && filteredProducts?.map((item, index) => {
+                    return (
+                      <ProductItem key={index} item={item} />
+                    )
+                  })
 
-                  {
-                    isLoading === true ? <ProductLoadingGrid view={itemView} />
-                      :
-
-                      paginatedProducts?.length !== 0 && paginatedProducts?.map((item, index) => {
-                        return (
-                          <ProductItem key={index} item={item} />
-                        )
-                      })
-
-                  }
-
-
-                </>
-              ) : (
-                <>
-                  {
-                    isLoading === true ? <ProductLoadingGrid view={itemView} />
-                      :
-
-                      paginatedProducts?.length !== 0 && paginatedProducts?.map((item, index) => {
-                        return (
-                          <ProductItemListView key={index} item={item} />
-                        )
-                      })
-
-                  }
-
-                </>
-              )}
+              }
             </div>
 
             {
