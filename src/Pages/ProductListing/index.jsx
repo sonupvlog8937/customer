@@ -1,17 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { Sidebar } from "../../components/Sidebar";
 import ProductItem from "../../components/ProductItem";
-import ProductItemListView from "../../components/ProductItemListView";
 import Button from "@mui/material/Button";
-import { IoGridSharp } from "react-icons/io5";
-import { LuMenu } from "react-icons/lu";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Pagination from "@mui/material/Pagination";
 import ProductLoadingGrid from "../../components/ProductLoading/productLoadingGrid";
-import { postData } from "../../utils/api";
 import { useAppContext } from "../../hooks/useAppContext";
 import { MdOutlineFilterAlt } from "react-icons/md";
+import { postData } from "../../utils/api";
+
 
 const ProductListing = () => {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -61,19 +59,21 @@ const ProductListing = () => {
     selectedColors,
     selectedRatingBands,
   ]);
-  const resetAllFilters = () => {
-    setSelectedBrands([]);
-    setSelectedSizes([]);
-    setSelectedProductTypes([]);
-    setSelectedPriceRanges([]);
-    setSelectedSaleOnly(false);
-    setSelectedStockStatus("all");
-    setSelectedDiscountRanges([]);
-    setSelectedWeights([]);
-    setSelectedRamOptions([]);
-    setSelectedColors([]);
-    setSelectedRatingBands([]);
-  };
+  
+  const resetAllFilters = useCallback(() => {
+  setSelectedBrands([]);
+  setSelectedSizes([]);
+  setSelectedProductTypes([]);
+  setSelectedPriceRanges([]);
+  setSelectedSaleOnly(false);
+  setSelectedStockStatus("all");
+  setSelectedDiscountRanges([]);
+  setSelectedWeights([]);
+  setSelectedRamOptions([]);
+  setSelectedColors([]);
+  setSelectedRatingBands([]);
+}, []);
+
 
   const getProductType = (product) => {
     return product?.productType || product?.thirdSubCatName || product?.subCatName || product?.catName || "";
@@ -88,7 +88,10 @@ const ProductListing = () => {
 
 
   const filteredProducts = useMemo(() => {
-    const allProducts = productsData?.products || [];
+    const allProducts = Array.isArray(productsData?.products)
+      ? productsData.products
+      : [];
+
 
     const productsAfterFilters = allProducts.filter((product) => {
       if (selectedBrands.length > 0) {
@@ -189,42 +192,77 @@ const ProductListing = () => {
 
     return [...productsAfterFilters].sort((a, b) => {
 
-      if (selectedSortType === "bestSeller") {
-        return Number(b?.sale || 0) - Number(a?.sale || 0);
+      switch (selectedSortType) {
+        case "bestSeller":
+          return Number(b?.sale || 0) - Number(a?.sale || 0);
+
+        case "latest":
+          return getProductTimestamp(b) - getProductTimestamp(a);
+
+        case "popular":
+          const ratingDiff = Number(b?.rating || 0) - Number(a?.rating || 0);
+          return ratingDiff !== 0
+            ? ratingDiff
+            : Number(b?.sale || 0) - Number(a?.sale || 0);
+
+        case "featured":
+          const featuredDiff =
+            Number(Boolean(b?.isFeatured)) - Number(Boolean(a?.isFeatured));
+          return featuredDiff !== 0
+            ? featuredDiff
+            : Number(b?.sale || 0) - Number(a?.sale || 0);
+
+        default:
+          return 0;
       }
 
-      if (selectedSortType === "latest") {
-        return getProductTimestamp(b) - getProductTimestamp(a);
-      }
-
-      if (selectedSortType === "popular") {
-        const ratingDifference = Number(b?.rating || 0) - Number(a?.rating || 0);
-
-        if (ratingDifference !== 0) {
-          return ratingDifference;
-        }
-
-        return Number(b?.sale || 0) - Number(a?.sale || 0);
-      }
-
-      if (selectedSortType === "featured") {
-        const featuredDifference =
-          Number(Boolean(b?.isFeatured)) - Number(Boolean(a?.isFeatured));
-
-        if (featuredDifference !== 0) {
-          return featuredDifference;
-        }
-
-        return Number(b?.sale || 0) - Number(a?.sale || 0);
-      } 
-
-      return 0;
     });
   }, [productsData, selectedSortType, selectedBrands, selectedSizes, selectedProductTypes, selectedPriceRanges, selectedSaleOnly, selectedStockStatus, selectedDiscountRanges, selectedWeights, selectedRamOptions, selectedColors, selectedRatingBands]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+
+      try {
+        const res = await postData("/api/product/getAllProducts", {
+          page: page,
+        });
+
+        if (res) {
+          setProductsData(res);
+          setTotalPages(res?.totalPages || 1);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchProducts();
+  }, [page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [
+    selectedBrands,
+    selectedSizes,
+    selectedProductTypes,
+    selectedPriceRanges,
+    selectedSaleOnly,
+    selectedStockStatus,
+    selectedDiscountRanges,
+    selectedWeights,
+    selectedRamOptions,
+    selectedColors,
+    selectedRatingBands,
+  ]);
+
+
 
 
   const open = Boolean(anchorEl);
@@ -280,7 +318,7 @@ const ProductListing = () => {
           </div>
 
           {
-            context?.windowWidth < 992 &&
+            context?.windowWidth && context.windowWidth < 992 &&
             <div className={`filter_overlay w-full h-full bg-[rgba(0,0,0,0.5)] fixed top-0 left-0 z-[101]  ${context?.openFilter === true ? 'block' : 'hidden'}`}
               onClick={() => context?.setOpenFilter(false)}
             ></div>
@@ -370,15 +408,19 @@ const ProductListing = () => {
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
             >
               {
-                isLoading === true ? <ProductLoadingGrid view="grid" />
-                  :
-                  filteredProducts?.length !== 0 && filteredProducts?.map((item, index) => {
-                    return (
-                      <ProductItem key={item?._id || item?.id || index} item={item} />
-                    )
-                  })
-
+                isLoading ? (
+                  <ProductLoadingGrid view="grid" />
+                ) : filteredProducts?.length !== 0 ? (
+                  filteredProducts.map((item, index) => (
+                    <ProductItem key={item?._id || item?.id || index} item={item} />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center text-gray-500 text-[15px] py-10">
+                    No Products Found
+                  </div>
+                )
               }
+
             </div>
 
             {
