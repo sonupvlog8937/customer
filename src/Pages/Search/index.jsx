@@ -79,7 +79,7 @@ const SearchPage = () => {
     setAnchorEl(null);
   };
 
-   useEffect(() => {
+  useEffect(() => {
     if (!searchQuery) return;
     setIsLoading(true);
     postData(`/api/product/search/get`, {
@@ -207,7 +207,7 @@ const SearchPage = () => {
 
       <div className="bg-white p-2">
         <div className="container flex gap-3">
-          <div className={`sidebarWrapper fixed -bottom-[100%] left-0 w-fulllg:h-full lg:static lg:w-[20%] bg-white z-[102] lg:z-[100] p-3 lg:p-0  transition-all lg:opacity-100 opacity-0 ${context?.openFilter === true ? 'open' : ''}`}>
+          <div className={`sidebarWrapper fixed -bottom-[100%] left-0 w-full lg:h-full lg:static lg:w-[20%] bg-white z-[102] lg:z-[100] p-3 lg:p-0  transition-all lg:opacity-100 opacity-0 ${context?.openFilter === true ? 'open' : ''}`}>
             <Sidebar
               productsData={productsData}
               setProductsData={setProductsData}
@@ -215,7 +215,7 @@ const SearchPage = () => {
               setIsLoading={setIsLoading}
               page={page}
               setTotalPages={setTotalPages}
-               selectedBrands={selectedBrands}
+              selectedBrands={selectedBrands}
               setSelectedBrands={setSelectedBrands}
               selectedSizes={selectedSizes}
               setSelectedSizes={setSelectedSizes}
@@ -241,7 +241,7 @@ const SearchPage = () => {
           {
             context?.windowWidth < 992 &&
             <div className={`filter_overlay w-full h-full bg-[rgba(0,0,0,0.5)] fixed top-0 left-0 z-[101]  ${context?.openFilter === true ? 'block' : 'hidden'}`}
-              onClick={()=>context?.setOpenFilter(false)}
+              onClick={() => context?.setOpenFilter(false)}
             ></div>
           }
 
@@ -253,11 +253,11 @@ const SearchPage = () => {
                   onClick={() => context?.setOpenFilter(true)}
                   className="!text-[12px] !capitalize !rounded-full !bg-[#ff5252] !text-white !border-[#ff5252]"
                 >
-                 <MdOutlineFilterAlt className="mr-1" size={20} />
-                 <b className="text-[14px]">Filters</b>
-                 {activeFiltersCount > 0 && <span className="ml-1 text-[13px]">({activeFiltersCount})</span>}
+                  <MdOutlineFilterAlt className="mr-1" size={20} />
+                  <b className="text-[14px]">Filters</b>
+                  {activeFiltersCount > 0 && <span className="ml-1 text-[13px]">({activeFiltersCount})</span>}
                 </Button>
-                
+
               </div>
 
               <div className="col2 ml-auto flex items-center justify-end gap-3 pr-4">
@@ -290,7 +290,7 @@ const SearchPage = () => {
                     onClick={() => handleSortBy('Best Seller', 'bestSeller')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                     Best Seller
+                    Best Seller
                   </MenuItem>
 
 
@@ -303,7 +303,7 @@ const SearchPage = () => {
 
 
                   <MenuItem
-                   onClick={() => handleSortBy('Popular', 'popular')}
+                    onClick={() => handleSortBy('Popular', 'popular')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
                     Popular
@@ -311,7 +311,7 @@ const SearchPage = () => {
 
 
                   <MenuItem
-                   onClick={() => handleSortBy('Featured', 'featured')}
+                    onClick={() => handleSortBy('Featured', 'featured')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
                     Featured
@@ -320,18 +320,18 @@ const SearchPage = () => {
                 </Menu>
               </div>
             </div>
-               
-       
+
+
 
 
             <div
-              
-                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
             >
-               {
+              {
                 isLoading === true ? <ProductLoadingGrid view="grid" />
                   :
-                 filteredProducts?.length !== 0 && filteredProducts?.map((item, index) => {
+                  filteredProducts?.length !== 0 && filteredProducts?.map((item, index) => {
                     return (
                       <ProductItem key={index} item={item} />
                     )
