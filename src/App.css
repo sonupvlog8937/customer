@@ -33,3 +33,57 @@
     transform: rotate(360deg);
   }
 }
+
+.global-back-button {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 1100;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0f172a, #334155);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px 11px 12px;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.24);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.global-back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.3);
+}
+
+.global-back-button:active {
+  transform: translateY(0);
+  opacity: 0.92;
+}
+
+.global-back-button:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.45);
+  outline-offset: 3px;
+}
+
+.global-back-button__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  display: grid;
+  place-items: center;
+}
+
+@media (max-width: 991px) {
+  .global-back-button {
+    left: 14px;
+    bottom: 88px;
+    padding: 10px 14px 10px 11px;
+    font-size: 13px;
+  }
+}

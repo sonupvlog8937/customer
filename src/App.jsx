@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { IoArrowBack } from "react-icons/io5";
 import "./App.css";
 import "./responsive.css";
 import Header from "./components/Header";
@@ -52,6 +53,37 @@ const GlobalLoader = () => {
   );
 };
 
+const GlobalBackButton = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/");
+  };
+
+  if (location.pathname === "/") return null;
+
+  return (
+    <button
+      className="global-back-button"
+      onClick={handleGoBack}
+      aria-label="Go back to previous page"
+      type="button"
+    >
+      <span className="global-back-button__icon" aria-hidden="true">
+        <IoArrowBack size={18} />
+      </span>
+      <span className="global-back-button__label">Back</span>
+    </button>
+  );
+};
+
+
 const AppContent = () => {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -68,6 +100,7 @@ const AppContent = () => {
   return (
     <>
       <GlobalLoader />
+      <GlobalBackButton />
       <Header />
       <Routes>
         <Route path="/" exact={true} element={<Home />} />
