@@ -73,13 +73,17 @@ const Register = () => {
         setIsLoading(false);
         context.alertBox("success", res?.message);
         localStorage.setItem("userEmail", formFields.email)
+        localStorage.setItem("accessToken", res?.data?.accesstoken);
+        localStorage.setItem("refreshToken", res?.data?.refreshToken);
+
+        context.setIsLogin(true);
         setFormFields({
           name: "",
           email: "",
           password: ""
         })
 
-        history("/verify")
+        history("/")
       } else {
         context.alertBox("error", res?.message);
         setIsLoading(false);
