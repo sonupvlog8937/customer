@@ -163,12 +163,12 @@ export const ProductDetails = () => {
 
 
             <>
-              <div className="container bg-gradient-to-br from-white via-[#f8fbff] to-[#f4f6ff] border border-[rgba(0,0,0,0.06)] rounded-2xl shadow-sm p-4 md:p-8 flex gap-8 flex-col lg:flex-row items-start lg:items-center">
-                <div className="productZoomContainer w-full lg:w-[42%] bg-white rounded-xl p-3 shadow-sm">
+              <div className="container bg-gradient-to-br from-white via-[#f8fbff] to-[#f4f6ff] border border-[rgba(0,0,0,0.06)] rounded-2xl shadow-sm p-4 md:p-6 flex gap-6 flex-col lg:flex-row items-start">
+                <div className="productZoomContainer w-full lg:w-[50%] bg-white rounded-xl overflow-hidden shadow-sm" style={{ minHeight: "480px" }}>
                   <ProductZoom images={activeImages?.length !== 0 ? activeImages : productData?.images} />
                 </div>
 
-                <div className="productContent w-full lg:w-[58%] pr-2 pl-2 lg:pr-10 lg:pl-10">
+                <div className="productContent w-full lg:w-[50%] py-2 pr-2 pl-2 lg:pr-6 lg:pl-4">
                   <ProductDetailsComponent
                     item={productData}
                     reviewsCount={reviewsCount}
@@ -277,10 +277,10 @@ export const ProductDetails = () => {
               <div className="container pt-8 pb-8">
                 <div className="flex items-center justify-between mb-4">
                   <div className="rp-section-head">
-                  <h2>Related Products</h2>
-                  <div className="rp-line" />
-                 
-                </div>
+                    <h2>Related Products</h2>
+                    <div className="rp-line" />
+
+                  </div>
                 </div>
                 {
                   relatedProductData?.length !== 0 ?
