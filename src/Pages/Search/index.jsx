@@ -17,9 +17,9 @@ import { setGlobalLoading } from "../../store/appSlice";
 
 // ─── Sort Options ────────────────────────────────────────────────────────────
 const SORT_OPTIONS = [
-  { value: "bestseller", label: "🏆 Best Seller" },
-  { value: "latest",     label: "🆕 Latest"      },
-  { value: "popular",    label: "⭐ Most Popular" },
+  { value: "bestseller", label: "Best Seller" },
+  { value: "latest",     label: "Latest"      },
+  { value: "popular",    label: "Most Popular" },
   { value: "priceAsc",   label: "↑ Price: Low to High" },
   { value: "priceDesc",  label: "↓ Price: High to Low" },
   { value: "nameAsc",    label: "A → Z"           },
@@ -35,7 +35,7 @@ const SearchPage = () => {
   const [itemView,          setItemView]          = useState("grid");
   const [anchorEl,          setAnchorEl]          = useState(null);
   const [selectedSortType,  setSelectedSortType]  = useState("bestseller");
-  const [selectedSortLabel, setSelectedSortLabel] = useState("🏆 Best Seller");
+  const [selectedSortLabel, setSelectedSortLabel] = useState("Best Seller");
 
   // ── Data ───────────────────────────────────────────────────────────────────
   const [productsData, setProductsData] = useState([]);
@@ -230,25 +230,6 @@ const SearchPage = () => {
 
               {/* Right: view toggle + sort */}
               <div className="col2 ml-auto flex items-center gap-3">
-
-                {/* Grid / List toggle */}
-                <div className="flex items-center border-2 border-[#ddd] rounded-md overflow-hidden">
-                  <button
-                    onClick={() => setItemView("grid")}
-                    title="Grid View"
-                    className={`p-[6px] transition ${itemView === "grid" ? "bg-[#ff5252] text-white" : "bg-white text-[#555]"}`}
-                  >
-                    <IoGridSharp size={18} />
-                  </button>
-                  <button
-                    onClick={() => setItemView("list")}
-                    title="List View"
-                    className={`p-[6px] transition ${itemView === "list" ? "bg-[#ff5252] text-white" : "bg-white text-[#555]"}`}
-                  >
-                    <LuMenu size={18} />
-                  </button>
-                </div>
-
                 <span className="text-[13px] font-[500] text-[rgba(0,0,0,0.6)] hidden sm:block">
                   Sort By
                 </span>
