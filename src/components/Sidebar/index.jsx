@@ -15,8 +15,6 @@ import { useAppContext } from "../../hooks/useAppContext";
 import { useLocation } from "react-router-dom";
 import { postData } from "../../utils/api";
 import { MdOutlineFilterAlt } from "react-icons/md";
-import { useDispatch } from "react-redux";
-import { setGlobalLoading } from "../../store/appSlice";
 
 
 export const Sidebar = (props) => {
@@ -37,7 +35,16 @@ export const Sidebar = (props) => {
   const [moreFilterSelections, setMoreFilterSelections] = useState([]);
   const [expandedCategoryIds, setExpandedCategoryIds] = useState([]);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const MAX_VISIBLE_FILTER_OPTIONS = 5;
+
+  // ✅ Stable filter options — sirf pehli baar set honge, filter apply hone ke baad nahi badlenge
+  const [stableFilterOptions, setStableFilterOptions] = useState({
+    brands: [],
+    sizes: [],
+    productTypes: [],
+    weights: [],
+    ramOptions: [],
+    colors: [],
+  });
 
 
   const [filters, setFilters] = useState({
@@ -54,57 +61,17 @@ export const Sidebar = (props) => {
 
 
 
-  const [price, setPrice] = useState([0, 60000]);const [applyVersion, setApplyVersion] = useState(0);
-  const [draftSelectedBrands, setDraftSelectedBrands] = useState([]);
-  const [draftSelectedSizes, setDraftSelectedSizes] = useState([]);
-  const [draftSelectedProductTypes, setDraftSelectedProductTypes] = useState([]);
-  const [draftSelectedPriceRanges, setDraftSelectedPriceRanges] = useState([]);
-  const [draftSelectedSaleOnly, setDraftSelectedSaleOnly] = useState(false);
-  const [draftSelectedStockStatus, setDraftSelectedStockStatus] = useState("all");
-  const [draftSelectedDiscountRanges, setDraftSelectedDiscountRanges] = useState([]);
-  const [draftSelectedWeights, setDraftSelectedWeights] = useState([]);
-  const [draftSelectedRamOptions, setDraftSelectedRamOptions] = useState([]);
-  const [draftSelectedColors, setDraftSelectedColors] = useState([]);
-  const [draftSelectedRatingBands, setDraftSelectedRatingBands] = useState([]);
-
+  const [price, setPrice] = useState([0, 60000]);
 
   const context = useAppContext();
-  const dispatch = useDispatch();
 
   const location = useLocation();
 
-  const availableBrands = useMemo(() => {
-    if (Array.isArray(props?.productsData?.filterOptions?.brands) && props?.productsData?.filterOptions?.brands?.length > 0) {
-      return props.productsData.filterOptions.brands;
-    }
-    const items = props?.productsData?.products || [];
-    return [...new Set(items.map((product) => product?.brand?.trim()).filter(Boolean))];
-  }, [props?.productsData]);
-
-  const availableSizes = useMemo(() => {
-     if (Array.isArray(props?.productsData?.filterOptions?.sizes) && props?.productsData?.filterOptions?.sizes?.length > 0) {
-      return props.productsData.filterOptions.sizes;
-    }
-    const sizeSet = new Set();
-    (props?.productsData?.products || []).forEach((product) => {
-      (product?.size || []).forEach((size) => {
-        if (size) sizeSet.add(size);
-      });
-    });
-    return Array.from(sizeSet);
-  }, [props?.productsData]);
-
-  const availableProductTypes = useMemo(() => {
-     if (Array.isArray(props?.productsData?.filterOptions?.productTypes) && props?.productsData?.filterOptions?.productTypes?.length > 0) {
-      return props.productsData.filterOptions.productTypes;
-    }
-    const typeSet = new Set();
-    (props?.productsData?.products || []).forEach((product) => {
-      const typeValue = product?.productType || product?.thirdSubCatName || product?.subCatName || product?.catName;
-      if (typeValue) typeSet.add(typeValue);
-    });
-    return Array.from(typeSet);
-  }, [props?.productsData]);
+  const availableBrands = stableFilterOptions.brands;
+  const availableSizes = stableFilterOptions.sizes;
+  const availableProductTypes = stableFilterOptions.productTypes;
+  const availableWeights = stableFilterOptions.weights;
+  const availableRamOptions = stableFilterOptions.ramOptions;
 
   const availablePriceRanges = useMemo(() => {
     const products = props?.productsData?.products || [];
@@ -123,32 +90,6 @@ export const Sidebar = (props) => {
     }
 
     return ranges;
-  }, [props?.productsData]);
-
-  const availableWeights = useMemo(() => {
-     if (Array.isArray(props?.productsData?.filterOptions?.weights) && props?.productsData?.filterOptions?.weights?.length > 0) {
-      return props.productsData.filterOptions.weights;
-    }
-    const weightSet = new Set();
-    (props?.productsData?.products || []).forEach((product) => {
-      (product?.productWeight || []).forEach((weight) => {
-        if (weight) weightSet.add(weight);
-      });
-    });
-    return Array.from(weightSet);
-  }, [props?.productsData]);
-
-  const availableRamOptions = useMemo(() => {
-     if (Array.isArray(props?.productsData?.filterOptions?.ramOptions) && props?.productsData?.filterOptions?.ramOptions?.length > 0) {
-      return props.productsData.filterOptions.ramOptions;
-    }
-    const ramSet = new Set();
-    (props?.productsData?.products || []).forEach((product) => {
-      (product?.productRam || []).forEach((ram) => {
-        if (ram) ramSet.add(ram);
-      });
-    });
-    return Array.from(ramSet);
   }, [props?.productsData]);
 
   const discountBands = useMemo(() => ([
@@ -289,18 +230,6 @@ export const Sidebar = (props) => {
 
 
   const handleApplyFilters = () => {
-    props?.setSelectedBrands?.(draftSelectedBrands);
-    props?.setSelectedSizes?.(draftSelectedSizes);
-    props?.setSelectedProductTypes?.(draftSelectedProductTypes);
-    props?.setSelectedPriceRanges?.(draftSelectedPriceRanges);
-    props?.setSelectedSaleOnly?.(draftSelectedSaleOnly);
-    props?.setSelectedStockStatus?.(draftSelectedStockStatus);
-    props?.setSelectedDiscountRanges?.(draftSelectedDiscountRanges);
-    props?.setSelectedWeights?.(draftSelectedWeights);
-    props?.setSelectedRamOptions?.(draftSelectedRamOptions);
-    props?.setSelectedColors?.(draftSelectedColors);
-    props?.setSelectedRatingBands?.(draftSelectedRatingBands);
-    setApplyVersion((prev) => prev + 1);
     context?.setOpenFilter(false);
   };
 
@@ -325,6 +254,7 @@ export const Sidebar = (props) => {
   const applyMoreFilterSelection = () => {
     activeMoreFilter?.onApplySelection?.(moreFilterSelections);
     closeMoreFilterModal();
+    context?.setOpenFilter(false);
   };
 
   const renderLimitedOptions = ({
@@ -337,15 +267,13 @@ export const Sidebar = (props) => {
     getOptionLabel,
     containerClassName = "scroll px-3"
   }) => {
-
-     const visibleOptions = options.slice(0, MAX_VISIBLE_FILTER_OPTIONS);
-    const hasMoreOptions = options.length > MAX_VISIBLE_FILTER_OPTIONS;
-    
+    const visibleOptions = options.slice(0, 5);
+    const hasMore = options.length > 5;
 
     return (
       <>
         <div className={containerClassName}>
-             {visibleOptions.map((option) => {
+          {visibleOptions.map((option) => {
             const optionKey = getOptionKey(option);
             return (
               <FormControlLabel
@@ -360,23 +288,16 @@ export const Sidebar = (props) => {
           })}
         </div>
 
-{hasMoreOptions && (
+        {hasMore && (
+          <div className="px-3 pb-1">
             <Button
-              variant="text"
-              className="!normal-case !font-[600] !text-[#111] !justify-start"
-              onClick={() => openMoreFilterModal({
-                title,
-                options,
-                selectedValues,
-                onApplySelection,
-                getOptionKey,
-                getOptionLabel,
-              })}
+              onClick={() => openMoreFilterModal({ title, options, selectedValues, onApplySelection, getOptionKey, getOptionLabel })}
+              className="!normal-case !text-[#1976d2] !font-[600]"
             >
-              + More
+              More ({options.length - 5})
             </Button>
-          )}
-        
+          </div>
+        )}
       </>
     );
   };
@@ -388,7 +309,7 @@ export const Sidebar = (props) => {
       catId: [],
       subCatId: [],
       thirdsubCatId: [],
-      rating: [],
+      rating: "",
       colors: []
     }));
     setPrice([0, 60000]);
@@ -399,82 +320,85 @@ export const Sidebar = (props) => {
 
   useEffect(() => {
 
-    
+    const url = window.location.href;
     const queryParameters = new URLSearchParams(location.search);
-    const categoryId = queryParameters.get("catId");
-    const subcategoryId = queryParameters.get("subCatId");
-    const thirdcategoryId = queryParameters.get("thirdLavelCatId");
 
-    if (!categoryId && !subcategoryId && !thirdcategoryId) return;
+    if (url.includes("catId")) {
+      const categoryId = queryParameters.get("catId");
+      const catArr = [];
+      catArr.push(categoryId);
+      filters.catId = catArr;
+      filters.subCatId = [];
+      filters.thirdsubCatId = [];
+      filters.rating = [];
+      context?.setSearchData([]);
+    }
+
+    if (url.includes("subCatId")) {
+      const subcategoryId = queryParameters.get("subCatId");
+      const subcatArr = [];
+      subcatArr.push(subcategoryId);
+      filters.subCatId = subcatArr;
+      filters.catId = [];
+      filters.thirdsubCatId = [];
+      filters.rating = [];
+      context?.setSearchData([]);
+    }
 
 
-     setFilters((prev) => ({
-      ...prev,
-      catId: categoryId ? [categoryId] : [],
-      subCatId: subcategoryId ? [subcategoryId] : [],
-      thirdsubCatId: thirdcategoryId ? [thirdcategoryId] : [],
-      rating: [],
-      page: 1,
-    }));
-    context?.setSearchData([]);
-  }, [location.search]);
+    if (url.includes("thirdLavelCatId")) {
+      const thirdcategoryId = queryParameters.get("thirdLavelCatId");
+      const thirdcatArr = [];
+      thirdcatArr.push(thirdcategoryId);
+      filters.subCatId = [];
+      filters.catId = [];
+      filters.thirdsubCatId = thirdcatArr;
+      filters.rating = [];
+      context?.setSearchData([]);
+    }
+
+    filters.page = 1;
+
+    setTimeout(() => {
+      filtesData();
+    }, 200);
+
+
+
+
+  }, [location]);
 
 
 
   const filtesData = () => {
-    const hasSearchProp = typeof props?.searchQuery === "string";
-    const queryValue = (props?.searchQuery || "").trim();
-
-    if (hasSearchProp && !queryValue) {
-      props?.setProductsData?.({ products: [], totalPages: 1, totalPost: 0, currentPage: 1 });
-      props?.setTotalPages?.(1);
-      props?.setIsLoading?.(false);
-      dispatch(setGlobalLoading(false));
-      return;
-    }
     props.setIsLoading(true);
-    dispatch(setGlobalLoading(true));
 
     //console.log(context?.searchData)
 
      const requestPayload = {
       ...filters,
-      page: props?.page || 1,
-      brands: draftSelectedBrands || [],
-      sizes: draftSelectedSizes || [],
-      productTypes: draftSelectedProductTypes || [],
-      priceRanges: draftSelectedPriceRanges || [],
-      saleOnly: draftSelectedSaleOnly || false,
-      stockStatus: draftSelectedStockStatus || "all",
-      discountRanges: draftSelectedDiscountRanges || [],
-      weights: draftSelectedWeights || [],
-      ramOptions: draftSelectedRamOptions || [],
-      ratingBands: (draftSelectedRatingBands || []).map((rating) => ({
-        min: Number(rating),
-        max: Number(rating) >= 5 ? null : Number(rating) + 1,
-      })),
+      brands: props?.selectedBrands || [],
+      sizes: props?.selectedSizes || [],
+      productTypes: props?.selectedProductTypes || [],
+      priceRanges: props?.selectedPriceRanges || [],
+      saleOnly: props?.selectedSaleOnly || false,
+      stockStatus: props?.selectedStockStatus || "all",
+      discountRanges: props?.selectedDiscountRanges || [],
+      weights: props?.selectedWeights || [],
+      ramOptions: props?.selectedRamOptions || [],
+      ratingBands: props?.selectedRatingBands || [],
       sortType: props?.selectedSortType || "bestSeller",
-      query: queryValue,
+      query: props?.searchQuery || "",
     };
 
     const apiUrl = props?.searchQuery ? `/api/product/search/get` : `/api/product/filters`;
 
-     postData(apiUrl, requestPayload)
-      .then((res) => {
-        if (hasSearchProp) {
-          context?.setSearchData?.(res);
-        }
-        props.setProductsData(res);
-        props.setTotalPages(res?.totalPages || 1)
-        window.scrollTo(0, 0);
-      })
-      .catch((error) => {
-        console.log(error);
-      })
-      .finally(() => {
-        props.setIsLoading(false);
-        dispatch(setGlobalLoading(false));
-      });
+     postData(apiUrl, requestPayload).then((res) => {
+      props.setProductsData(res);
+      props.setIsLoading(false);
+      props.setTotalPages(res?.totalPages)
+      window.scrollTo(0, 0);
+     })
 
 
   }
@@ -482,8 +406,24 @@ export const Sidebar = (props) => {
 
 
   useEffect(() => {
+    filters.page = props.page;
     filtesData();
-  }, [props.page, props.selectedSortType, props.searchQuery, applyVersion])
+  }, [
+    filters,
+    props.page,
+    props.selectedBrands,
+    props.selectedSizes,
+    props.selectedProductTypes,
+    props.selectedPriceRanges,
+    props.selectedSaleOnly,
+    props.selectedStockStatus,
+    props.selectedDiscountRanges,
+    props.selectedWeights,
+    props.selectedRamOptions,
+    props.selectedRatingBands,
+    props.selectedSortType,
+    props.searchQuery,
+  ])
 
 
   useEffect(() => {
@@ -494,65 +434,86 @@ export const Sidebar = (props) => {
     }))
   }, [price]);
 
-   useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      page: props?.page || 1,
-    }));
-  }, [props?.page]);
-
+  // ✅ Pehli baar data aane par stable filter options set karo, baad mein mat badlo
   useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      colors: draftSelectedColors || [],
-      rating: draftSelectedRatingBands || [],
-    }));
-  }, [draftSelectedColors, draftSelectedRatingBands]);
+    const products = props?.productsData?.products || [];
+    const filterOptions = props?.productsData?.filterOptions || {};
 
-  useEffect(() => {
-    setDraftSelectedBrands(props?.selectedBrands || []);
-    setDraftSelectedSizes(props?.selectedSizes || []);
-    setDraftSelectedProductTypes(props?.selectedProductTypes || []);
-    setDraftSelectedPriceRanges(props?.selectedPriceRanges || []);
-    setDraftSelectedSaleOnly(props?.selectedSaleOnly || false);
-    setDraftSelectedStockStatus(props?.selectedStockStatus || "all");
-    setDraftSelectedDiscountRanges(props?.selectedDiscountRanges || []);
-    setDraftSelectedWeights(props?.selectedWeights || []);
-    setDraftSelectedRamOptions(props?.selectedRamOptions || []);
-    setDraftSelectedColors(props?.selectedColors || []);
-    setDraftSelectedRatingBands(props?.selectedRatingBands || []);
-  }, [
-    props?.selectedBrands,
-    props?.selectedSizes,
-    props?.selectedProductTypes,
-    props?.selectedPriceRanges,
-    props?.selectedSaleOnly,
-    props?.selectedStockStatus,
-    props?.selectedDiscountRanges,
-    props?.selectedWeights,
-    props?.selectedRamOptions,
-    props?.selectedColors,
-    props?.selectedRatingBands,
-  ]);
+    if (products.length === 0 && Object.keys(filterOptions).length === 0) return;
 
-  useEffect(() => {
-    const colorMap = new Map();
+    setStableFilterOptions((prev) => {
+      // Agar already populated hai toh mat badlo (filter apply hone ke baad bhi stable rahe)
+      const needsUpdate =
+        prev.brands.length === 0 &&
+        prev.sizes.length === 0 &&
+        prev.productTypes.length === 0;
 
-    const availableColorOptions = props?.productsData?.filterOptions?.colors;
-    if (Array.isArray(availableColorOptions) && availableColorOptions.length > 0) {
-      setAvailableColors(availableColorOptions.map((name) => ({ name, code: "" })));
-      return;
-    }
+      if (!needsUpdate) return prev;
 
-    props?.productsData?.products?.forEach((product) => {
-      product?.colorOptions?.forEach((colorItem) => {
-        if (colorItem?.name && !colorMap.has(colorItem?.name)) {
-          colorMap.set(colorItem?.name, colorItem?.code || "");
-        }
-      })
-    })
+      // Brands
+      const brands = Array.isArray(filterOptions.brands) && filterOptions.brands.length > 0
+        ? filterOptions.brands
+        : [...new Set(products.map((p) => p?.brand?.trim()).filter(Boolean))];
 
-    setAvailableColors(Array.from(colorMap, ([name, code]) => ({ name, code })));
+      // Sizes
+      const sizeSet = new Set();
+      if (Array.isArray(filterOptions.sizes) && filterOptions.sizes.length > 0) {
+        filterOptions.sizes.forEach((s) => sizeSet.add(s));
+      } else {
+        products.forEach((p) => (p?.size || []).forEach((s) => s && sizeSet.add(s)));
+      }
+
+      // Product Types
+      const typeSet = new Set();
+      if (Array.isArray(filterOptions.productTypes) && filterOptions.productTypes.length > 0) {
+        filterOptions.productTypes.forEach((t) => typeSet.add(t));
+      } else {
+        products.forEach((p) => {
+          const t = p?.productType || p?.thirdSubCatName || p?.subCatName || p?.catName;
+          if (t) typeSet.add(t);
+        });
+      }
+
+      // Weights
+      const weightSet = new Set();
+      if (Array.isArray(filterOptions.weights) && filterOptions.weights.length > 0) {
+        filterOptions.weights.forEach((w) => weightSet.add(w));
+      } else {
+        products.forEach((p) => (p?.productWeight || []).forEach((w) => w && weightSet.add(w)));
+      }
+
+      // RAM
+      const ramSet = new Set();
+      if (Array.isArray(filterOptions.ramOptions) && filterOptions.ramOptions.length > 0) {
+        filterOptions.ramOptions.forEach((r) => ramSet.add(r));
+      } else {
+        products.forEach((p) => (p?.productRam || []).forEach((r) => r && ramSet.add(r)));
+      }
+
+      // Colors
+      const colorMap = new Map();
+      if (Array.isArray(filterOptions.colors) && filterOptions.colors.length > 0) {
+        filterOptions.colors.forEach((name) => colorMap.set(name, ""));
+      } else {
+        products.forEach((p) =>
+          (p?.colorOptions || []).forEach((c) => {
+            if (c?.name && !colorMap.has(c.name)) colorMap.set(c.name, c.code || "");
+          })
+        );
+      }
+
+      const colors = Array.from(colorMap, ([name, code]) => ({ name, code }));
+      setAvailableColors(colors);
+
+      return {
+        brands,
+        sizes: Array.from(sizeSet),
+        productTypes: Array.from(typeSet),
+        weights: Array.from(weightSet),
+        ramOptions: Array.from(ramSet),
+        colors,
+      };
+    });
   }, [props?.productsData]);
 
 
@@ -587,9 +548,9 @@ export const Sidebar = (props) => {
             {renderLimitedOptions({
               title: "Filter By Brand",
               options: availableBrands,
-              selectedValues: draftSelectedBrands || [],
-              onToggle: (brand) => handleMultiSelect(draftSelectedBrands, setDraftSelectedBrands, brand),
-              onApplySelection: (values) => setDraftSelectedBrands(values),
+              selectedValues: props?.selectedBrands || [],
+              onToggle: (brand) => handleMultiSelect(props?.selectedBrands, props?.setSelectedBrands, brand),
+              onApplySelection: (values) => props?.setSelectedBrands?.(values),
               getOptionKey: (brand) => brand,
               getOptionLabel: (brand) => brand
             })}
@@ -607,9 +568,9 @@ export const Sidebar = (props) => {
             {renderLimitedOptions({
               title: "Filter By Size",
               options: availableSizes,
-              selectedValues: draftSelectedSizes || [],
-              onToggle: (size) => handleMultiSelect(draftSelectedSizes, setDraftSelectedSizes, size),
-              onApplySelection: (values) => setDraftSelectedSizes(values),
+              selectedValues: props?.selectedSizes || [],
+              onToggle: (size) => handleMultiSelect(props?.selectedSizes, props?.setSelectedSizes, size),
+              onApplySelection: (values) => props?.setSelectedSizes?.(values),
               getOptionKey: (size) => size,
               getOptionLabel: (size) => size
             })}
@@ -627,9 +588,9 @@ export const Sidebar = (props) => {
             {renderLimitedOptions({
               title: "Filter By Product Type",
               options: availableProductTypes,
-              selectedValues: draftSelectedProductTypes || [],
-              onToggle: (type) => handleMultiSelect(draftSelectedProductTypes, setDraftSelectedProductTypes, type),
-              onApplySelection: (values) => setDraftSelectedProductTypes(values),
+              selectedValues: props?.selectedProductTypes || [],
+              onToggle: (type) => handleMultiSelect(props?.selectedProductTypes, props?.setSelectedProductTypes, type),
+              onApplySelection: (values) => props?.setSelectedProductTypes?.(values),
               getOptionKey: (type) => type,
               getOptionLabel: (type) => type
             })}
@@ -647,7 +608,9 @@ export const Sidebar = (props) => {
             {renderLimitedOptions({
               title: "Filter By Price",
               options: availablePriceRanges,
-              selectedValues: draftSelectedPriceRanges || [],
+              selectedValues: props?.selectedPriceRanges || [],
+              onToggle: (range) => handleMultiSelect(props?.selectedPriceRanges, props?.setSelectedPriceRanges, range.value),
+              onApplySelection: (values) => props?.setSelectedPriceRanges?.(values),
               getOptionKey: (range) => range.value,
               getOptionLabel: (range) => range.label,
               containerClassName: "px-2"
@@ -666,8 +629,8 @@ export const Sidebar = (props) => {
             <div className="px-2">
               <FormControlLabel
                 control={<Checkbox />}
-                checked={draftSelectedSaleOnly}
-                onChange={() => setDraftSelectedSaleOnly(!draftSelectedSaleOnly)}
+                checked={props?.selectedSaleOnly}
+                onChange={() => props?.setSelectedSaleOnly(!props?.selectedSaleOnly)}
                 label="On Sale"
                 className="w-full"
               />
@@ -689,9 +652,14 @@ export const Sidebar = (props) => {
               {renderLimitedOptions({
                 title: "Filter By Colour",
                 options: availableColors,
-                selectedValues: draftSelectedColors || [],
-                onToggle: (color) => handleMultiSelect(draftSelectedColors || [], setDraftSelectedColors, color?.name),
-                onApplySelection: (values) => setDraftSelectedColors(values),
+                selectedValues: filters?.colors || [],
+                onToggle: (color) => handleCheckboxChange("colors", color?.name),
+                onApplySelection: (values) => {
+                  setFilters((prev) => ({
+                    ...prev,
+                    colors: values
+                  }));
+                },
                 getOptionKey: (color) => color?.name,
                 getOptionLabel: (color) => (
                   <span className="flex items-center gap-2">
@@ -717,15 +685,15 @@ export const Sidebar = (props) => {
             <div className="px-2">
               <FormControlLabel
                 control={<Checkbox />}
-                checked={draftSelectedStockStatus === "inStock"}
-                onChange={() => setDraftSelectedStockStatus(draftSelectedStockStatus === "inStock" ? "all" : "inStock")}
+                checked={props?.selectedStockStatus === "inStock"}
+                onChange={() => props?.setSelectedStockStatus?.(props?.selectedStockStatus === "inStock" ? "all" : "inStock")}
                 label="In Stock"
                 className="w-full"
               />
               <FormControlLabel
                 control={<Checkbox />}
-                checked={draftSelectedStockStatus === "outOfStock"}
-                onChange={() => setDraftSelectedStockStatus(draftSelectedStockStatus === "outOfStock" ? "all" : "outOfStock")}
+                checked={props?.selectedStockStatus === "outOfStock"}
+                onChange={() => props?.setSelectedStockStatus?.(props?.selectedStockStatus === "outOfStock" ? "all" : "outOfStock")}
                 label="Out Of Stock"
                 className="w-full"
               />
@@ -744,9 +712,9 @@ export const Sidebar = (props) => {
             {renderLimitedOptions({
               title: "Filter By Discount",
               options: discountBands,
-             selectedValues: draftSelectedDiscountRanges || [],
-              onToggle: (band) => handleMultiSelect(draftSelectedDiscountRanges, setDraftSelectedDiscountRanges, band.min),
-              onApplySelection: (values) => setDraftSelectedDiscountRanges(values),
+              selectedValues: props?.selectedDiscountRanges || [],
+              onToggle: (band) => handleMultiSelect(props?.selectedDiscountRanges, props?.setSelectedDiscountRanges, band.min),
+              onApplySelection: (values) => props?.setSelectedDiscountRanges?.(values),
               getOptionKey: (band) => band.min,
               getOptionLabel: (band) => band.label,
               containerClassName: "px-2"
@@ -765,9 +733,9 @@ export const Sidebar = (props) => {
             {renderLimitedOptions({
               title: "Filter By Weight",
               options: availableWeights,
-              selectedValues: draftSelectedWeights || [],
-              onToggle: (weight) => handleMultiSelect(draftSelectedWeights, setDraftSelectedWeights, weight),
-              onApplySelection: (values) => setDraftSelectedWeights(values),
+              selectedValues: props?.selectedWeights || [],
+              onToggle: (weight) => handleMultiSelect(props?.selectedWeights, props?.setSelectedWeights, weight),
+              onApplySelection: (values) => props?.setSelectedDiscountRanges?.(values),
               getOptionKey: (weight) => weight,
               getOptionLabel: (weight) => weight
             })}
@@ -785,9 +753,9 @@ export const Sidebar = (props) => {
             {renderLimitedOptions({
               title: "Filter By RAM",
               options: availableRamOptions,
-              selectedValues: draftSelectedRamOptions || [],
-              onToggle: (ram) => handleMultiSelect(draftSelectedRamOptions, setDraftSelectedRamOptions, ram),
-              onApplySelection: (values) => setDraftSelectedRamOptions(values),
+              selectedValues: props?.selectedRamOptions || [],
+              onToggle: (ram) => handleMultiSelect(props?.selectedRamOptions, props?.setSelectedRamOptions, ram),
+              onApplySelection: (values) => props?.setSelectedRamOptions?.(values),
               getOptionKey: (ram) => ram,
               getOptionLabel: (ram) => ram
             })}
@@ -824,8 +792,8 @@ export const Sidebar = (props) => {
                 <FormControlLabel
                   value={rating}
                   control={<Checkbox />}
-                  checked={(draftSelectedRatingBands || []).includes(rating)}
-                  onChange={() => handleMultiSelect(draftSelectedRatingBands || [], setDraftSelectedRatingBands, rating)}
+                  checked={filters?.rating?.includes(rating)}
+                  onChange={() => handleCheckboxChange("rating", rating)}
                 />
                 <Rating name={`rating-${rating}`} value={rating} size="small" readOnly />
               </div>
@@ -846,7 +814,7 @@ export const Sidebar = (props) => {
       <br />
       <div className="flex items-center gap-2 py-2">
         <Button className="btn-org w-full !bg-[#ff5252] !text-white" onClick={handleApplyFilters}>
-           Apply {props?.activeFiltersCount > 0 && <span className="ml-1">({props.activeFiltersCount})</span>}
+          Apply  <span className="ml-1">({props.activeFiltersCount})</span>
         </Button>
         <Button className="w-full !border !border-[#ff5252] !text-[#ff5252]" onClick={handleResetFilters}>Reset</Button>
       </div>
