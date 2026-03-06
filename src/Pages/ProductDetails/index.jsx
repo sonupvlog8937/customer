@@ -285,7 +285,7 @@ export const ProductDetails = () => {
                 {
                   relatedProductData?.length !== 0 ?
                     <>
-                      <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+                      <div className="grid lg:grid-cols-5 grid-cols-2 sm:grid-cols-2 gap-4">
                         {
                           relatedProductData?.map((item) => (
                             <ProductItem key={item?._id} item={item} />
