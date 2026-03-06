@@ -11,6 +11,10 @@ import { postData } from "../../utils/api";
 import { FaCheckDouble } from "react-icons/fa";
 import { IoMdHeart } from "react-icons/io";
 import { FaRegClock } from "react-icons/fa6";
+import { FaWhatsapp, FaFacebookF, FaTelegramPlane } from "react-icons/fa";
+import { RiInstagramFill } from "react-icons/ri";
+import { BsTwitterX } from "react-icons/bs";
+import { IoShareSocialOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 
 
@@ -259,6 +263,24 @@ export const ProductDetailsComponent = (props) => {
 
   }
 
+  const handleShareProduct = (platform) => {
+    const productName = encodeURIComponent(props?.item?.name || "Check this product");
+    const productUrl = encodeURIComponent(window.location.href);
+    const shareText = encodeURIComponent(`Check out this product: ${props?.item?.name || ""}`);
+
+    const shareUrls = {
+      whatsapp: `https://wa.me/?text=${shareText}%20${productUrl}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${productUrl}`,
+      instagram: `https://www.instagram.com/`,
+      telegram: `https://t.me/share/url?url=${productUrl}&text=${shareText}`,
+      x: `https://twitter.com/intent/tweet?url=${productUrl}&text=${productName}`,
+    };
+
+    const targetUrl = shareUrls[platform];
+    if (!targetUrl) return;
+
+    window.open(targetUrl, "_blank", "noopener,noreferrer");
+  };
 
   const handleAddToMyList = (item) => {
     if (context?.userData === null) {
@@ -620,6 +642,31 @@ export const ProductDetailsComponent = (props) => {
             )}
           </Button>
 
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-gradient-to-r from-[#f8fbff] to-[#eef6ff] p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <IoShareSocialOutline className="text-[18px] text-primary" />
+          <p className="text-[14px] font-[600] text-[rgba(0,0,0,0.85)]">Share this product</p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          <button type="button" onClick={() => handleShareProduct("whatsapp")} className="flex items-center justify-center gap-2 text-[12px] rounded-lg border border-[#d9f2df] bg-[#edfff2] px-2 py-2 font-[600] text-[#1f9d49] hover:shadow-sm">
+            <FaWhatsapp className="text-[15px]" /> WhatsApp
+          </button>
+          <button type="button" onClick={() => handleShareProduct("facebook")} className="flex items-center justify-center gap-2 text-[12px] rounded-lg border border-[#d6e5ff] bg-[#edf3ff] px-2 py-2 font-[600] text-[#1877f2] hover:shadow-sm">
+            <FaFacebookF className="text-[13px]" /> Facebook
+          </button>
+          <button type="button" onClick={() => handleShareProduct("instagram")} className="flex items-center justify-center gap-2 text-[12px] rounded-lg border border-[#ffd8ea] bg-[#fff0f7] px-2 py-2 font-[600] text-[#e1306c] hover:shadow-sm">
+            <RiInstagramFill className="text-[15px]" /> Instagram
+          </button>
+          <button type="button" onClick={() => handleShareProduct("telegram")} className="flex items-center justify-center gap-2 text-[12px] rounded-lg border border-[#d2f0ff] bg-[#ebf9ff] px-2 py-2 font-[600] text-[#2aabee] hover:shadow-sm">
+            <FaTelegramPlane className="text-[15px]" /> Telegram
+          </button>
+          <button type="button" onClick={() => handleShareProduct("x")} className="flex items-center justify-center gap-2 text-[12px] rounded-lg border border-[#e5e7eb] bg-white px-2 py-2 font-[600] text-[#111] hover:shadow-sm">
+            <BsTwitterX className="text-[14px]" /> X
+          </button>
         </div>
       </div>
 
