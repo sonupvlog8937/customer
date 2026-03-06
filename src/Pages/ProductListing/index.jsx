@@ -75,149 +75,7 @@ const ProductListing = () => {
 }, []);
 
 
-  const getProductType = (product) => {
-    return product?.productType || product?.thirdSubCatName || product?.subCatName || product?.catName || "";
-  };
-
-  const getProductTimestamp = (product) => {
-    const dateString = product?.createdAt || product?.updatedAt || product?.date;
-    const parsed = new Date(dateString).getTime();
-    return Number.isNaN(parsed) ? 0 : parsed;
-  };
-
-
-
-  const filteredProducts = useMemo(() => {
-    const allProducts = Array.isArray(productsData?.products)
-      ? productsData.products
-      : [];
-
-
-    const productsAfterFilters = allProducts.filter((product) => {
-      if (selectedBrands.length > 0) {
-        const productBrand = product?.brand?.trim();
-        if (!selectedBrands.includes(productBrand)) {
-          return false;
-        }
-      }
-
-      if (selectedSizes.length > 0) {
-        const productSizes = product?.size || [];
-        const hasMatchingSize = productSizes.some((size) => selectedSizes.includes(size));
-
-        if (!hasMatchingSize) {
-          return false;
-        }
-      }
-
-      if (selectedProductTypes.length > 0) {
-        const productType = getProductType(product);
-
-        if (!selectedProductTypes.includes(productType)) {
-          return false;
-        }
-      }
-
-      if (selectedPriceRanges.length > 0) {
-        const productPrice = Number(product?.price || 0);
-        const hasMatchingPriceRange = selectedPriceRanges.some((range) => {
-          const [minPrice, maxPrice] = range.split("-").map(Number);
-          return productPrice >= minPrice && productPrice <= maxPrice;
-        });
-
-        if (!hasMatchingPriceRange) {
-          return false;
-        }
-      }
-
-      if (selectedSaleOnly && !Number(product?.discount || 0)) {
-        return false;
-      }
-
-      if (selectedStockStatus === "inStock" && Number(product?.countInStock || 0) <= 0) {
-        return false;
-      }
-
-      if (selectedStockStatus === "outOfStock" && Number(product?.countInStock || 0) > 0) {
-        return false;
-      }
-
-      if (selectedDiscountRanges.length > 0) {
-        const productDiscount = Number(product?.discount || 0);
-        const matchesDiscountBand = selectedDiscountRanges.some((minimumDiscount) => productDiscount >= minimumDiscount);
-        if (!matchesDiscountBand) {
-          return false;
-        }
-      }
-
-      if (selectedWeights.length > 0) {
-        const productWeights = product?.productWeight || [];
-        const hasMatchingWeight = productWeights.some((weight) => selectedWeights.includes(weight));
-        if (!hasMatchingWeight) {
-          return false;
-        }
-      }
-
-      if (selectedRamOptions.length > 0) {
-        const productRamOptions = product?.productRam || [];
-        const hasMatchingRam = productRamOptions.some((ram) => selectedRamOptions.includes(ram));
-        if (!hasMatchingRam) {
-          return false;
-        }
-      }
-
-      if (selectedColors.length > 0) {
-        const productColors = Array.isArray(product?.colorOptions)
-          ? product.colorOptions.map((colorItem) => colorItem?.name?.toLowerCase().trim()).filter(Boolean)
-          : [];
-        const hasMatchingColor = selectedColors.some((colorName) => productColors.includes(colorName.toLowerCase()));
-        if (!hasMatchingColor) {
-          return false;
-        }
-      }
-
-      if (selectedRatingBands.length > 0) {
-        const productRating = Number(product?.rating || 0);
-        const hasMatchingRatingBand = selectedRatingBands.some(({ min, max }) =>
-          max === null ? productRating >= min : productRating >= min && productRating < max,
-        );
-        if (!hasMatchingRatingBand) {
-          return false;
-        }
-      }
-
-
-      return true;
-    });
-
-    return [...productsAfterFilters].sort((a, b) => {
-
-      switch (selectedSortType) {
-        case "bestSeller":
-          return Number(b?.sale || 0) - Number(a?.sale || 0);
-
-        case "latest":
-          return getProductTimestamp(b) - getProductTimestamp(a);
-
-        case "popular":
-          const ratingDiff = Number(b?.rating || 0) - Number(a?.rating || 0);
-          return ratingDiff !== 0
-            ? ratingDiff
-            : Number(b?.sale || 0) - Number(a?.sale || 0);
-
-        case "featured":
-          const featuredDiff =
-            Number(Boolean(b?.isFeatured)) - Number(Boolean(a?.isFeatured));
-          return featuredDiff !== 0
-            ? featuredDiff
-            : Number(b?.sale || 0) - Number(a?.sale || 0);
-
-        default:
-          return 0;
-      }
-
-    });
-  }, [productsData, selectedSortType, selectedBrands, selectedSizes, selectedProductTypes, selectedPriceRanges, selectedSaleOnly, selectedStockStatus, selectedDiscountRanges, selectedWeights, selectedRamOptions, selectedColors, selectedRatingBands]);
+  const filteredProducts = productsData?.products || [];
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -311,6 +169,11 @@ const ProductListing = () => {
               selectedWeights={selectedWeights}
               setSelectedWeights={setSelectedWeights}
               selectedRamOptions={selectedRamOptions}
+              selectedColors={selectedColors}
+              setSelectedColors={setSelectedColors}
+              selectedRatingBands={selectedRatingBands}
+              setSelectedRatingBands={setSelectedRatingBands}
+              selectedSortType={selectedSortType}
               setSelectedRamOptions={setSelectedRamOptions}
               activeFiltersCount={activeFiltersCount}
               onResetAllFilters={resetAllFilters}
