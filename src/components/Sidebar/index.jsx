@@ -15,6 +15,8 @@ import { useAppContext } from "../../hooks/useAppContext";
 import { useLocation } from "react-router-dom";
 import { postData } from "../../utils/api";
 import { MdOutlineFilterAlt } from "react-icons/md";
+import { useDispatch } from "react-redux";
+import { setGlobalLoading } from "../../store/appSlice";
 
 
 export const Sidebar = (props) => {
@@ -67,6 +69,7 @@ export const Sidebar = (props) => {
 
 
   const context = useAppContext();
+  const dispatch = useDispatch();
 
   const location = useLocation();
 
@@ -426,9 +429,11 @@ export const Sidebar = (props) => {
       props?.setProductsData?.({ products: [], totalPages: 1, totalPost: 0, currentPage: 1 });
       props?.setTotalPages?.(1);
       props?.setIsLoading?.(false);
+      dispatch(setGlobalLoading(false));
       return;
     }
     props.setIsLoading(true);
+    dispatch(setGlobalLoading(true));
 
     //console.log(context?.searchData)
 
@@ -454,15 +459,22 @@ export const Sidebar = (props) => {
 
     const apiUrl = props?.searchQuery ? `/api/product/search/get` : `/api/product/filters`;
 
-     postData(apiUrl, requestPayload).then((res) => {
-      if (hasSearchProp) {
-        context?.setSearchData?.(res);
-      }
-      props.setProductsData(res);
-      props.setIsLoading(false);
-      props.setTotalPages(res?.totalPages || 1)
-      window.scrollTo(0, 0);
-     })
+     postData(apiUrl, requestPayload)
+      .then((res) => {
+        if (hasSearchProp) {
+          context?.setSearchData?.(res);
+        }
+        props.setProductsData(res);
+        props.setTotalPages(res?.totalPages || 1)
+        window.scrollTo(0, 0);
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        props.setIsLoading(false);
+        dispatch(setGlobalLoading(false));
+      });
 
 
   }

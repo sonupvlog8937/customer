@@ -14,6 +14,8 @@ import { postData } from "../../utils/api";
 import { useAppContext } from "../../hooks/useAppContext";
 import { MdOutlineFilterAlt } from "react-icons/md";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setGlobalLoading } from "../../store/appSlice";
 
 const SearchPage = () => {
   const [itemView, setItemView] = useState("grid");
@@ -41,6 +43,7 @@ const SearchPage = () => {
   const context = useAppContext();
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchQuery = queryParams.get("query") || "";
@@ -116,6 +119,10 @@ const SearchPage = () => {
       .map((item) => Number(item))
       .filter(Boolean));
   }, [location.search]);
+
+  useEffect(() => {
+    dispatch(setGlobalLoading(isLoading));
+  }, [isLoading, dispatch]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -348,7 +355,10 @@ const SearchPage = () => {
                   showFirstButton showLastButton
                   count={totalPages}
                   page={page}
-                  onChange={(e, value) => setPage(value)}
+                  onChange={(e, value) => {
+                    dispatch(setGlobalLoading(true));
+                    setPage(value);
+                  }}
                 />
               </div>
             }

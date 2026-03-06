@@ -9,6 +9,8 @@ import ProductLoadingGrid from "../../components/ProductLoading/productLoadingGr
 import { useAppContext } from "../../hooks/useAppContext";
 import { MdOutlineFilterAlt } from "react-icons/md";
 import { postData } from "../../utils/api";
+import { useDispatch } from "react-redux";
+import { setGlobalLoading } from "../../store/appSlice";
 
 
 const ProductListing = () => {
@@ -34,6 +36,7 @@ const ProductListing = () => {
   const [selectedColors, setSelectedColors] = useState([]);
   const [selectedRatingBands, setSelectedRatingBands] = useState([]);
   const context = useAppContext();
+  const dispatch = useDispatch();
   const activeFiltersCount = useMemo(() => (
     selectedBrands.length +
     selectedSizes.length +
@@ -81,28 +84,10 @@ const ProductListing = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  
   useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-
-      try {
-        const res = await postData("/api/product/getAllProducts", {
-          page: page,
-        });
-
-        if (res) {
-          setProductsData(res);
-          setTotalPages(res?.totalPages || 1);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-
-      setIsLoading(false);
-    };
-
-    fetchProducts();
-  }, [page]);
+    dispatch(setGlobalLoading(isLoading));
+  }, [isLoading, dispatch]);
 
   useEffect(() => {
     setPage(1);
@@ -293,7 +278,10 @@ const ProductListing = () => {
                   showFirstButton showLastButton
                   count={totalPages}
                   page={page}
-                  onChange={(e, value) => setPage(value)}
+                  onChange={(e, value) => {
+                    dispatch(setGlobalLoading(true));
+                    setPage(value);
+                  }}
                 />
               </div>
             }
