@@ -333,7 +333,7 @@ const Header = () => {
           </div>
         </div>
 
-         {!hideNavigationOnPage && (
+         {(!hideNavigationOnPage || isOpenCatPanel) && (
           <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} />
         )}
       </header>
