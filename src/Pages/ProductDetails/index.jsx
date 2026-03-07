@@ -131,7 +131,7 @@ export const ProductDetails = () => {
                   
 
                   {/* Details column */}
-                  <div className="pd-content-col mt-5 lg:mt-0">
+                  <div className="pd-content-col">
                     
                     <ProductDetailsComponent
                       item={productData}
