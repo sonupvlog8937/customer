@@ -3,7 +3,7 @@ import Drawer from "@mui/material/Drawer";
 import { IoCloseSharp } from "react-icons/io5";
 import { FiChevronRight, FiChevronDown, FiSearch, FiX, FiGrid, FiPackage } from "react-icons/fi";
 import { useAppContext } from "../../../hooks/useAppContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 /* ═══════════════════════════════════════════════════════════
    URL BUILDER
@@ -11,18 +11,24 @@ import { Link, useNavigate } from "react-router-dom";
    Fallback:  /products?category=<id>&catName=<n>&level=<...>
 ════════════════════════════════════════════════════════════ */
 function buildProductUrl(item, level = "main", parentId = null, grandParentId = null) {
-  const id   = item?._id || item?.id || "";
-  const slug = item?.slug || "";
-  const name = encodeURIComponent(item?.name || "");
+  const id = item?._id || item?.id || "";
 
   const params = new URLSearchParams();
-  params.set("catId",   id);
-  params.set("catName", decodeURIComponent(name));
-  params.set("level",   level);
-  if (parentId)      params.set("parentId",      parentId);
-  if (grandParentId) params.set("grandParentId", grandParentId);
+  if (!id) return "/products";
 
-  if (slug) return `/products/category/${slug}?${params.toString()}`;
+  params.set("catName", item?.name || "");
+  params.set("level", level);
+
+  if (level === "main") {
+    params.set("catId", id);
+  } else if (level === "sub") {
+    params.set("subCatId", id);
+    if (parentId) params.set("catId", parentId);
+  } else {
+    params.set("thirdLavelCatId", id);
+    if (parentId) params.set("subCatId", parentId);
+    if (grandParentId) params.set("catId", grandParentId);
+  }
   return `/products?${params.toString()}`;
 }
 
@@ -111,7 +117,7 @@ function useRipple(ref) {
     const rect = el.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
     const x = e.clientX - rect.left - size / 2;
-    const y = e.clientY - rect.top  - size / 2;
+    const y = e.clientY - rect.top - size / 2;
     const circle = document.createElement("span");
     circle.className = "cp-ripple";
     circle.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
@@ -128,10 +134,10 @@ function useRipple(ref) {
 ════════════════════════════════════════════ */
 function flattenCategories(
   cats,
-  result       = [],
-  depth        = 0,
-  parent       = null,   // parent display name
-  parentId     = null,   // parent _id
+  result = [],
+  depth = 0,
+  parent = null,   // parent display name
+  parentId = null,   // parent _id
   grandParentId = null   // grandparent _id
 ) {
   if (!Array.isArray(cats)) return result;
@@ -139,9 +145,9 @@ function flattenCategories(
     const id = cat?._id || cat?.id || "";
     result.push({
       ...cat,
-      _depth:        depth,
-      _parent:       parent,
-      _parentId:     parentId,
+      _depth: depth,
+      _parent: parent,
+      _parentId: parentId,
       _grandParentId: grandParentId,
     });
     if (cat.children?.length) {
@@ -165,7 +171,7 @@ function highlight(text, query) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark style={{ background:"rgba(99,102,241,0.28)", color:"#c7d2fe", borderRadius:3, padding:"0 2px" }}>
+      <mark style={{ background: "rgba(99,102,241,0.28)", color: "#c7d2fe", borderRadius: 3, padding: "0 2px" }}>
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -498,8 +504,8 @@ const SearchResults = ({ results, query, onNavigate }) => {
               background: item._depth === 0
                 ? "#6366f1"
                 : item._depth === 1
-                ? "rgba(99,102,241,0.45)"
-                : "rgba(99,102,241,0.2)",
+                  ? "rgba(99,102,241,0.45)"
+                  : "rgba(99,102,241,0.2)",
             }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="cp-result-label" style={{
@@ -555,13 +561,13 @@ const SkeletonLoader = () => (
 const CategoryPanel = (props) => {
   injectStyles("cpanel-styles-v3", GLOBAL_CSS);
 
-  const navigate    = useNavigate();
-  const context     = useAppContext();
-  const [searchQuery,   setSearchQuery]   = useState("");
+
+  const context = useAppContext();
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [searching,     setSearching]     = useState(false);
-  const [allFlat,       setAllFlat]       = useState([]);
-  const inputRef    = useRef(null);
+  const [searching, setSearching] = useState(false);
+  const [allFlat, setAllFlat] = useState([]);
+  const inputRef = useRef(null);
   const debounceRef = useRef(null);
 
   /* Flatten ALL levels whenever data arrives/changes */
@@ -569,7 +575,7 @@ const CategoryPanel = (props) => {
     const data = props?.data;
     if (Array.isArray(data) && data.length > 0) {
       const flat = flattenCategories(data);
-      console.log('[CategoryPanel] flattened', flat.length, 'entries from', data.length, 'top-level cats');
+
       setAllFlat(flat);
     }
   }, [props?.data]);
@@ -591,7 +597,7 @@ const CategoryPanel = (props) => {
       const q = searchQuery.toLowerCase();
       const results = allFlat.filter((c) => {
         // Match on own name OR parent name (so typing "mobiles" also finds sub-items under Mobiles)
-        const nameMatch   = c?.name?.toLowerCase().includes(q);
+        const nameMatch = c?.name?.toLowerCase().includes(q);
         const parentMatch = c?._parent?.toLowerCase().includes(q);
         return nameMatch || parentMatch;
       });

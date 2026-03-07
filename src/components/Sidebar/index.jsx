@@ -569,12 +569,17 @@ export const Sidebar = (props) => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const url    = location.search;
+    
     setInternalCat(() => {
-      if (url.includes("catId"))           return { catId: [params.get("catId")].filter(Boolean), subCatId: [], thirdsubCatId: [] };
-      if (url.includes("subCatId"))        return { catId: [], subCatId: [params.get("subCatId")].filter(Boolean), thirdsubCatId: [] };
-      if (url.includes("thirdLavelCatId")) return { catId: [], subCatId: [], thirdsubCatId: [params.get("thirdLavelCatId")].filter(Boolean) };
-      return prev => prev;
+     const catId = params.get("catId");
+      const subCatId = params.get("subCatId");
+      const thirdLavelCatId = params.get("thirdLavelCatId");
+
+      if (thirdLavelCatId) return { catId: [], subCatId: [], thirdsubCatId: [thirdLavelCatId] };
+      if (subCatId) return { catId: [], subCatId: [subCatId], thirdsubCatId: [] };
+      if (catId) return { catId: [catId], subCatId: [], thirdsubCatId: [] };
+
+      return { catId: [], subCatId: [], thirdsubCatId: [] };
     });
     context?.setSearchData?.([]);
   }, [location.search]);
@@ -678,11 +683,7 @@ export const Sidebar = (props) => {
       return (
         <div key={cat?._id} style={{ paddingLeft: level > 0 ? 0 : 0 }}>
           <div className="sb-cat-row">
-            {hasChildren ? (
-              <button className={`sb-cat-expand${isExpanded ? " open" : ""}`} onClick={() => toggleCatExpand(cat?._id)}>
-                {isExpanded ? <FaAngleDown size={10} /> : <FaAngleRight size={10} />}
-              </button>
-            ) : <span style={{ width: 22, flexShrink: 0 }} />}
+            
             <Checkbox
               size="small" checked={isSelected}
               onChange={() => {
