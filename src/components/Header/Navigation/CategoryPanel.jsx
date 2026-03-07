@@ -1,107 +1,159 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Drawer from "@mui/material/Drawer";
 import { IoCloseSharp } from "react-icons/io5";
-import {
-  FiChevronRight,
-  FiChevronDown,
-  FiSearch,
-  FiX,
-  FiGrid,
-} from "react-icons/fi";
+import { FiChevronRight, FiChevronDown, FiSearch, FiX, FiGrid, FiPackage } from "react-icons/fi";
 import { useAppContext } from "../../../hooks/useAppContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-/* ═══════════════════════════════════════════════════
-   INJECT GLOBAL STYLES
-═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   URL BUILDER
+   Generates: /products/category/<slug>?catId=<id>&catName=<n>&level=<main|sub|subsub>
+   Fallback:  /products?category=<id>&catName=<n>&level=<...>
+════════════════════════════════════════════════════════════ */
+function buildProductUrl(item, level = "main", parentId = null, grandParentId = null) {
+  const id   = item?._id || item?.id || "";
+  const slug = item?.slug || "";
+  const name = encodeURIComponent(item?.name || "");
+
+  const params = new URLSearchParams();
+  params.set("catId",   id);
+  params.set("catName", decodeURIComponent(name));
+  params.set("level",   level);
+  if (parentId)      params.set("parentId",      parentId);
+  if (grandParentId) params.set("grandParentId", grandParentId);
+
+  if (slug) return `/products/category/${slug}?${params.toString()}`;
+  return `/products?${params.toString()}`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL CSS INJECTION
+════════════════════════════════════════════════════════════ */
 const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Syne:wght@700;800&display=swap');
 
-  .cat-panel-scroll::-webkit-scrollbar { width: 3px; }
-  .cat-panel-scroll::-webkit-scrollbar-track { background: transparent; }
-  .cat-panel-scroll::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.35); border-radius: 10px; }
+  .cpanel-scroll::-webkit-scrollbar { width: 3px; }
+  .cpanel-scroll::-webkit-scrollbar-track { background: transparent; }
+  .cpanel-scroll::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); border-radius: 10px; }
 
-  @keyframes slideInPanel {
-    from { opacity: 0; transform: translateX(-18px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
-  @keyframes fadeRowIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes subSlideIn {
-    from { opacity: 0; transform: translateX(-10px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
-  @keyframes pulseDot {
-    0%,100% { transform: scale(1); opacity: 0.7; }
-    50%      { transform: scale(1.5); opacity: 1; }
-  }
-  @keyframes shimmer {
-    0%   { background-position: -400px 0; }
-    100% { background-position: 400px 0; }
-  }
+  @keyframes cpSlideIn  { from { opacity:0; transform:translateX(-16px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes cpFadeUp   { from { opacity:0; transform:translateY(7px);   } to { opacity:1; transform:translateY(0); } }
+  @keyframes cpSubSlide { from { opacity:0; transform:translateX(-8px);  } to { opacity:1; transform:translateX(0); } }
+  @keyframes cpPulse    { 0%,100%{transform:scale(1);opacity:.7;} 50%{transform:scale(1.55);opacity:1;} }
+  @keyframes cpShimmer  { 0%{background-position:-400px 0;} 100%{background-position:400px 0;} }
+  @keyframes cpRipple   { 0%{transform:scale(0);opacity:.45;} 100%{transform:scale(3);opacity:0;} }
+  @keyframes cpFlash    { 0%{background:rgba(99,102,241,0.18);} 100%{background:transparent;} }
 
-  .cat-row-item { animation: fadeRowIn 0.28s ease both; }
-  .cat-row-item:hover .cat-row-label { color: #818cf8 !important; }
-  .cat-row-item:hover .cat-row-icon-wrap {
-    background: rgba(99,102,241,0.18) !important;
-    border-color: rgba(99,102,241,0.4) !important;
-  }
-  .cat-row-item:hover .cat-row-chevron { transform: rotate(0deg) translateX(2px) !important; color: #818cf8 !important; }
-  .cat-row-item.expanded-cat .cat-row-label { color: #a5b4fc !important; font-weight: 600 !important; }
-  .cat-row-item.expanded-cat .cat-row-icon-wrap {
-    background: rgba(99,102,241,0.22) !important;
-    border-color: rgba(165,180,252,0.5) !important;
-  }
+  /* ── top-level row ── */
+  .cp-cat-row { animation: cpFadeUp 0.26s ease both; position:relative; overflow:hidden; }
+  .cp-cat-inner { border-radius:10px; margin:0 8px; transition:background 0.2s; cursor:pointer; }
+  .cp-cat-inner:hover { background: rgba(99,102,241,0.07) !important; }
+  .cp-cat-inner:hover .cp-cat-label { color:#818cf8 !important; }
+  .cp-cat-inner:hover .cp-cat-iconbox { background:rgba(99,102,241,0.18)!important; border-color:rgba(99,102,241,0.4)!important; }
+  .cp-cat-inner:hover .cp-cat-chevron { color:#818cf8 !important; }
+  .cp-cat-inner:active { animation: cpFlash 0.3s ease forwards; }
+  .cp-cat-inner.is-expanded { background: rgba(99,102,241,0.07) !important; }
+  .cp-cat-inner.is-expanded .cp-cat-label { color:#a5b4fc !important; font-weight:600 !important; }
+  .cp-cat-inner.is-expanded .cp-cat-iconbox { background:rgba(99,102,241,0.2)!important; border-color:rgba(165,180,252,0.45)!important; }
 
-  .sub-row:hover { background: rgba(99,102,241,0.08) !important; }
-  .sub-row:hover .sub-label { color: #a5b4fc !important; }
+  /* ── sub row ── */
+  .cp-sub-row { border-radius:8px; margin:1px 8px; transition:background 0.18s; cursor:pointer; }
+  .cp-sub-row:hover { background: rgba(99,102,241,0.08) !important; }
+  .cp-sub-row:hover .cp-sub-label { color:#a5b4fc !important; }
+  .cp-sub-row:active { background: rgba(99,102,241,0.16) !important; }
 
-  .subsub-row:hover { background: rgba(165,180,252,0.07) !important; }
-  .subsub-row:hover .subsub-label { color: #c7d2fe !important; }
+  /* ── sub-sub row ── */
+  .cp-subsub-row { border-radius:7px; margin:1px 8px; transition:background 0.18s; }
+  .cp-subsub-row:hover { background: rgba(165,180,252,0.07) !important; }
+  .cp-subsub-row:hover .cp-subsub-label { color:#c7d2fe !important; }
+  .cp-subsub-row:active { background: rgba(99,102,241,0.13) !important; }
 
-  .search-input-cat:focus {
+  /* ── search ── */
+  .cp-search:focus {
     border-color: rgba(99,102,241,0.55) !important;
     background: rgba(99,102,241,0.06) !important;
     box-shadow: 0 0 0 3px rgba(99,102,241,0.1) !important;
   }
-  .close-btn-cat:hover {
-    background: rgba(99,102,241,0.15) !important;
-    border-color: rgba(99,102,241,0.45) !important;
-    color: #a5b4fc !important;
-  }
-  .view-all-link:hover { color: #a5b4fc !important; }
 
-  .skeleton-line {
-    background: linear-gradient(90deg,
-      rgba(255,255,255,0.04) 25%,
-      rgba(255,255,255,0.09) 50%,
-      rgba(255,255,255,0.04) 75%);
-    background-size: 400px 100%;
-    animation: shimmer 1.4s infinite linear;
-    border-radius: 6px;
-  }
+  /* ── close btn ── */
+  .cp-close:hover { background:rgba(99,102,241,0.15)!important; border-color:rgba(99,102,241,0.45)!important; color:#a5b4fc!important; }
+
+  /* ── ripple ── */
+  .cp-ripple { position:absolute; border-radius:50%; background:rgba(99,102,241,0.22); pointer-events:none; animation:cpRipple 0.5s ease-out forwards; transform-origin:center; }
+
+  /* ── skeleton ── */
+  .cp-skel { background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.09) 50%,rgba(255,255,255,0.04) 75%); background-size:400px 100%; animation:cpShimmer 1.4s infinite linear; border-radius:6px; }
+
+  /* ── search result row ── */
+  .cp-result-row { border-radius:9px; margin:2px 8px; transition:background 0.18s; }
+  .cp-result-row:hover { background:rgba(99,102,241,0.08)!important; }
+  .cp-result-row:hover .cp-result-label { color:#a5b4fc !important; }
+  .cp-result-row:active { background:rgba(99,102,241,0.16)!important; }
+
+  .cp-viewall:hover { color:#a5b4fc !important; }
 `;
 
 function injectStyles(id, css) {
   if (typeof document !== "undefined" && !document.getElementById(id)) {
     const el = document.createElement("style");
-    el.id = id;
-    el.textContent = css;
+    el.id = id; el.textContent = css;
     document.head.appendChild(el);
   }
 }
 
 /* ═══════════════════════════════════════════
-   FLATTEN for search
-═══════════════════════════════════════════ */
-function flattenCategories(cats, result = [], depth = 0, parent = null) {
+   RIPPLE HOOK
+════════════════════════════════════════════ */
+function useRipple(ref) {
+  const trigger = useCallback((e) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top  - size / 2;
+    const circle = document.createElement("span");
+    circle.className = "cp-ripple";
+    circle.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
+    el.appendChild(circle);
+    setTimeout(() => circle.remove(), 520);
+  }, [ref]);
+  return trigger;
+}
+
+/* ═══════════════════════════════════════════
+   FLATTEN CATEGORIES for search
+   Recursively walks ALL levels so every
+   sub / sub-sub category appears in results.
+════════════════════════════════════════════ */
+function flattenCategories(
+  cats,
+  result       = [],
+  depth        = 0,
+  parent       = null,   // parent display name
+  parentId     = null,   // parent _id
+  grandParentId = null   // grandparent _id
+) {
   if (!Array.isArray(cats)) return result;
   cats.forEach((cat) => {
-    result.push({ ...cat, _depth: depth, _parent: parent });
-    if (cat.children?.length)
-      flattenCategories(cat.children, result, depth + 1, cat.name);
+    const id = cat?._id || cat?.id || "";
+    result.push({
+      ...cat,
+      _depth:        depth,
+      _parent:       parent,
+      _parentId:     parentId,
+      _grandParentId: grandParentId,
+    });
+    if (cat.children?.length) {
+      flattenCategories(
+        cat.children,
+        result,
+        depth + 1,
+        cat.name,          // this cat becomes the parent name
+        id,                // this cat's id becomes parentId
+        parentId           // previous parentId becomes grandParentId
+      );
+    }
   });
   return result;
 }
@@ -113,12 +165,7 @@ function highlight(text, query) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark style={{
-        background: "rgba(99,102,241,0.3)",
-        color: "#c7d2fe",
-        borderRadius: 3,
-        padding: "0 2px",
-      }}>
+      <mark style={{ background:"rgba(99,102,241,0.28)", color:"#c7d2fe", borderRadius:3, padding:"0 2px" }}>
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -128,136 +175,152 @@ function highlight(text, query) {
 
 /* ═══════════════════════════════════════════
    SUB-SUB CATEGORY ROW
-═══════════════════════════════════════════ */
-const SubSubRow = ({ item, onClose, delay = 0 }) => (
-  <Link
-    to={`/category/${item?.slug || item?._id}`}
-    onClick={onClose}
-    className="subsub-row"
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      padding: "7px 14px 7px 54px",
-      textDecoration: "none",
-      borderRadius: 7,
-      margin: "1px 8px",
-      transition: "background 0.18s",
-      animation: `subSlideIn 0.2s ease ${delay}ms both`,
-    }}
-  >
-    <span style={{
-      width: 5, height: 5,
-      borderRadius: "50%",
-      border: "1.5px solid rgba(148,163,184,0.35)",
-      flexShrink: 0,
-    }} />
-    <span
-      className="subsub-label"
+════════════════════════════════════════════ */
+const SubSubRow = ({ item, parentId, grandParentId, onNavigate, delay = 0 }) => {
+  const rowRef = useRef(null);
+  const triggerRipple = useRipple(rowRef);
+  const url = buildProductUrl(item, "subsub", parentId, grandParentId);
+
+  return (
+    <Link
+      ref={rowRef}
+      to={url}
+      onClick={(e) => { triggerRipple(e); onNavigate(); }}
+      className="cp-subsub-row"
       style={{
-        fontSize: 12,
-        color: "#64748b",
-        fontFamily: "'DM Sans', sans-serif",
-        transition: "color 0.18s",
-        letterSpacing: "0.01em",
+        display: "flex", alignItems: "center", gap: 9,
+        padding: "7px 14px 7px 56px",
+        textDecoration: "none",
+        animation: `cpSubSlide 0.2s ease ${delay}ms both`,
+        position: "relative", overflow: "hidden",
       }}
     >
-      {item?.name}
-    </span>
-  </Link>
-);
+      <span style={{
+        width: 5, height: 5, borderRadius: "50%",
+        border: "1.5px solid rgba(148,163,184,0.3)",
+        flexShrink: 0,
+      }} />
+      <span className="cp-subsub-label" style={{
+        fontSize: 12, color: "#5a6a85",
+        fontFamily: "'DM Sans',sans-serif",
+        transition: "color 0.18s",
+        flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+      }}>
+        {item?.name}
+      </span>
+      <FiChevronRight size={10} style={{ color: "#2d3748", flexShrink: 0 }} />
+    </Link>
+  );
+};
 
 /* ═══════════════════════════════════════════
    SUB CATEGORY ROW
-═══════════════════════════════════════════ */
-const SubRow = ({ item, onClose, delay = 0 }) => {
+════════════════════════════════════════════ */
+const SubRow = ({ item, parentId, onNavigate, delay = 0 }) => {
   const [open, setOpen] = useState(false);
+  const rowRef = useRef(null);
+  const triggerRipple = useRipple(rowRef);
   const hasSubs = item?.children?.length > 0;
+  const url = buildProductUrl(item, "sub", parentId);
+
+  const handleClick = (e) => {
+    triggerRipple(e);
+    if (hasSubs) {
+      setOpen((p) => !p);
+    } else {
+      onNavigate();
+    }
+  };
 
   return (
-    <div style={{ animation: `subSlideIn 0.22s ease ${delay}ms both` }}>
-      <div
-        className="sub-row"
-        onClick={() => hasSubs && setOpen((p) => !p)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "8px 14px 8px 46px",
-          borderRadius: 8,
-          margin: "1px 8px",
-          cursor: "pointer",
-          transition: "background 0.18s",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+    <div style={{ animation: `cpSubSlide 0.22s ease ${delay}ms both` }}>
+      {hasSubs ? (
+        /* Has children → toggle expand; label navigates */
+        <div
+          ref={rowRef}
+          className="cp-sub-row"
+          style={{
+            display: "flex", alignItems: "center",
+            padding: "8px 13px 8px 46px",
+            position: "relative", overflow: "hidden",
+          }}
+        >
+          {/* Dot indicator */}
           <span style={{
-            width: 6, height: 6,
-            borderRadius: "50%",
-            background: open
-              ? "rgba(99,102,241,0.6)"
-              : "rgba(255,255,255,0.1)",
-            flexShrink: 0,
-            transition: "background 0.18s",
+            width: 6, height: 6, borderRadius: "50%",
+            background: open ? "rgba(99,102,241,0.65)" : "rgba(255,255,255,0.1)",
+            flexShrink: 0, transition: "background 0.18s",
           }} />
-          {hasSubs ? (
-            <span
-              className="sub-label"
-              style={{
-                fontSize: 13,
-                color: "#94a3b8",
-                fontFamily: "'DM Sans', sans-serif",
-                transition: "color 0.18s",
-                flex: 1,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {item?.name}
-            </span>
-          ) : (
-            <Link
-              to={`/category/${item?.slug || item?._id}`}
-              onClick={onClose}
-              className="sub-label"
-              style={{
-                fontSize: 13,
-                color: "#94a3b8",
-                fontFamily: "'DM Sans', sans-serif",
-                transition: "color 0.18s",
-                flex: 1,
-                textDecoration: "none",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {item?.name}
-            </Link>
-          )}
-        </div>
 
-        {hasSubs && (
+          {/* Clickable name → products */}
+          <Link
+            to={url}
+            onClick={(e) => { e.stopPropagation(); triggerRipple(e); onNavigate(); }}
+            className="cp-sub-label"
+            style={{
+              flex: 1, fontSize: 13, color: "#8392a8",
+              fontFamily: "'DM Sans',sans-serif",
+              transition: "color 0.18s",
+              textDecoration: "none",
+              marginLeft: 8,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}
+          >
+            {item?.name}
+          </Link>
+
+          {/* Toggle chevron */}
           <FiChevronDown
             size={12}
+            onClick={() => setOpen((p) => !p)}
             style={{
-              color: "#475569",
+              color: "#334155", flexShrink: 0,
               transition: "transform 0.22s",
               transform: open ? "rotate(180deg)" : "rotate(0deg)",
-              flexShrink: 0,
+              cursor: "pointer", padding: "2px",
             }}
           />
-        )}
-      </div>
+        </div>
+      ) : (
+        /* No children → full row is a link */
+        <Link
+          ref={rowRef}
+          to={url}
+          onClick={(e) => { triggerRipple(e); onNavigate(); }}
+          className="cp-sub-row"
+          style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 13px 8px 46px",
+            textDecoration: "none",
+            position: "relative", overflow: "hidden",
+          }}
+        >
+          <span style={{
+            width: 6, height: 6, borderRadius: "50%",
+            background: "rgba(255,255,255,0.1)", flexShrink: 0,
+          }} />
+          <span className="cp-sub-label" style={{
+            flex: 1, fontSize: 13, color: "#8392a8",
+            fontFamily: "'DM Sans',sans-serif",
+            transition: "color 0.18s",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>
+            {item?.name}
+          </span>
+          <FiChevronRight size={11} style={{ color: "#2d3748", flexShrink: 0 }} />
+        </Link>
+      )}
 
+      {/* Sub-sub-categories */}
       {hasSubs && open && (
-        <div>
+        <div style={{ borderLeft: "1px solid rgba(99,102,241,0.1)", marginLeft: 52 }}>
           {item.children.map((ssub, i) => (
             <SubSubRow
               key={ssub?._id || i}
               item={ssub}
-              onClose={onClose}
+              parentId={item?._id || item?.id}
+              grandParentId={parentId}
+              onNavigate={onNavigate}
               delay={i * 25}
             />
           ))}
@@ -269,49 +332,53 @@ const SubRow = ({ item, onClose, delay = 0 }) => {
 
 /* ═══════════════════════════════════════════
    CATEGORY ROW (top-level)
-═══════════════════════════════════════════ */
-const CategoryRow = ({ item, index, onClose }) => {
+════════════════════════════════════════════ */
+const CategoryRow = ({ item, index, onNavigate }) => {
   const [expanded, setExpanded] = useState(false);
+  const innerRef = useRef(null);
+  const triggerRipple = useRipple(innerRef);
   const hasSubs = item?.children?.length > 0;
+  const url = buildProductUrl(item, "main");
+
+  const handleRowClick = (e) => {
+    triggerRipple(e);
+    if (hasSubs) {
+      setExpanded((p) => !p);
+    } else {
+      onNavigate();
+    }
+  };
 
   return (
     <div
-      className={`cat-row-item ${expanded ? "expanded-cat" : ""}`}
-      style={{ animationDelay: `${index * 40}ms`, marginBottom: 1 }}
+      className="cp-cat-row"
+      style={{ animationDelay: `${index * 38}ms`, marginBottom: 1 }}
     >
       <div
-        onClick={() => hasSubs && setExpanded((p) => !p)}
+        ref={innerRef}
+        className={`cp-cat-inner ${expanded ? "is-expanded" : ""}`}
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 11,
-          padding: "9px 13px",
-          cursor: "pointer",
-          borderRadius: 10,
-          margin: "0 8px",
-          transition: "background 0.2s",
-          background: expanded ? "rgba(99,102,241,0.07)" : "transparent",
-          position: "relative",
+          display: "flex", alignItems: "center", gap: 11,
+          padding: "9px 12px",
+          position: "relative", overflow: "hidden",
         }}
       >
-        {/* Accent bar when expanded */}
+        {/* Accent bar */}
         {expanded && (
           <span style={{
-            position: "absolute",
-            left: 0, top: "50%",
+            position: "absolute", left: 0, top: "50%",
             transform: "translateY(-50%)",
-            width: 3, height: "55%",
+            width: 3, height: "58%",
             background: "linear-gradient(180deg, #6366f1, #818cf8)",
             borderRadius: "0 3px 3px 0",
           }} />
         )}
 
-        {/* Icon */}
+        {/* Icon box */}
         <div
-          className="cat-row-icon-wrap"
+          className="cp-cat-iconbox"
           style={{
-            width: 34, height: 34,
-            borderRadius: 9,
+            width: 34, height: 34, borderRadius: 9,
             background: "rgba(255,255,255,0.04)",
             border: "1px solid rgba(255,255,255,0.07)",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -319,64 +386,44 @@ const CategoryRow = ({ item, index, onClose }) => {
             transition: "all 0.22s",
           }}
         >
-          {item?.icon
-            ? <span>{item.icon}</span>
-            : <FiGrid size={13} style={{ color: "#475569" }} />
-          }
+          {item?.icon ? <span>{item.icon}</span> : <FiGrid size={13} style={{ color: "#475569" }} />}
         </div>
 
-        {/* Label */}
-        {hasSubs ? (
-          <span
-            className="cat-row-label"
-            style={{
-              flex: 1, fontSize: 14, fontWeight: 500,
-              color: "#cbd5e1",
-              fontFamily: "'DM Sans', sans-serif",
-              transition: "color 0.2s",
-              letterSpacing: "0.005em",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {item?.name}
-          </span>
-        ) : (
-          <Link
-            to={`/category/${item?.slug || item?._id}`}
-            onClick={onClose}
-            className="cat-row-label"
-            style={{
-              flex: 1, fontSize: 14, fontWeight: 500,
-              color: "#cbd5e1",
-              fontFamily: "'DM Sans', sans-serif",
-              transition: "color 0.2s",
-              letterSpacing: "0.005em",
-              textDecoration: "none",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {item?.name}
-          </Link>
-        )}
+        {/* Name — always navigates to products */}
+        <Link
+          to={url}
+          onClick={(e) => { e.stopPropagation(); triggerRipple(e); onNavigate(); }}
+          className="cp-cat-label"
+          style={{
+            flex: 1, fontSize: 14, fontWeight: 500,
+            color: "#c8d3e0",
+            fontFamily: "'DM Sans',sans-serif",
+            transition: "color 0.2s",
+            letterSpacing: "0.005em",
+            textDecoration: "none",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}
+        >
+          {item?.name}
+        </Link>
 
-        {/* Sub count + chevron */}
+        {/* Sub count + toggle chevron */}
         {hasSubs && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          <div
+            onClick={handleRowClick}
+            style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, cursor: "pointer" }}
+          >
             <span style={{
-              fontSize: 10, color: "#334155",
+              fontSize: 10, color: "#2d3748",
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,255,255,0.06)",
               borderRadius: 8, padding: "2px 6px",
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'DM Sans',sans-serif",
             }}>
               {item.children.length}
             </span>
             <FiChevronDown
-              className="cat-row-chevron"
+              className="cp-cat-chevron"
               size={14}
               style={{
                 color: "#475569",
@@ -386,21 +433,26 @@ const CategoryRow = ({ item, index, onClose }) => {
             />
           </div>
         )}
+
+        {/* Arrow for leaf categories */}
+        {!hasSubs && (
+          <FiChevronRight size={13} style={{ color: "#2d3748", flexShrink: 0 }} />
+        )}
       </div>
 
-      {/* Sub-categories panel */}
+      {/* Sub-categories */}
       {hasSubs && expanded && (
         <div style={{
-          borderLeft: "1px solid rgba(99,102,241,0.13)",
-          marginLeft: 33,
-          paddingBottom: 4,
+          borderLeft: "1px solid rgba(99,102,241,0.12)",
+          marginLeft: 33, paddingBottom: 4,
         }}>
           {item.children.map((sub, i) => (
             <SubRow
               key={sub?._id || i}
               item={sub}
-              onClose={onClose}
-              delay={i * 30}
+              parentId={item?._id || item?.id}
+              onNavigate={onNavigate}
+              delay={i * 28}
             />
           ))}
         </div>
@@ -410,14 +462,14 @@ const CategoryRow = ({ item, index, onClose }) => {
 };
 
 /* ═══════════════════════════════════════════
-   SEARCH RESULTS LIST
-═══════════════════════════════════════════ */
-const SearchResults = ({ results, query, onClose }) => {
+   SEARCH RESULTS
+════════════════════════════════════════════ */
+const SearchResults = ({ results, query, onNavigate }) => {
   if (!results.length) return (
-    <div style={{ padding: "40px 20px", textAlign: "center" }}>
-      <div style={{ fontSize: 30, marginBottom: 12 }}>🔍</div>
-      <div style={{ fontSize: 13, color: "#334155", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6 }}>
-        No categories match<br />
+    <div style={{ padding: "38px 20px", textAlign: "center" }}>
+      <FiPackage size={28} style={{ color: "#1e2535", marginBottom: 10 }} />
+      <div style={{ fontSize: 13, color: "#334155", fontFamily: "'DM Sans',sans-serif", lineHeight: 1.7 }}>
+        No categories found for<br />
         <strong style={{ color: "#6366f1" }}>"{query}"</strong>
       </div>
     </div>
@@ -425,65 +477,73 @@ const SearchResults = ({ results, query, onClose }) => {
 
   return (
     <div style={{ padding: "6px 0" }}>
-      {results.map((item, i) => (
-        <Link
-          key={i}
-          to={`/category/${item?.slug || item?._id}`}
-          onClick={onClose}
-          className="sub-row"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "9px 14px",
-            textDecoration: "none",
-            borderRadius: 9,
-            margin: "2px 8px",
-            transition: "background 0.18s",
-            animation: `fadeRowIn 0.2s ease ${i * 28}ms both`,
-          }}
-        >
-          <div style={{
-            width: 6, height: 6, borderRadius: "50%",
-            background: item._depth === 0
-              ? "#6366f1"
-              : item._depth === 1
-              ? "rgba(99,102,241,0.5)"
-              : "rgba(99,102,241,0.25)",
-            flexShrink: 0,
-          }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sub-label" style={{
-              fontSize: 13, color: "#94a3b8",
-              fontFamily: "'DM Sans', sans-serif",
-              transition: "color 0.18s",
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>
-              {highlight(item?.name, query)}
-            </div>
-            {item._parent && (
-              <div style={{ fontSize: 11, color: "#334155", marginTop: 1 }}>
-                {item._depth === 1 ? "in " : "sub of "}
-                {item._parent}
+      {results.map((item, i) => {
+        const level = item._depth === 0 ? "main" : item._depth === 1 ? "sub" : "subsub";
+        const url = buildProductUrl(item, level, item._parentId, item._grandParentId);
+        return (
+          <Link
+            key={i}
+            to={url}
+            onClick={onNavigate}
+            className="cp-result-row"
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "9px 13px", textDecoration: "none",
+              animation: `cpFadeUp 0.2s ease ${i * 26}ms both`,
+            }}
+          >
+            {/* Depth indicator dot */}
+            <span style={{
+              width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+              background: item._depth === 0
+                ? "#6366f1"
+                : item._depth === 1
+                ? "rgba(99,102,241,0.45)"
+                : "rgba(99,102,241,0.2)",
+            }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="cp-result-label" style={{
+                fontSize: 13, color: "#8a9ab8",
+                fontFamily: "'DM Sans',sans-serif",
+                transition: "color 0.18s",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
+                {highlight(item?.name, query)}
               </div>
-            )}
-          </div>
-          <FiChevronRight size={12} style={{ color: "#334155", flexShrink: 0 }} />
-        </Link>
-      ))}
+              {item._parent && (
+                <div style={{ fontSize: 11, color: "#2d3748", marginTop: 2 }}>
+                  {item._depth === 1 ? "in " : "sub of "}{item._parent}
+                </div>
+              )}
+            </div>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 4,
+              fontSize: 10, color: "#334155",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 7, padding: "2px 7px",
+              fontFamily: "'DM Sans',sans-serif",
+              flexShrink: 0,
+            }}>
+              <FiPackage size={9} />
+              Products
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 };
 
 /* ═══════════════════════════════════════════
-   SKELETON
-═══════════════════════════════════════════ */
+   SKELETON LOADER
+════════════════════════════════════════════ */
 const SkeletonLoader = () => (
   <div style={{ padding: "10px 16px" }}>
-    {[100, 75, 88, 60, 82, 70, 90].map((w, i) => (
-      <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-        <div className="skeleton-line" style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0 }} />
-        <div className="skeleton-line" style={{ width: `${w * 0.65}%`, height: 13 }} />
+    {[90, 68, 82, 55, 76, 63, 88].map((w, i) => (
+      <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 13 }}>
+        <div className="cp-skel" style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0 }} />
+        <div className="cp-skel" style={{ width: `${w * 0.7}%`, height: 13 }} />
       </div>
     ))}
   </div>
@@ -491,47 +551,53 @@ const SkeletonLoader = () => (
 
 /* ═══════════════════════════════════════════
    MAIN — CategoryPanel
-═══════════════════════════════════════════ */
+════════════════════════════════════════════ */
 const CategoryPanel = (props) => {
-  injectStyles("cat-panel-v2-styles", GLOBAL_CSS);
+  injectStyles("cpanel-styles-v3", GLOBAL_CSS);
 
-  const context = useAppContext();
-  const [searchQuery, setSearchQuery] = useState("");
+  const navigate    = useNavigate();
+  const context     = useAppContext();
+  const [searchQuery,   setSearchQuery]   = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
-  const [allFlat, setAllFlat] = useState([]);
-  const inputRef = useRef(null);
+  const [searching,     setSearching]     = useState(false);
+  const [allFlat,       setAllFlat]       = useState([]);
+  const inputRef    = useRef(null);
   const debounceRef = useRef(null);
 
-  /* Flatten on data change */
+  /* Flatten ALL levels whenever data arrives/changes */
   useEffect(() => {
-    if (props?.data?.length) setAllFlat(flattenCategories(props.data));
+    const data = props?.data;
+    if (Array.isArray(data) && data.length > 0) {
+      const flat = flattenCategories(data);
+      console.log('[CategoryPanel] flattened', flat.length, 'entries from', data.length, 'top-level cats');
+      setAllFlat(flat);
+    }
   }, [props?.data]);
 
-  /* Reset + auto-focus */
+  /* Reset + autofocus on open */
   useEffect(() => {
     if (props.isOpenCatPanel) {
-      setSearchQuery("");
-      setSearchResults([]);
-      setSearching(false);
-      setTimeout(() => inputRef.current?.focus(), 350);
+      setSearchQuery(""); setSearchResults([]); setSearching(false);
+      setTimeout(() => inputRef.current?.focus(), 340);
     }
   }, [props.isOpenCatPanel]);
 
   /* Debounced search */
   useEffect(() => {
     clearTimeout(debounceRef.current);
-    if (!searchQuery.trim()) {
-      setSearching(false);
-      setSearchResults([]);
-      return;
-    }
+    if (!searchQuery.trim()) { setSearching(false); setSearchResults([]); return; }
     setSearching(true);
     debounceRef.current = setTimeout(() => {
       const q = searchQuery.toLowerCase();
-      setSearchResults(allFlat.filter((c) => c?.name?.toLowerCase().includes(q)));
+      const results = allFlat.filter((c) => {
+        // Match on own name OR parent name (so typing "mobiles" also finds sub-items under Mobiles)
+        const nameMatch   = c?.name?.toLowerCase().includes(q);
+        const parentMatch = c?._parent?.toLowerCase().includes(q);
+        return nameMatch || parentMatch;
+      });
+      setSearchResults(results);
       setSearching(false);
-    }, 220);
+    }, 210);
     return () => clearTimeout(debounceRef.current);
   }, [searchQuery, allFlat]);
 
@@ -540,33 +606,31 @@ const CategoryPanel = (props) => {
     props.propsSetIsOpenCatPanel(false);
   }, [props]);
 
+  /* Called by any category/sub/subsub click → close panel */
+  const handleNavigate = useCallback(() => {
+    closePanel();
+  }, [closePanel]);
+
   const isLoading = !props?.data || props?.data?.length === 0;
   const hasSearch = searchQuery.trim().length > 0;
+  const totalCats = props?.data?.length || 0;
 
   return (
     <Drawer
       open={props.isOpenCatPanel}
       onClose={closePanel}
-      PaperProps={{
-        style: {
-          width: 308,
-          background: "transparent",
-          boxShadow: "none",
-          border: "none",
-        },
-      }}
+      PaperProps={{ style: { width: 308, background: "transparent", boxShadow: "none", border: "none" } }}
     >
       <div style={{
         width: 308, height: "100%",
         display: "flex", flexDirection: "column",
         background: "#0b0d12",
-        fontFamily: "'DM Sans', sans-serif",
-        animation: "slideInPanel 0.3s cubic-bezier(0.22,1,0.36,1) both",
-        position: "relative",
-        overflow: "hidden",
+        fontFamily: "'DM Sans',sans-serif",
+        animation: "cpSlideIn 0.3s cubic-bezier(0.22,1,0.36,1) both",
+        position: "relative", overflow: "hidden",
       }}>
 
-        {/* Background ambience */}
+        {/* ── Ambient Background ── */}
         <div style={{
           position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
           background:
@@ -575,39 +639,34 @@ const CategoryPanel = (props) => {
         }} />
         <div style={{
           position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
-          backgroundImage: "radial-gradient(rgba(99,102,241,0.055) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(rgba(99,102,241,0.05) 1px, transparent 1px)",
           backgroundSize: "22px 22px",
         }} />
 
-        {/* ── HEADER ── */}
+        {/* ══════════════ HEADER ══════════════ */}
         <div style={{
-          position: "relative", zIndex: 2,
-          height: 58,
-          padding: "0 14px",
+          position: "relative", zIndex: 2, flexShrink: 0,
+          height: 58, padding: "0 14px",
           display: "flex", alignItems: "center", justifyContent: "space-between",
           borderBottom: "1px solid rgba(255,255,255,0.05)",
-          flexShrink: 0,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
             {localStorage.getItem("logo") ? (
-              <img
-                src={localStorage.getItem("logo")}
-                alt="logo"
-                style={{ maxHeight: 28, maxWidth: 100, objectFit: "contain" }}
-              />
+              <img src={localStorage.getItem("logo")} alt="logo"
+                style={{ maxHeight: 28, maxWidth: 100, objectFit: "contain" }} />
             ) : (
               <>
                 <div style={{
                   width: 30, height: 30, borderRadius: 8,
-                  background: "linear-gradient(135deg, #4f46e5 0%, #818cf8 100%)",
+                  background: "linear-gradient(135deg,#4f46e5,#818cf8)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 0 16px rgba(99,102,241,0.35)",
+                  boxShadow: "0 0 14px rgba(99,102,241,0.35)",
                 }}>
                   <FiGrid size={14} color="#fff" />
                 </div>
                 <span style={{
                   fontSize: 15, fontWeight: 800,
-                  fontFamily: "'Syne', sans-serif",
+                  fontFamily: "'Syne',sans-serif",
                   color: "#e2e8f0", letterSpacing: "0.02em",
                 }}>
                   Categories
@@ -619,16 +678,16 @@ const CategoryPanel = (props) => {
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             {!isLoading && (
               <span style={{
-                fontSize: 10, color: "#334155",
+                fontSize: 10, color: "#2d3748",
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 9, padding: "3px 8px",
               }}>
-                {props.data.length} depts
+                {totalCats} depts
               </span>
             )}
             <button
-              className="close-btn-cat"
+              className="cp-close"
               onClick={closePanel}
               aria-label="Close menu"
               style={{
@@ -645,23 +704,18 @@ const CategoryPanel = (props) => {
           </div>
         </div>
 
-        {/* ── SEARCH ── */}
-        <div style={{
-          position: "relative", zIndex: 2,
-          padding: "11px 13px 7px",
-          flexShrink: 0,
-        }}>
+        {/* ══════════════ SEARCH ══════════════ */}
+        <div style={{ position: "relative", zIndex: 2, padding: "11px 13px 7px", flexShrink: 0 }}>
           <div style={{ position: "relative" }}>
             <FiSearch style={{
               position: "absolute", left: 11, top: "50%",
               transform: "translateY(-50%)",
-              color: "#334155", fontSize: 13,
-              pointerEvents: "none",
+              color: "#334155", fontSize: 13, pointerEvents: "none",
             }} />
             <input
               ref={inputRef}
               type="text"
-              className="search-input-cat"
+              className="cp-search"
               placeholder="Search categories…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -671,9 +725,8 @@ const CategoryPanel = (props) => {
                 borderRadius: 9,
                 border: "1px solid rgba(255,255,255,0.07)",
                 background: "rgba(255,255,255,0.03)",
-                color: "#e2e8f0", fontSize: 13,
-                outline: "none",
-                fontFamily: "'DM Sans', sans-serif",
+                color: "#e2e8f0", fontSize: 13, outline: "none",
+                fontFamily: "'DM Sans',sans-serif",
                 transition: "all 0.2s",
               }}
             />
@@ -683,9 +736,8 @@ const CategoryPanel = (props) => {
                 style={{
                   position: "absolute", right: 9, top: "50%",
                   transform: "translateY(-50%)",
-                  background: "rgba(255,255,255,0.07)",
-                  border: "none", borderRadius: 5,
-                  color: "#475569", cursor: "pointer",
+                  background: "rgba(255,255,255,0.07)", border: "none",
+                  borderRadius: 5, color: "#475569", cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   width: 20, height: 20, padding: 0,
                 }}
@@ -696,9 +748,7 @@ const CategoryPanel = (props) => {
           </div>
 
           {hasSearch && !searching && (
-            <div style={{
-              fontSize: 11, color: "#334155", marginTop: 7, paddingLeft: 2,
-            }}>
+            <div style={{ fontSize: 11, color: "#2d3748", marginTop: 7, paddingLeft: 2 }}>
               {searchResults.length > 0 ? (
                 <><span style={{ color: "#6366f1" }}>{searchResults.length}</span> result{searchResults.length !== 1 ? "s" : ""}</>
               ) : "No matches"}
@@ -706,7 +756,7 @@ const CategoryPanel = (props) => {
           )}
         </div>
 
-        {/* ── DIVIDER LABEL ── */}
+        {/* ══════════════ SECTION LABEL ══════════════ */}
         {!hasSearch && (
           <div style={{
             padding: "5px 20px 8px",
@@ -716,19 +766,16 @@ const CategoryPanel = (props) => {
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
             <span style={{
               fontSize: 9, fontWeight: 700,
-              letterSpacing: "0.13em",
-              textTransform: "uppercase",
-              color: "#1e2535",
-            }}>
-              All Departments
-            </span>
+              letterSpacing: "0.14em", textTransform: "uppercase",
+              color: "#1a2030",
+            }}>All Departments</span>
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
           </div>
         )}
 
-        {/* ── SCROLL AREA ── */}
+        {/* ══════════════ SCROLL AREA ══════════════ */}
         <div
-          className="cat-panel-scroll"
+          className="cpanel-scroll"
           style={{
             flex: 1, overflowY: "auto", overflowX: "hidden",
             position: "relative", zIndex: 2,
@@ -740,20 +787,20 @@ const CategoryPanel = (props) => {
           ) : hasSearch ? (
             searching
               ? <SkeletonLoader />
-              : <SearchResults results={searchResults} query={searchQuery} onClose={closePanel} />
+              : <SearchResults results={searchResults} query={searchQuery} onNavigate={handleNavigate} />
           ) : (
             props.data.map((cat, i) => (
               <CategoryRow
                 key={cat?._id || i}
                 item={cat}
                 index={i}
-                onClose={closePanel}
+                onNavigate={handleNavigate}
               />
             ))
           )}
         </div>
 
-        {/* ── FOOTER ── */}
+        {/* ══════════════ FOOTER ══════════════ */}
         <div style={{
           borderTop: "1px solid rgba(255,255,255,0.05)",
           padding: "11px 16px",
@@ -765,27 +812,26 @@ const CategoryPanel = (props) => {
               width: 7, height: 7, borderRadius: "50%",
               background: "#22c55e",
               display: "inline-block",
-              animation: "pulseDot 2.2s ease infinite",
+              animation: "cpPulse 2.2s ease infinite",
               boxShadow: "0 0 6px rgba(34,197,94,0.5)",
             }} />
-            <span style={{ fontSize: 11, color: "#1e2535", fontFamily: "'DM Sans', sans-serif" }}>
+            <span style={{ fontSize: 11, color: "#1e2535", fontFamily: "'DM Sans',sans-serif" }}>
               All categories live
             </span>
           </div>
-
           <Link
-            to="/categories"
+            to="/products"
             onClick={closePanel}
-            className="view-all-link"
+            className="cp-viewall"
             style={{
               fontSize: 11, color: "#6366f1",
               textDecoration: "none", fontWeight: 600,
               display: "flex", alignItems: "center", gap: 3,
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'DM Sans',sans-serif",
               transition: "color 0.18s",
             }}
           >
-            View all <FiChevronRight size={12} />
+            All Products <FiChevronRight size={12} />
           </Link>
         </div>
       </div>
