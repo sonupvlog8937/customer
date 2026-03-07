@@ -339,7 +339,7 @@ const Header = () => {
       </header>
 
 
-      <div className="afterHeader mt-[75px] lg:mt-0"></div>
+      <div className="afterHeader mt-[45px] lg:mt-0"></div>
 
     </>
   );
