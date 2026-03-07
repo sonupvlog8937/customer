@@ -14,15 +14,15 @@ const styles = `
   .zoom-wrapper {
     font-family: 'Outfit', sans-serif;
     --accent: #c9a96e;
-    --bg-deep: #0d0d0d;
-    --bg-card: #141414;
-    --bg-thumb: #1a1a1a;
-    --border: rgba(255,255,255,0.07);
-    --text-muted: rgba(255,255,255,0.35);
+    --bg-deep: #ffffff;
+    --bg-card: #f8f8f8;
+    --bg-thumb: #f2f2f2;
+    --border: rgba(0,0,0,0.08);
+    --text-muted: rgba(0,0,0,0.35);
     background: var(--bg-deep);
     border-radius: 20px;
     padding: 20px;
-    box-shadow: 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
   }
 
   .zoom-inner {
@@ -111,8 +111,8 @@ const styles = `
   }
 
   .thumb-item:not(.active) img {
-    opacity: 0.45;
-    filter: grayscale(30%);
+    opacity: 0.5;
+    filter: grayscale(20%);
   }
 
   .thumb-item:hover img {
@@ -151,11 +151,12 @@ const styles = `
     position: relative;
     flex: 1;
     order: 1;
-    background: var(--bg-card);
+    background: #ffffff;
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--border);
     min-height: 320px;
+    width: 100%;
   }
 
   @media (min-width: 992px) {
@@ -180,12 +181,14 @@ const styles = `
     border-top: 1.5px solid var(--accent);
     border-left: 1.5px solid var(--accent);
     border-radius: 4px 0 0 0;
+    opacity: 0.7;
   }
   .main-stage::after {
     bottom: 12px; right: 12px;
     border-bottom: 1.5px solid var(--accent);
     border-right: 1.5px solid var(--accent);
     border-radius: 0 0 4px 0;
+    opacity: 0.7;
   }
 
   /* Zoom hint badge */
@@ -224,12 +227,12 @@ const styles = `
     font-family: 'Cormorant Garamond', serif;
     font-size: 13px;
     font-weight: 300;
-    color: var(--text-muted);
+    color: rgba(0,0,0,0.35);
     letter-spacing: 0.05em;
   }
 
   .image-counter span {
-    color: rgba(255,255,255,0.7);
+    color: rgba(0,0,0,0.65);
     font-size: 15px;
   }
 
@@ -238,7 +241,7 @@ const styles = `
     position: absolute;
     inset: 0;
     z-index: 20;
-    background: rgba(13,13,13,0.75);
+    background: rgba(255,255,255,0.8);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -249,7 +252,7 @@ const styles = `
   .loading-spinner {
     width: 36px;
     height: 36px;
-    border: 1.5px solid rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(0,0,0,0.08);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
@@ -269,20 +272,48 @@ const styles = `
   .zoom-wrapper .iiz__img {
     width: 100% !important;
     height: 100% !important;
-    object-fit: contain !important;
+    object-fit: cover !important;
     display: block !important;
+  }
+
+  /* Zoom hint badge */
+  .zoom-badge {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    z-index: 10;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 20px;
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.4);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    transition: opacity 0.3s ease;
+  }
+
+  .zoom-badge svg {
+    opacity: 0.5;
   }
 
   /* Swiper navigation arrows */
   .zoom-wrapper .swiper-button-next,
   .zoom-wrapper .swiper-button-prev {
     color: var(--accent) !important;
-    background: rgba(0,0,0,0.5);
+    background: rgba(255,255,255,0.9);
     width: 28px !important;
     height: 28px !important;
     border-radius: 50%;
     border: 1px solid rgba(201,169,110,0.3);
     backdrop-filter: blur(6px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
 
   .zoom-wrapper .swiper-button-next::after,
@@ -305,12 +336,11 @@ const styles = `
   .main-stage .stage-gradient {
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    height: 80px;
-    background: linear-gradient(to top, rgba(13,13,13,0.5), transparent);
+    height: 60px;
+    background: linear-gradient(to top, rgba(255,255,255,0.3), transparent);
     z-index: 5;
     pointer-events: none;
-  }
-`;
+  }`;
 
 export const ProductZoom = (props) => {
   const [slideIndex, setSlideIndex] = useState(0);
