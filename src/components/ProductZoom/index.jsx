@@ -1,471 +1,427 @@
-import React, { useEffect, useRef, useState } from "react";
-import InnerImageZoom from "react-inner-image-zoom";
-import "react-inner-image-zoom/lib/InnerImageZoom/styles.css";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
-import "swiper/css/navigation";
-import { Navigation } from "swiper/modules";
 import { useAppContext } from "../../hooks/useAppContext";
-import CircularProgress from "@mui/material/CircularProgress";
 
+/* ─────────────────────────────────────────────
+   Instagram-style Zoom Overlay
+───────────────────────────────────────────── */
+const ZoomOverlay = ({ src, onClose }) => {
+  const [scale, setScale] = useState(1);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  const dragStart = useRef(null);
+  const lastPos = useRef({ x: 0, y: 0 });
+  const lastTouchDist = useRef(null);
+  const lastScale = useRef(1);
+  const lastScalePos = useRef({ x: 0, y: 0 });
+  const containerRef = useRef(null);
+  const lastTap = useRef(0);
+
+  const resetZoom = () => {
+    setScale(1); setPos({ x: 0, y: 0 }); setIsZoomed(false);
+    lastScale.current = 1; lastPos.current = { x: 0, y: 0 };
+  };
+
+  const handleDoubleAction = useCallback((cx, cy) => {
+    if (isZoomed) {
+      resetZoom();
+    } else {
+      const newScale = 2.8;
+      const rect = containerRef.current?.getBoundingClientRect();
+      let ox = 0, oy = 0;
+      if (rect) {
+        ox = (rect.width / 2 - cx) * (newScale - 1);
+        oy = (rect.height / 2 - cy) * (newScale - 1);
+      }
+      setScale(newScale); setPos({ x: ox, y: oy });
+      lastScale.current = newScale; lastPos.current = { x: ox, y: oy };
+      setIsZoomed(true);
+    }
+  }, [isZoomed]);
+
+  /* Mouse */
+  const onMouseDown = (e) => {
+    if (scale <= 1) return;
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX - lastPos.current.x, y: e.clientY - lastPos.current.y };
+  };
+  const onMouseMove = (e) => {
+    if (!isDragging) return;
+    const nx = e.clientX - dragStart.current.x;
+    const ny = e.clientY - dragStart.current.y;
+    setPos({ x: nx, y: ny }); lastPos.current = { x: nx, y: ny };
+  };
+  const onMouseUp = () => setIsDragging(false);
+  const onDblClick = (e) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    handleDoubleAction(e.clientX - (rect?.left || 0), e.clientY - (rect?.top || 0));
+  };
+
+  /* Touch */
+  const onTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchDist.current = Math.hypot(dx, dy);
+      lastScalePos.current = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      };
+    } else if (e.touches.length === 1) {
+      const now = Date.now();
+      if (now - lastTap.current < 280) {
+        const rect = containerRef.current?.getBoundingClientRect();
+        handleDoubleAction(e.touches[0].clientX - (rect?.left || 0), e.touches[0].clientY - (rect?.top || 0));
+      }
+      lastTap.current = now;
+      if (scale > 1) {
+        dragStart.current = { x: e.touches[0].clientX - lastPos.current.x, y: e.touches[0].clientY - lastPos.current.y };
+        setIsDragging(true);
+      }
+    }
+  };
+  const onTouchMove = (e) => {
+    e.preventDefault();
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      if (lastTouchDist.current) {
+        const ratio = dist / lastTouchDist.current;
+        const newScale = Math.min(Math.max(lastScale.current * ratio, 1), 5);
+        setScale(newScale);
+        setIsZoomed(newScale > 1.05);
+        if (newScale <= 1) { setPos({ x: 0, y: 0 }); lastPos.current = { x: 0, y: 0 }; }
+        lastScale.current = newScale;
+      }
+      lastTouchDist.current = dist;
+    } else if (e.touches.length === 1 && isDragging && scale > 1) {
+      const nx = e.touches[0].clientX - dragStart.current.x;
+      const ny = e.touches[0].clientY - dragStart.current.y;
+      setPos({ x: nx, y: ny }); lastPos.current = { x: nx, y: ny };
+    }
+  };
+  const onTouchEnd = () => { lastTouchDist.current = null; setIsDragging(false); };
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, [onClose]);
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "rgba(0,0,0,0.97)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      touchAction: "none",
+    }}>
+      {/* Close */}
+      <button onClick={onClose} style={{
+        position: "absolute", top: 16, right: 16,
+        background: "rgba(255,255,255,0.1)", border: "none",
+        borderRadius: "50%", width: 40, height: 40,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", color: "#fff", zIndex: 10,
+      }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      {/* Hint text */}
+      <div style={{
+        position: "absolute", bottom: 22, left: "50%", transform: "translateX(-50%)",
+        color: "rgba(255,255,255,0.3)", fontSize: 11, letterSpacing: "0.1em",
+        textTransform: "uppercase", fontFamily: "sans-serif", whiteSpace: "nowrap",
+        pointerEvents: "none",
+      }}>
+        {scale > 1.05 ? "Drag to pan  ·  Double-tap to reset" : "Double-tap or pinch to zoom"}
+      </div>
+
+      {/* Image */}
+      <div
+        ref={containerRef}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onDoubleClick={onDblClick}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={{
+          width: "100vw", height: "100vh",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
+          overflow: "hidden", userSelect: "none",
+        }}
+      >
+        <img
+          src={src}
+          draggable={false}
+          style={{
+            maxWidth: "92vw", maxHeight: "92vh",
+            objectFit: "contain",
+            transform: `scale(${scale}) translate(${pos.x / scale}px, ${pos.y / scale}px)`,
+            transformOrigin: "center center",
+            transition: isDragging ? "none" : "transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94)",
+            willChange: "transform",
+            pointerEvents: "none", userSelect: "none",
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────
+   Styles
+───────────────────────────────────────────── */
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Outfit:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap');
 
-  .zoom-wrapper {
+  .pz-wrapper {
     font-family: 'Outfit', sans-serif;
-    --accent: #c9a96e;
-    --bg-deep: #ffffff;
-    --bg-card: #f8f8f8;
-    --bg-thumb: #f2f2f2;
-    --border: rgba(0,0,0,0.08);
-    --text-muted: rgba(0,0,0,0.35);
-    background: var(--bg-deep);
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
-  }
-
-  .zoom-inner {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  @media (min-width: 992px) {
-    .zoom-inner {
-      flex-direction: row;
-      gap: 16px;
-      align-items: flex-start;
-    }
-  }
-
-  /* ── THUMBNAIL RAIL ── */
-  .thumb-rail {
+    --accent: #222222;
+    background: #fff;
     width: 100%;
-    order: 2;
   }
 
-  @media (min-width: 992px) {
-    .thumb-rail {
-      width: 88px;
-      order: 1;
-      flex-shrink: 0;
-    }
-  }
-
-  .thumb-rail .swiper {
-    height: auto !important;
-  }
-
-  @media (min-width: 992px) {
-    .thumb-rail .swiper {
-      height: 560px !important;
-    }
-    .thumb-rail .swiper-wrapper {
-      flex-direction: column !important;
-    }
-  }
-
-  .thumb-item {
+  /* ── STAGE ── */
+  .pz-stage {
     position: relative;
-    border-radius: 10px;
+    width: 100%;
     overflow: hidden;
-    cursor: pointer;
-    background: var(--bg-thumb);
-    border: 1.5px solid var(--border);
-    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    background: #f5f5f5;
+    cursor: zoom-in;
     aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
-  .thumb-item::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 9px;
-    border: 1.5px solid transparent;
-    transition: border-color 0.3s ease;
+  @media (min-width: 640px) {
+    .pz-stage { aspect-ratio: unset; height: 520px; }
+  }
+  @media (min-width: 1024px) {
+    .pz-stage { height: 640px; }
   }
 
-  .thumb-item:hover {
-    border-color: rgba(201,169,110,0.4);
-    transform: translateX(2px);
+  .pz-stage .swiper,
+  .pz-stage .swiper-wrapper,
+  .pz-stage .swiper-slide {
+    width: 100% !important;
+    height: 100% !important;
   }
 
-  .thumb-item.active {
-    border-color: var(--accent);
-  }
-
-  .thumb-item.active::after {
-    border-color: rgba(201,169,110,0.2);
-  }
-
-  .thumb-item img {
+  .pz-main-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.4s ease, opacity 0.3s ease;
-  }
-
-  .thumb-item:not(.active) img {
-    opacity: 0.5;
-    filter: grayscale(20%);
-  }
-
-  .thumb-item:hover img {
-    opacity: 0.75;
-    transform: scale(1.05);
-  }
-
-  .thumb-item.active img {
-    opacity: 1;
-  }
-
-  /* Active indicator dot */
-  .thumb-item.active .dot {
-    display: block;
-  }
-
-  .thumb-dot {
-    display: none;
-    position: absolute;
-    left: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 22px;
-    background: var(--accent);
-    border-radius: 2px;
-    box-shadow: 0 0 8px rgba(201,169,110,0.7);
-  }
-
-  @media (min-width: 992px) {
-    .thumb-item.active .thumb-dot { display: block; }
-  }
-
-  /* ── MAIN IMAGE AREA ── */
-  .main-stage {
-    position: relative;
-    flex: 1;
-    order: 1;
-    background: #ffffff;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    min-height: 320px;
-    width: 100%;
-  }
-
-  @media (min-width: 992px) {
-    .main-stage {
-      order: 2;
-      height: 560px;
-    }
-  }
-
-  /* Corner accents */
-  .main-stage::before,
-  .main-stage::after {
-    content: '';
-    position: absolute;
-    width: 28px;
-    height: 28px;
-    z-index: 10;
+    transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+    user-select: none;
     pointer-events: none;
   }
-  .main-stage::before {
-    top: 12px; left: 12px;
-    border-top: 1.5px solid var(--accent);
-    border-left: 1.5px solid var(--accent);
-    border-radius: 4px 0 0 0;
-    opacity: 0.7;
-  }
-  .main-stage::after {
-    bottom: 12px; right: 12px;
-    border-bottom: 1.5px solid var(--accent);
-    border-right: 1.5px solid var(--accent);
-    border-radius: 0 0 4px 0;
-    opacity: 0.7;
+
+  .pz-stage:hover .pz-main-img {
+    transform: scale(1.04);
   }
 
-  /* Zoom hint badge */
-  .zoom-badge {
-    position: absolute;
-    bottom: 16px;
-    left: 16px;
-    z-index: 10;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 20px;
-    padding: 5px 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    font-family: 'Outfit', sans-serif;
+  /* ── LOADING ── */
+  .pz-loading {
+    position: absolute; inset: 0; z-index: 15;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .pz-spinner {
+    width: 30px; height: 30px;
+    border: 2px solid rgba(0,0,0,0.06);
+    border-top-color: #999;
+    border-radius: 50%;
+    animation: pz-spin 0.7s linear infinite;
+  }
+  @keyframes pz-spin { to { transform: rotate(360deg); } }
+
+  /* ── COUNTER ── */
+  .pz-counter {
+    position: absolute; top: 14px; right: 14px; z-index: 10;
+    background: rgba(0,0,0,0.38); backdrop-filter: blur(6px);
+    border-radius: 20px; padding: 3px 10px;
+    font-size: 11px; letter-spacing: 0.05em;
+    color: rgba(255,255,255,0.9);
     font-weight: 300;
-    transition: opacity 0.3s ease;
   }
 
-  .zoom-badge svg {
-    opacity: 0.6;
+  /* ── ZOOM ICON ── */
+  .pz-zoom-icon {
+    position: absolute; bottom: 14px; right: 14px; z-index: 10;
+    background: rgba(255,255,255,0.82); backdrop-filter: blur(6px);
+    border-radius: 50%; width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(0,0,0,0.5);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.1);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
   }
+  .pz-stage:hover .pz-zoom-icon { opacity: 1; }
 
-  /* Counter badge */
-  .image-counter {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    z-index: 10;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 13px;
-    font-weight: 300;
-    color: rgba(0,0,0,0.35);
-    letter-spacing: 0.05em;
-  }
-
-  .image-counter span {
+  /* ── NAV ARROWS ── */
+  .pz-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    z-index: 10; background: rgba(255,255,255,0.92);
+    border: none; border-radius: 50%;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.14);
     color: rgba(0,0,0,0.65);
-    font-size: 15px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease, background 0.15s ease, transform 0.15s ease;
   }
+  .pz-stage:hover .pz-arrow { opacity: 1; pointer-events: all; }
+  .pz-arrow:hover { background: #fff; color: #000; transform: translateY(-50%) scale(1.06); }
+  .pz-arrow.left  { left: 14px; }
+  .pz-arrow.right { right: 56px; }
 
-  /* Loading overlay */
-  .loading-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 20;
-    background: rgba(255,255,255,0.8);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
+  /* ── DOT RAIL ── */
+  .pz-dots {
+    display: flex; align-items: center; justify-content: center;
+    gap: 5px;
+    padding: 12px 0 4px;
   }
-
-  .loading-spinner {
-    width: 36px;
-    height: 36px;
-    border: 1.5px solid rgba(0,0,0,0.08);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+  .pz-dot {
+    height: 3px; border-radius: 2px;
+    background: rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: width 0.35s cubic-bezier(0.4,0,0.2,1), background 0.35s ease;
   }
+  .pz-dot.active { background: #111; }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
+  /* ── FADE ANIMATION ── */
+  .pz-fade { animation: pz-in 0.3s ease forwards; }
+  @keyframes pz-in { from { opacity: 0; } to { opacity: 1; } }
+`;
 
-  /* InnerImageZoom override */
-  .zoom-wrapper .iiz {
-    width: 100% !important;
-    height: 100% !important;
-    display: block !important;
-  }
-
-  .zoom-wrapper .iiz__img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    display: block !important;
-  }
-
-  /* Zoom hint badge */
-  .zoom-badge {
-    position: absolute;
-    bottom: 16px;
-    left: 16px;
-    z-index: 10;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 20px;
-    padding: 5px 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(0,0,0,0.4);
-    font-family: 'Outfit', sans-serif;
-    font-weight: 400;
-    transition: opacity 0.3s ease;
-  }
-
-  .zoom-badge svg {
-    opacity: 0.5;
-  }
-
-  /* Swiper navigation arrows */
-  .zoom-wrapper .swiper-button-next,
-  .zoom-wrapper .swiper-button-prev {
-    color: var(--accent) !important;
-    background: rgba(255,255,255,0.9);
-    width: 28px !important;
-    height: 28px !important;
-    border-radius: 50%;
-    border: 1px solid rgba(201,169,110,0.3);
-    backdrop-filter: blur(6px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-
-  .zoom-wrapper .swiper-button-next::after,
-  .zoom-wrapper .swiper-button-prev::after {
-    font-size: 10px !important;
-    font-weight: 700;
-  }
-
-  /* Fade-in slide */
-  .fade-slide {
-    animation: fadeSlide 0.4s ease forwards;
-  }
-
-  @keyframes fadeSlide {
-    from { opacity: 0; transform: scale(0.99); }
-    to   { opacity: 1; transform: scale(1); }
-  }
-
-  /* Subtle gradient overlay bottom of main image */
-  .main-stage .stage-gradient {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 60px;
-    background: linear-gradient(to top, rgba(255,255,255,0.3), transparent);
-    z-index: 5;
-    pointer-events: none;
-  }`;
-
+/* ─────────────────────────────────────────────
+   ProductZoom
+───────────────────────────────────────────── */
 export const ProductZoom = (props) => {
   const [slideIndex, setSlideIndex] = useState(0);
-  const [isImageLoading, setIsImageLoading] = useState(false);
-  const zoomSliderBig = useRef();
-  const zoomSliderSml = useRef();
-  const context = useAppContext();
+  const [isLoading, setIsLoading] = useState(false);
+  const [zoomSrc, setZoomSrc] = useState(null);
+  const swiperRef = useRef();
 
-  const handleImageChange = (index) => {
-    if (slideIndex === index) return;
-    setIsImageLoading(true);
+  const total = props?.images?.length || 0;
+
+  const goTo = (index) => {
+    if (index === slideIndex) return;
+    setIsLoading(true);
     setSlideIndex(index);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    setTimeout(() => setIsImageLoading(false), 600);
+    swiperRef.current?.swiper?.slideTo(index);
+    setTimeout(() => setIsLoading(false), 450);
   };
 
-  const goto = (index) => {
-    if (slideIndex === index) return;
-    zoomSliderSml.current?.swiper?.slideTo(index);
-    zoomSliderBig.current?.swiper?.slideTo(index);
-    handleImageChange(index);
+  const goPrev = (e) => { e.stopPropagation(); goTo(Math.max(0, slideIndex - 1)); };
+  const goNext = (e) => { e.stopPropagation(); goTo(Math.min(total - 1, slideIndex + 1)); };
+
+  const openZoom = () => {
+    if (props?.images?.[slideIndex]) setZoomSrc(props.images[slideIndex]);
   };
 
   useEffect(() => {
     setSlideIndex(0);
-    zoomSliderSml?.current?.swiper?.slideTo(0);
-    zoomSliderBig?.current?.swiper?.slideTo(0);
+    swiperRef?.current?.swiper?.slideTo(0);
   }, [props?.images]);
 
-  const total = props?.images?.length || 0;
+  const dotWidth = (i) => {
+    const d = Math.abs(i - slideIndex);
+    if (d === 0) return 22;
+    if (d === 1) return 8;
+    return 5;
+  };
 
   return (
     <>
       <style>{styles}</style>
 
-      <div className="zoom-wrapper">
-        <div className="zoom-inner">
+      {zoomSrc && <ZoomOverlay src={zoomSrc} onClose={() => setZoomSrc(null)} />}
 
-          {/* ── Thumbnail Rail ── */}
-          <div className="thumb-rail">
-            <Swiper
-              ref={zoomSliderSml}
-              direction={context?.windowWidth < 992 ? "horizontal" : "vertical"}
-              slidesPerView={context?.windowWidth < 992 ? 5 : 5}
-              spaceBetween={8}
-              navigation={context?.windowWidth >= 992 && total > 5}
-              modules={[Navigation]}
-              className="zoomProductSliderThumbs"
-            >
-              {props?.images?.map((item, index) => (
-                <SwiperSlide key={index}>
-                  <div
-                    className={`thumb-item ${slideIndex === index ? "active" : ""}`}
-                    onClick={() => goto(index)}
-                  >
-                    <span className="thumb-dot" />
-                    <img src={item} alt={`Product view ${index + 1}`} />
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+      <div className="pz-wrapper">
+
+        {/* Stage */}
+        <div className="pz-stage" onClick={openZoom}>
+
+          {isLoading && <div className="pz-loading"><div className="pz-spinner" /></div>}
+
+          {total > 1 && <div className="pz-counter">{slideIndex + 1} / {total}</div>}
+
+          <div className="pz-zoom-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="11" y1="8" x2="11" y2="14"/>
+              <line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
           </div>
 
-          {/* ── Main Stage ── */}
-          <div className="main-stage">
-
-            {/* Image counter */}
-            {total > 1 && (
-              <div className="image-counter">
-                <span>{String(slideIndex + 1).padStart(2, "0")}</span>
-                {" / "}
-                {String(total).padStart(2, "0")}
-              </div>
-            )}
-
-            {/* Loading overlay */}
-            {isImageLoading && (
-              <div className="loading-overlay">
-                <div className="loading-spinner" />
-              </div>
-            )}
-
-            {/* Bottom gradient */}
-            <div className="stage-gradient" />
-
-            {/* Zoom hint */}
-            <div className="zoom-badge">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+          {total > 1 && slideIndex > 0 && (
+            <button className="pz-arrow left" onClick={goPrev}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="15 18 9 12 15 6"/>
               </svg>
-              Hover to zoom
-            </div>
+            </button>
+          )}
+          {total > 1 && slideIndex < total - 1 && (
+            <button className="pz-arrow right" onClick={goNext}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          )}
 
-            {/* Main Swiper */}
-            <Swiper
-              ref={zoomSliderBig}
-              slidesPerView={1}
-              spaceBetween={0}
-              navigation={false}
-              onSlideChange={(swiper) => {
-                handleImageChange(swiper.activeIndex);
-                zoomSliderSml.current?.swiper?.slideTo(swiper.activeIndex);
-              }}
-              style={{ height: "100%" }}
-            >
-              {props?.images?.map((item, index) => (
-                <SwiperSlide
-                  key={index}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                >
-                  <div className={slideIndex === index ? "fade-slide" : ""} style={{ width: "100%", height: "100%" }}>
-                    <InnerImageZoom
-                      zoomType="hover"
-                      zoomScale={1.5}
-                      src={item}
-                      style={{ width: "100%", height: "100%" }}
-                    />
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-
-          </div>
+          <Swiper
+            ref={swiperRef}
+            slidesPerView={1}
+            spaceBetween={0}
+            onSlideChange={(s) => {
+              if (s.activeIndex !== slideIndex) {
+                setIsLoading(true);
+                setSlideIndex(s.activeIndex);
+                setTimeout(() => setIsLoading(false), 450);
+              }
+            }}
+            style={{ width: "100%", height: "100%" }}
+          >
+            {props?.images?.map((item, i) => (
+              <SwiperSlide key={i}>
+                <div className={i === slideIndex ? "pz-fade" : ""} style={{ width: "100%", height: "100%" }}>
+                  <img className="pz-main-img" src={item} alt={`Product ${i + 1}`} draggable={false} />
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
         </div>
+
+        {/* Dot indicators */}
+        {total > 1 && (
+          <div className="pz-dots">
+            {props.images.map((_, i) => (
+              <div
+                key={i}
+                className={`pz-dot${i === slideIndex ? " active" : ""}`}
+                style={{ width: dotWidth(i) }}
+                onClick={() => goTo(i)}
+              />
+            ))}
+          </div>
+        )}
+
       </div>
     </>
   );
