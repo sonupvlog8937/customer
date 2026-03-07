@@ -130,6 +130,8 @@ function readFiltersFromURL(params) {
     weights:    toArr(params.get("weights")),
     ram:        toArr(params.get("ram")),
     priceRanges:toArr(params.get("priceRanges")),
+    minPrice:   params.get("minPrice") !== null ? Number(params.get("minPrice")) : null,
+    maxPrice:   params.get("maxPrice") !== null ? Number(params.get("maxPrice")) : null,
     colors:     toArr(params.get("colors")),
     stock:      params.get("stock") || "all",
     sale:       params.get("sale") === "1",
@@ -158,6 +160,8 @@ function buildURLSearch(filters) {
   if (filters.weights?.length)                  p.set("weights",         fromArr(filters.weights));
   if (filters.ram?.length)                      p.set("ram",             fromArr(filters.ram));
   if (filters.priceRanges?.length)              p.set("priceRanges",     fromArr(filters.priceRanges));
+  if (filters.minPrice !== null && filters.minPrice !== undefined) p.set("minPrice", String(filters.minPrice));
+  if (filters.maxPrice !== null && filters.maxPrice !== undefined) p.set("maxPrice", String(filters.maxPrice));
   if (filters.colors?.length)                   p.set("colors",          fromArr(filters.colors));
   if (filters.stock && filters.stock !== "all") p.set("stock",           filters.stock);
   if (filters.sale)                             p.set("sale",            "1");
@@ -219,6 +223,8 @@ const SearchPage = () => {
     weights:     selectedWeights,
     ram:         selectedRamOptions,
     priceRanges: selectedPriceRanges,
+    minPrice:    selectedMinPrice,
+    maxPrice:    selectedMaxPrice,
     colors:      selectedColors,
     stock:       selectedStockStatus,
     sale:        selectedSaleOnly,
@@ -259,6 +265,8 @@ const SearchPage = () => {
         catId:      filters.catId,
         subCatId:   filters.subCatId,
         thirdCatId: filters.thirdCatId,
+        minPrice:   null,
+        maxPrice:   null,
         page:       1,
       })}`,
       { replace: true }
@@ -290,6 +298,8 @@ const SearchPage = () => {
   const setSelectedWeights        = makeUpdater("weights",     selectedWeights);
   const setSelectedRamOptions     = makeUpdater("ram",         selectedRamOptions);
   const setSelectedPriceRanges    = makeUpdater("priceRanges", selectedPriceRanges);
+  const setSelectedMinPrice       = makeUpdater("minPrice",    selectedMinPrice);
+  const setSelectedMaxPrice       = makeUpdater("maxPrice",    selectedMaxPrice);
   const setSelectedColors         = makeUpdater("colors",      selectedColors);
   const setSelectedStockStatus    = makeUpdater("stock",       selectedStockStatus);
   const setSelectedSaleOnly       = makeUpdater("sale",        selectedSaleOnly);
@@ -302,11 +312,13 @@ const SearchPage = () => {
     selectedPriceRanges.length + (selectedSaleOnly ? 1 : 0) +
     (selectedStockStatus !== "all" ? 1 : 0) + selectedDiscountRanges.length +
     selectedWeights.length + selectedRamOptions.length +
-    selectedColors.length + selectedRatingBands.length
+    selectedColors.length + selectedRatingBands.length +
+    (selectedMinPrice !== null || selectedMaxPrice !== null ? 1 : 0)
   ), [
     selectedBrands, selectedSizes, selectedProductTypes, selectedPriceRanges,
     selectedSaleOnly, selectedStockStatus, selectedDiscountRanges,
     selectedWeights, selectedRamOptions, selectedColors, selectedRatingBands,
+    selectedMinPrice, selectedMaxPrice,
   ]);
 
   /* ── Active filter pills ── */
@@ -377,6 +389,8 @@ const SearchPage = () => {
               selectedWeights={selectedWeights}               setSelectedWeights={setSelectedWeights}
               selectedRamOptions={selectedRamOptions}         setSelectedRamOptions={setSelectedRamOptions}
               selectedPriceRanges={selectedPriceRanges}       setSelectedPriceRanges={setSelectedPriceRanges}
+              selectedMinPrice={selectedMinPrice}             setSelectedMinPrice={setSelectedMinPrice}
+              selectedMaxPrice={selectedMaxPrice}             setSelectedMaxPrice={setSelectedMaxPrice}
               selectedColors={selectedColors}                 setSelectedColors={setSelectedColors}
               selectedRatingBands={selectedRatingBands}       setSelectedRatingBands={setSelectedRatingBands}
 

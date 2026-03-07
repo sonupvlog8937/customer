@@ -295,19 +295,7 @@ const ProductItem = (props) => {
                 backdropFilter: "blur(2px)",
               }}
             >
-              <span
-                style={{
-                  background: "#111",
-                  color: "#fff",
-                  borderRadius: "8px",
-                  padding: "6px 16px",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  letterSpacing: "0.05em",
-                }}
-              >
-                OUT OF STOCK
-              </span>
+              
             </div>
           )}
         </div>

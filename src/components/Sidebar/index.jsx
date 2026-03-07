@@ -13,7 +13,7 @@ import Rating from "@mui/material/Rating";
 import { useAppContext } from "../../hooks/useAppContext";
 import { useLocation } from "react-router-dom";
 import { postData } from "../../utils/api";
-import { MdOutlineFilterAlt, MdClose, MdTune, MdRefresh } from "react-icons/md";
+import { MdOutlineFilterAlt, MdTune, MdRefresh, MdCheck } from "react-icons/md";
 
 /* ═══════════════════════════════════════════════════════════════
    CSS
@@ -37,6 +37,7 @@ const CSS = `
   .sb-root .MuiCheckbox-root.Mui-checked { color:#0d0d12 !important; }
   .sb-root .MuiFormControlLabel-root:hover .MuiFormControlLabel-label { color:#0d0d12 !important; }
 
+  /* Category */
   .sb-cat-row { display:flex; align-items:center; gap:2px; border-radius:8px; transition:background 0.15s; padding:1px 2px; }
   .sb-cat-row:hover { background:#f7f7fb; }
   .sb-cat-btn { text-align:left; font-size:13px; font-weight:500; color:#6b7280; background:none; border:none; cursor:pointer; padding:5px 2px; line-height:1.4; font-family:'DM Sans',sans-serif; transition:color 0.15s ease; flex:1; -webkit-tap-highlight-color:transparent; }
@@ -51,13 +52,67 @@ const CSS = `
   .sb-color-option { display:flex; align-items:center; gap:8px; padding:2px 0; }
   .sb-color-swatch { width:16px; height:16px; border-radius:50%; border:1.5px solid rgba(0,0,0,0.12); flex-shrink:0; }
 
+  /* ── PRICE RANGE PRESETS ── */
+  .sb-price-presets { display:flex; flex-direction:column; gap:3px; margin-bottom:14px; max-height:280px; overflow-y:auto; padding-right:2px; }
+  .sb-price-presets::-webkit-scrollbar { width:4px; }
+  .sb-price-presets::-webkit-scrollbar-track { background:#f8f8fb; border-radius:4px; }
+  .sb-price-presets::-webkit-scrollbar-thumb { background:#e0e0ea; border-radius:4px; }
+  .sb-price-presets::-webkit-scrollbar-thumb:hover { background:#c0c0d0; }
+  .sb-price-opt {
+    display:flex; align-items:center; gap:10px;
+    padding:7px 10px; border-radius:9px; cursor:pointer;
+    border:1.5px solid transparent; transition:all 0.14s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .sb-price-opt:hover { background:#f7f7fb; border-color:#e8e8f3; }
+  .sb-price-opt.active { background:#f0f0fa; border-color:#c7c7ef; }
+
+  .sb-price-radio {
+    width:16px; height:16px; border-radius:50%; border:2px solid #d1d5db;
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    transition:all 0.14s ease;
+  }
+  .sb-price-opt.active .sb-price-radio { border-color:#0d0d12; background:#0d0d12; }
+  .sb-price-radio-dot {
+    width:6px; height:6px; border-radius:50%; background:#fff;
+    opacity:0; transition:opacity 0.14s ease;
+  }
+  .sb-price-opt.active .sb-price-radio-dot { opacity:1; }
+
+  .sb-price-lbl { font-size:13px; font-weight:500; color:#374151; flex:1; line-height:1.3; }
+  .sb-price-opt.active .sb-price-lbl { color:#0d0d12; font-weight:700; }
+
+  .sb-price-divider {
+    display:flex; align-items:center; gap:8px; margin:10px 0 8px;
+    font-size:10px; font-weight:700; letter-spacing:0.08em;
+    text-transform:uppercase; color:#9ca3af;
+  }
+  .sb-price-divider::before, .sb-price-divider::after {
+    content:''; flex:1; height:1px; background:#f0f0f5;
+  }
+
+  /* Slider (existing) */
   .sb-price-values { display:flex; align-items:center; justify-content:space-between; margin-top:14px; }
   .sb-price-val { background:#f8f8fb; border:1px solid #e8e8f0; border-radius:8px; padding:4px 10px; font-size:12px; font-weight:700; color:#0d0d12; }
-  .sb-price-divider { font-size:11px; color:#9ca3af; }
+  .sb-price-divider-line { font-size:11px; color:#9ca3af; }
 
   .sb-root .range-slider { height:4px !important; }
   .sb-root .range-slider .range-slider__thumb { width:18px !important; height:18px !important; background:#0d0d12 !important; border:2px solid #fff !important; box-shadow:0 2px 8px rgba(0,0,0,0.2) !important; }
   .sb-root .range-slider .range-slider__range { background:#0d0d12 !important; }
+
+  /* Active price badge */
+  .sb-price-active-tag {
+    display:inline-flex; align-items:center; gap:5px;
+    background:#0d0d12; color:#fff;
+    font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px;
+    margin-bottom:10px;
+  }
+  .sb-price-active-tag button {
+    background:none; border:none; color:rgba(255,255,255,0.7);
+    cursor:pointer; padding:0; font-size:13px; line-height:1;
+    display:flex; align-items:center;
+  }
+  .sb-price-active-tag button:hover { color:#fff; }
 
   .sb-rating-row { display:flex; align-items:center; gap:4px; padding:2px 0; cursor:pointer; }
 
@@ -90,6 +145,22 @@ const CSS = `
   .sb-dialog-cancel:hover { border-color:#374151; }
 `;
 
+/* ── PRICE PRESET RANGES ── */
+const PRICE_RANGES = [
+  { label: "Under ₹99",          min: 0,     max: 99 },
+  { label: "₹99 – ₹199",        min: 99,    max: 199 },
+  { label: "₹199 – ₹299",       min: 199,   max: 299 },
+  { label: "₹299 – ₹499",       min: 299,   max: 499 },
+  { label: "₹499 – ₹699",       min: 499,   max: 699 },
+  { label: "₹699 – ₹999",       min: 699,   max: 999 },
+  { label: "₹999 – ₹1,499",     min: 999,   max: 1499 },
+  { label: "₹1,499 – ₹1,999",   min: 1499,  max: 1999 },
+  { label: "₹1,999 – ₹2,999",   min: 1999,  max: 2999 },
+  { label: "₹2,999 – ₹4,999",   min: 2999,  max: 4999 },
+  { label: "₹4,999 – ₹9,999",   min: 4999,  max: 9999 },
+  { label: "Above ₹9,999",       min: 9999,  max: 60000 },
+];
+
 /* ── Collapsible Section ── */
 const Section = ({ title, open, onToggle, children }) => (
   <div className="sb-box">
@@ -116,18 +187,19 @@ export const Sidebar = (props) => {
   });
   const toggleSection = (k) => setOpenSections(p => ({ ...p, [k]: !p[k] }));
 
-  /* ── Stable filter options (populated once on first load) ── */
+  /* ── Stable filter options ── */
   const [stableOptions,   setStableOptions]   = useState({ brands: [], sizes: [], productTypes: [], weights: [], ramOptions: [] });
   const [availableColors, setAvailableColors] = useState([]);
   const [expandedCatIds,  setExpandedCatIds]  = useState([]);
 
-  /* ── Internal state only for: catId, subCatId, thirdsubCatId, rating, colors, price ──
-     These are NOT in the parent's URL-driven filter state, so Sidebar owns them.
-     All other filters (brand, size, etc.) come from props and go to URL via setters. */
-  const [internalCat, setInternalCat] = useState({ catId: [], subCatId: [], thirdsubCatId: [] });
+  /* ── Internal state ── */
+  const [internalCat,    setInternalCat]    = useState({ catId: [], subCatId: [], thirdsubCatId: [] });
   const [internalRating, setInternalRating] = useState([]);
   const [internalColors, setInternalColors] = useState([]);
-  const [price, setPrice] = useState([0, 60000]);
+  const [price,          setPrice]          = useState([0, 60000]);
+
+  /* ── Price preset state (NEW) ── */
+  const [activePricePreset, setActivePricePreset] = useState(null); // index of PRICE_RANGES
 
   const [activeMoreFilter,     setActiveMoreFilter]     = useState(null);
   const [moreFilterSelections, setMoreFilterSelections] = useState([]);
@@ -135,42 +207,32 @@ export const Sidebar = (props) => {
   const context  = useAppContext();
   const location = useLocation();
 
-  /* ═══════════════════════════════════════════════════════════
-     FETCH — uses a ref so it NEVER has a stale closure.
-     Every time ANY dependency changes, the ref is updated
-     before the debounced fetch reads it.
-  ═══════════════════════════════════════════════════════════ */
-  const timerRef    = useRef(null);
-  const latestRef   = useRef({});
+  /* ── FETCH (debounced, ref-based) ── */
+  const timerRef  = useRef(null);
+  const latestRef = useRef({});
 
-  /* Update ref every render — no deps needed */
-  latestRef.current = {
-    props,
-    internalCat,
-    internalRating,
-    internalColors,
-    price,
-  };
+  latestRef.current = { props, internalCat, internalRating, internalColors, price };
 
   const fetchProducts = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-
     timerRef.current = setTimeout(() => {
       const { props: p, internalCat: cat, internalRating: rat, internalColors: col, price: pr } = latestRef.current;
-
       p.setIsLoading(true);
 
+      /* prefer URL-driven props (SearchPage), fall back to internal slider (ProductListing) */
+      const minPrice = (p.selectedMinPrice !== null && p.selectedMinPrice !== undefined)
+        ? p.selectedMinPrice : pr[0];
+      const maxPrice = (p.selectedMaxPrice !== null && p.selectedMaxPrice !== undefined)
+        ? p.selectedMaxPrice : pr[1];
+
       const payload = {
-        /* Category filters — managed internally */
         catId:          cat.catId,
         subCatId:       cat.subCatId,
         thirdsubCatId:  cat.thirdsubCatId,
         rating:         rat,
         colors:         col,
-        minPrice:       pr[0],
-        maxPrice:       pr[1],
-
-        /* All other filters — come from props (URL-driven) */
+        minPrice,
+        maxPrice,
         brands:         p.selectedBrands        || [],
         sizes:          p.selectedSizes          || [],
         productTypes:   p.selectedProductTypes   || [],
@@ -183,119 +245,95 @@ export const Sidebar = (props) => {
         ratingBands:    p.selectedRatingBands    || [],
         sortType:       p.selectedSortType       || "bestseller",
         query:          p.searchQuery            || "",
-
-        /* ✅ Page — always fresh from props (URL-driven) */
         page:  p.page ?? 1,
         limit: 25,
       };
 
       const apiUrl = p.searchQuery ? `/api/product/search/get` : `/api/product/filters`;
-
       postData(apiUrl, payload)
         .then((res) => {
           p.setProductsData(res);
           p.setIsLoading(false);
           p.setTotalPages(res?.totalPages || 1);
-          if (p.setTotalProducts) {
-            p.setTotalProducts(res?.totalProducts || res?.total || 0);
-          }
+          if (p.setTotalProducts) p.setTotalProducts(res?.totalProducts || res?.total || 0);
           window.scrollTo({ top: 0, behavior: "smooth" });
         })
         .catch(() => p.setIsLoading(false));
     }, 150);
-  }, []); // ✅ empty deps — reads from ref, NEVER stale
+  }, []);
 
-  /* ═══════════════════════════════════════════════════════════
-     TRIGGER — fire fetch whenever anything changes.
-     
-     KEY INSIGHT:
-     - props.page changes   → goToPage() was called → URL changed →
-       SearchPage re-renders → new page prop → this effect fires →
-       fetchProducts() reads fresh page from ref ✅
-     
-     - filter changes       → setSelectedX() → URL changes →
-       SearchPage re-renders → new filter props → this effect fires →
-       fetchProducts() reads fresh filters from ref ✅
-     
-     - reset button clicked → handleResetAllFilters() → URL cleared →
-       all filter props become [] → this effect fires → fetch with
-       empty filters ✅
-  ═══════════════════════════════════════════════════════════ */
   useEffect(() => {
     fetchProducts();
   }, [
-    /* Page — most critical. Must be here so next page fetch works */
     props.page,
-
-    /* All URL-driven external filters */
-    props.selectedBrands,
-    props.selectedSizes,
-    props.selectedProductTypes,
-    props.selectedPriceRanges,
-    props.selectedSaleOnly,
-    props.selectedStockStatus,
-    props.selectedDiscountRanges,
-    props.selectedWeights,
-    props.selectedRamOptions,
-    props.selectedRatingBands,
-    props.selectedSortType,
-    props.searchQuery,
-
-    /* Internal sidebar state */
-    internalCat,
-    internalRating,
-    internalColors,
-    price,
-
-    fetchProducts, // stable ref
+    props.selectedBrands, props.selectedSizes, props.selectedProductTypes,
+    props.selectedPriceRanges, props.selectedSaleOnly, props.selectedStockStatus,
+    props.selectedDiscountRanges, props.selectedWeights, props.selectedRamOptions,
+    props.selectedRatingBands, props.selectedSortType, props.searchQuery,
+    internalCat, internalRating, internalColors, price,
+    fetchProducts,
   ]);
 
-  /* ── Sync catId from URL on location change ── */
+  /* ── Sync price slider + preset from URL props (SearchPage) ── */
+  useEffect(() => {
+    const min = props.selectedMinPrice;
+    const max = props.selectedMaxPrice;
+    if (min !== null && min !== undefined && max !== null && max !== undefined) {
+      setPrice([min, max]);
+      // find matching preset to highlight it
+      const idx = PRICE_RANGES.findIndex(r => r.min === min && r.max === max);
+      setActivePricePreset(idx !== -1 ? idx : null);
+    } else {
+      setPrice([0, 60000]);
+      setActivePricePreset(null);
+    }
+  }, [props.selectedMinPrice, props.selectedMaxPrice]);
+
+  /* ── Sync fetchProducts when selectedMinPrice/MaxPrice changes ── */
+  useEffect(() => {
+    fetchProducts();
+  }, [props.selectedMinPrice, props.selectedMaxPrice, fetchProducts]);
+
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const url    = location.search;
-
     setInternalCat(() => {
       if (url.includes("catId"))           return { catId: [params.get("catId")].filter(Boolean), subCatId: [], thirdsubCatId: [] };
       if (url.includes("subCatId"))        return { catId: [], subCatId: [params.get("subCatId")].filter(Boolean), thirdsubCatId: [] };
       if (url.includes("thirdLavelCatId")) return { catId: [], subCatId: [], thirdsubCatId: [params.get("thirdLavelCatId")].filter(Boolean) };
       return prev => prev;
     });
-
     context?.setSearchData?.([]);
   }, [location.search]);
 
-  /* ── Populate stable filter options once on first load ── */
+  /* ── Populate stable filter options once ── */
   useEffect(() => {
     const products      = props?.productsData?.products     || [];
     const filterOptions = props?.productsData?.filterOptions || {};
     if (products.length === 0 && Object.keys(filterOptions).length === 0) return;
 
     setStableOptions(prev => {
-      if (prev.brands.length > 0 || prev.sizes.length > 0) return prev; // already populated
+      if (prev.brands.length > 0 || prev.sizes.length > 0) return prev;
 
       const brands = Array.isArray(filterOptions.brands) && filterOptions.brands.length > 0
         ? filterOptions.brands
         : [...new Set(products.map(p => p?.brand?.trim()).filter(Boolean))];
 
       const sizeSet = new Set();
-      (filterOptions.sizes?.length ? filterOptions.sizes : [])
-        .forEach(s => sizeSet.add(s));
+      (filterOptions.sizes?.length ? filterOptions.sizes : []).forEach(s => sizeSet.add(s));
       products.forEach(p => (p?.size || []).forEach(s => s && sizeSet.add(s)));
 
       const typeSet = new Set();
-      (filterOptions.productTypes?.length ? filterOptions.productTypes : [])
-        .forEach(t => typeSet.add(t));
+      (filterOptions.productTypes?.length ? filterOptions.productTypes : []).forEach(t => typeSet.add(t));
       products.forEach(p => { const t = p?.productType || p?.thirdSubCatName || p?.subCatName || p?.catName; if (t) typeSet.add(t); });
 
       const weightSet = new Set();
-      (filterOptions.weights?.length ? filterOptions.weights : [])
-        .forEach(w => weightSet.add(w));
+      (filterOptions.weights?.length ? filterOptions.weights : []).forEach(w => weightSet.add(w));
       products.forEach(p => (p?.productWeight || []).forEach(w => w && weightSet.add(w)));
 
       const ramSet = new Set();
-      (filterOptions.ramOptions?.length ? filterOptions.ramOptions : [])
-        .forEach(r => ramSet.add(r));
+      (filterOptions.ramOptions?.length ? filterOptions.ramOptions : []).forEach(r => ramSet.add(r));
       products.forEach(p => (p?.productRam || []).forEach(r => r && ramSet.add(r)));
 
       const colorMap = new Map();
@@ -311,9 +349,9 @@ export const Sidebar = (props) => {
     });
   }, [props?.productsData]);
 
-  /* ═══════════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════
      HANDLERS
-  ═══════════════════════════════════════════════════════════ */
+  ══════════════════════════════════════════ */
   const totalProducts = props?.productsData?.totalProducts || props?.productsData?.total || 0;
 
   const discountBands = useMemo(() => [
@@ -344,14 +382,38 @@ export const Sidebar = (props) => {
     setExpandedCatIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
   }, []);
 
-  /* ── Reset: clears both URL-driven (via parent callback) and internal state ── */
+  /* ── Price preset handler ── */
+  const handlePricePreset = useCallback((idx) => {
+    if (activePricePreset === idx) {
+      setActivePricePreset(null);
+      setPrice([0, 60000]);
+      props.setSelectedMinPrice?.(null);
+      props.setSelectedMaxPrice?.(null);
+    } else {
+      const range = PRICE_RANGES[idx];
+      setActivePricePreset(idx);
+      setPrice([range.min, range.max]);
+      props.setSelectedMinPrice?.(range.min);
+      props.setSelectedMaxPrice?.(range.max);
+    }
+  }, [activePricePreset, props]);
+
+  /* When slider is dragged manually, clear preset selection */
+  const handleSliderInput = useCallback((val) => {
+    setPrice(val);
+    setActivePricePreset(null);
+    props.setSelectedMinPrice?.(val[0]);
+    props.setSelectedMaxPrice?.(val[1]);
+  }, [props]);
+
   const handleResetFilters = useCallback(() => {
-    /* Reset internal state */
     setInternalCat({ catId: [], subCatId: [], thirdsubCatId: [] });
     setInternalRating([]);
     setInternalColors([]);
     setPrice([0, 60000]);
-    /* Reset URL-driven filters via parent */
+    setActivePricePreset(null);
+    props.setSelectedMinPrice?.(null);
+    props.setSelectedMaxPrice?.(null);
     props?.onResetAllFilters?.();
     context?.setOpenFilter?.(false);
   }, [props, context]);
@@ -366,7 +428,7 @@ export const Sidebar = (props) => {
   const toggleMoreSel = (k) => setMoreFilterSelections(p => p.includes(k) ? p.filter(x => x !== k) : [...p, k]);
   const applyMoreSel  = ()  => { activeMoreFilter?.onApplySelection?.(moreFilterSelections); closeMore(); context?.setOpenFilter?.(false); };
 
-  /* ── Render category tree with collapse ── */
+  /* ── Render category tree ── */
   const renderCategoryTree = (categories = [], level = 0) => {
     if (!Array.isArray(categories) || categories.length === 0) return null;
     return categories.map(cat => {
@@ -379,8 +441,14 @@ export const Sidebar = (props) => {
 
       return (
         <div key={cat?._id} style={{ paddingLeft: level > 0 ? 0 : 0 }}>
-          <div className={`sb-cat-row${isSelected ? " selected" : ""}`}>
-            {/* Checkbox select */}
+          <div className="sb-cat-row">
+            {hasChildren ? (
+              <button className={`sb-cat-expand${isExpanded ? " open" : ""}`} onClick={() => toggleCatExpand(cat?._id)}>
+                {isExpanded ? <FaAngleDown size={10} /> : <FaAngleRight size={10} />}
+              </button>
+            ) : (
+              <span style={{ width: 22, flexShrink: 0 }} />
+            )}
             <Checkbox
               size="small"
               checked={isSelected}
@@ -396,8 +464,6 @@ export const Sidebar = (props) => {
               }}
               style={{ padding: "3px 5px 3px 0", color: isSelected ? "#0d0d12" : "#d1d5db", flexShrink: 0 }}
             />
-
-            {/* Category name */}
             <button
               className={`sb-cat-btn${isSelected ? " active" : ""}`}
               onClick={() => {
@@ -414,22 +480,16 @@ export const Sidebar = (props) => {
               {cat?.name}
               {isSelected && <span className="sb-selected-dot" />}
             </button>
-
-            {/* Expand/collapse toggle — right side */}
-            {hasChildren ? (
+            {/* expand arrow — right side */}
+            {hasChildren && (
               <button
                 className={`sb-cat-expand${isExpanded ? " open" : ""}`}
                 onClick={() => toggleCatExpand(cat?._id)}
-                title={isExpanded ? "Collapse" : "Expand"}
               >
                 {isExpanded ? <FaAngleDown size={10} /> : <FaAngleRight size={10} />}
               </button>
-            ) : (
-              <span style={{ width: 22, flexShrink: 0 }} />
             )}
           </div>
-
-          {/* Children — collapsible */}
           {hasChildren && (
             <Collapse isOpened={isExpanded}>
               <div className="sb-subcat-wrap">
@@ -472,9 +532,9 @@ export const Sidebar = (props) => {
     );
   };
 
-  /* ═══════════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════
      RENDER
-  ═══════════════════════════════════════════════════════════ */
+  ══════════════════════════════════════════ */
   return (
     <aside className="sb-root sidebar py-3 lg:py-5 static lg:sticky top-[130px] z-[50] pr-0 lg:pr-4">
       <style>{CSS}</style>
@@ -492,14 +552,14 @@ export const Sidebar = (props) => {
 
       <div className="sidebarFiltersScroll max-h-[60vh] lg:max-h-[calc(100vh-220px)] overflow-y-auto overflow-x-hidden w-full pr-1">
 
-        {/* Category */}
+        {/* ── Category ── */}
         <Section title="Category" open={openSections.category} onToggle={() => toggleSection("category")}>
           <div style={{ maxHeight: 240, overflowY: "auto", paddingRight: 4 }}>
             {renderCategoryTree(context?.catData || [])}
           </div>
         </Section>
 
-        {/* Brand */}
+        {/* ── Brand ── */}
         {stableOptions.brands.length > 0 && (
           <Section title="Brand" open={openSections.brand} onToggle={() => toggleSection("brand")}>
             {renderOptions({
@@ -512,7 +572,7 @@ export const Sidebar = (props) => {
           </Section>
         )}
 
-        {/* Size */}
+        {/* ── Size ── */}
         {stableOptions.sizes.length > 0 && (
           <Section title="Size" open={openSections.size} onToggle={() => toggleSection("size")}>
             {renderOptions({
@@ -525,7 +585,7 @@ export const Sidebar = (props) => {
           </Section>
         )}
 
-        {/* Product Type */}
+        {/* ── Product Type ── */}
         {stableOptions.productTypes.length > 0 && (
           <Section title="Product Type" open={openSections.type} onToggle={() => toggleSection("type")}>
             {renderOptions({
@@ -538,17 +598,48 @@ export const Sidebar = (props) => {
           </Section>
         )}
 
-        {/* Price Slider */}
+        {/* ══════════════════════════════════════
+            PRICE RANGE  ← UPDATED SECTION
+        ══════════════════════════════════════ */}
         <Section title="Price Range" open={openSections.price} onToggle={() => toggleSection("price")}>
-          <RangeSlider value={price} onInput={setPrice} min={0} max={60000} step={100} />
+
+          {/* Active preset badge */}
+          {activePricePreset !== null && (
+            <div className="sb-price-active-tag">
+              <span>🏷 {PRICE_RANGES[activePricePreset].label}</span>
+              <button onClick={() => { setActivePricePreset(null); setPrice([0, 60000]); }}>✕</button>
+            </div>
+          )}
+
+          {/* Preset ranges list */}
+          <div className="sb-price-presets">
+            {PRICE_RANGES.map((range, idx) => (
+              <div
+                key={idx}
+                className={`sb-price-opt${activePricePreset === idx ? " active" : ""}`}
+                onClick={() => handlePricePreset(idx)}
+              >
+                <div className="sb-price-radio">
+                  <div className="sb-price-radio-dot" />
+                </div>
+                <span className="sb-price-lbl">{range.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="sb-price-divider">Custom Range</div>
+
+          {/* Slider */}
+          <RangeSlider value={price} onInput={handleSliderInput} min={0} max={60000} step={100} />
           <div className="sb-price-values">
             <span className="sb-price-val">₹{price[0].toLocaleString("en-IN")}</span>
-            <span className="sb-price-divider">–</span>
+            <span className="sb-price-divider-line">–</span>
             <span className="sb-price-val">₹{price[1].toLocaleString("en-IN")}</span>
           </div>
         </Section>
 
-        {/* Sale */}
+        {/* ── Sale ── */}
         <Section title="Sale" open={openSections.sale} onToggle={() => toggleSection("sale")}>
           <FormControlLabel
             control={<Checkbox size="small" />}
@@ -558,7 +649,7 @@ export const Sidebar = (props) => {
           />
         </Section>
 
-        {/* Color */}
+        {/* ── Colour ── */}
         {availableColors.length > 0 && (
           <Section title="Colour" open={openSections.color} onToggle={() => toggleSection("color")}>
             {renderOptions({
@@ -577,7 +668,7 @@ export const Sidebar = (props) => {
           </Section>
         )}
 
-        {/* Stock */}
+        {/* ── Availability ── */}
         <Section title="Availability" open={openSections.stock} onToggle={() => toggleSection("stock")}>
           <FormControlLabel
             control={<Checkbox size="small" />}
@@ -593,7 +684,7 @@ export const Sidebar = (props) => {
           />
         </Section>
 
-        {/* Discount */}
+        {/* ── Discount ── */}
         <Section title="Discount" open={openSections.discount} onToggle={() => toggleSection("discount")}>
           {renderOptions({
             title: "Discount", options: discountBands,
@@ -604,7 +695,7 @@ export const Sidebar = (props) => {
           })}
         </Section>
 
-        {/* Weight */}
+        {/* ── Weight ── */}
         {stableOptions.weights.length > 0 && (
           <Section title="Weight" open={openSections.weight} onToggle={() => toggleSection("weight")}>
             {renderOptions({
@@ -617,7 +708,7 @@ export const Sidebar = (props) => {
           </Section>
         )}
 
-        {/* RAM */}
+        {/* ── RAM ── */}
         {stableOptions.ramOptions.length > 0 && (
           <Section title="RAM" open={openSections.ram} onToggle={() => toggleSection("ram")}>
             {renderOptions({
@@ -630,7 +721,7 @@ export const Sidebar = (props) => {
           </Section>
         )}
 
-        {/* Rating */}
+        {/* ── Rating ── */}
         <Section title="Rating" open={openSections.rating} onToggle={() => toggleSection("rating")}>
           {[5, 4, 3, 2, 1].map(star => (
             <div key={star} className="sb-rating-row"
@@ -670,7 +761,7 @@ export const Sidebar = (props) => {
         <DialogTitle>{activeMoreFilter?.title}</DialogTitle>
         <DialogContent>
           <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 12 }}>Select and apply filters.</p>
-          <div style={{ maxHeight: "55vh", overflowY: "auto", paddingRight: 4, paddingLeft: 4 }}>
+          <div style={{ maxHeight: "55vh", overflowY: "auto", paddingLeft: 4 }}>
             {(activeMoreFilter?.options || []).map(opt => {
               const key = activeMoreFilter?.getOptionKey?.(opt);
               return (
