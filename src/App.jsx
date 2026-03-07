@@ -78,7 +78,7 @@ const GlobalBackButton = () => {
       <span className="global-back-button__icon" aria-hidden="true">
         <IoArrowBack size={18} />
       </span>
-      <span className="global-back-button__label">Back</span>
+      
     </button>
   );
 };
