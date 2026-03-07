@@ -173,8 +173,27 @@ function App() {
 
 
 
-      <Toaster />
-
+   <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3200,
+          style: {
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: "13px",
+            fontWeight: 500,
+            letterSpacing: "0.01em",
+            borderRadius: "12px",
+            border: "1px solid rgba(0,0,0,0.08)",
+            boxShadow:
+              "0 8px 32px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06)",
+            padding: "12px 16px",
+            color: "#111",
+            background: "#fff",
+          },
+          success: { iconTheme: { primary: "#16a34a", secondary: "#fff" } },
+          error:   { iconTheme: { primary: "#dc2626", secondary: "#fff" } },
+        }}
+      />
 
     </>
   );
