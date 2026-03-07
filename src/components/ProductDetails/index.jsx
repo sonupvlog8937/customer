@@ -614,7 +614,7 @@ export const ProductDetailsComponent = (props) => {
 
           {/* Add To Cart */}
           <Button
-            className="btn-org btn-lg flex-1 flex gap-2 items-center justify-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            className="btn-dark btn-lg flex-1 flex gap-2 items-center justify-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
             onClick={() => addToCart(props?.item, context?.userData?._id, quantity)}
           >
             {isLoading ? (
@@ -629,7 +629,7 @@ export const ProductDetailsComponent = (props) => {
 
           {/* Buy Now */}
           <Button
-            className="btn-dark btn-lg flex-1 flex gap-2 items-center justify-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            className="btn-org btn-lg flex-1 flex gap-2 items-center justify-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
             onClick={handleBuyNow}
             disabled={isBuyingNow}
           >
