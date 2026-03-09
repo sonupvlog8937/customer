@@ -21,11 +21,16 @@ const MobileNav = () => {
     const [isNavVisible, setIsNavVisible] = useState(true);
     const lastScrollY = useRef(typeof window !== "undefined" ? window.scrollY : 0);
 
-    const isFilterPage = location.pathname === "/products" || location.pathname === "/search";
+    const isFilterPage = location.pathname === "" || location.pathname === "";
 
     useEffect(() => {
         context?.setisFilterBtnShow(isFilterPage);
     }, [context, isFilterPage]);
+
+     useEffect(() => {
+        setIsNavVisible(true);
+        lastScrollY.current = window.scrollY;
+    }, [location.pathname]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -53,7 +58,9 @@ const MobileNav = () => {
         context?.setOpenSearchPanel(false);
     };
 
-    const hideNavClass = isNavVisible
+    const shouldKeepNavVisible = isFilterPage || isNavVisible;
+
+    const hideNavClass = shouldKeepNavVisible
         ? "translate-y-0 opacity-100"
         : "translate-y-[120%] opacity-0 pointer-events-none";
 
