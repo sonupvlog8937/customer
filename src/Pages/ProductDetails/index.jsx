@@ -94,7 +94,7 @@ export const ProductDetails = () => {
 
         {/* ── Breadcrumb ── */}
         <div className="pd-breadcrumb-bar">
-          <div className="container" style={{ marginTop: "78px" }}>
+          <div className="container" style={{ marginTop: "38px" }}>
             <Breadcrumbs
               aria-label="breadcrumb"
               separator={<span style={{ color: "#d1d5db", fontSize: 12 }}>/</span>}

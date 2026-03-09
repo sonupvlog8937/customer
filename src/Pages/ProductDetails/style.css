@@ -26,6 +26,7 @@
     padding: 12px 0;
     background: var(--surface-2);
     border-bottom: 1px solid var(--border);
+    margin-top: -30px;
   }
   .pd-breadcrumb-bar .container { padding-inline: 16px; }
   .pd-breadcrumb-link {
