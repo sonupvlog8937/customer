@@ -44,7 +44,7 @@ const Header = () => {
   const context = useAppContext();
   const location = useLocation();
 
-  const hideNavigationOnPage = ["/products", "/search"].includes(location.pathname);
+  const hideNavigationOnPage = [""].includes(location.pathname);
 
   const history = useNavigate();
 
@@ -339,7 +339,7 @@ const Header = () => {
       </header>
 
 
-      <div className="afterHeader mt-[45px] lg:mt-0"></div>
+      <div className="afterHeader mt-[125px] lg:mt-0"></div>
 
     </>
   );
