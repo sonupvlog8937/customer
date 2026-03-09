@@ -1,270 +1,189 @@
-import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useContext, useEffect, useState } from "react";
+import { Button } from "@mui/material";
+import { FaCloudUploadAlt } from "react-icons/fa";
+import { FaRegUser } from "react-icons/fa";
+import { IoBagCheckOutline } from "react-icons/io5";
+import { IoMdHeartEmpty } from "react-icons/io";
+import { IoIosLogOut } from "react-icons/io";
+import { NavLink } from "react-router";
 import { useAppContext } from "../../hooks/useAppContext";
-import {
-    FaUser,
-    FaMapMarkerAlt,
-    FaShoppingBag,
-    FaHeart,
-    FaSignOutAlt,
-    FaSignInAlt,
-    FaChevronRight,
-} from 'react-icons/fa';
+import CircularProgress from '@mui/material/CircularProgress';
+import { fetchDataFromApi, uploadImage } from "../../utils/api";
+import { LuMapPin } from "react-icons/lu";
 
-const menuItems = [
-    { label: 'My Profile',  path: '/my-account',           icon: <FaUser />        },
-    { label: 'My Orders',   path: '/my-orders',            icon: <FaShoppingBag /> },
-    { label: 'Address',     path: '/my-account/address',   icon: <FaMapMarkerAlt />},
-    { label: 'Wishlist',    path: '/my-account/wishlist',  icon: <FaHeart />       },
-];
+
 
 const AccountSidebar = () => {
-    const context  = useAppContext();
-    const navigate = useNavigate();
-    const location = useLocation();
 
-    // Logout: Redux state + localStorage dono clear karo
-    const handleLogout = () => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        context.setIsLogin(false);
-        context.setUserData({});
-        context.setCartData([]);
-        context.setMyListData([]);
-        navigate("/login");
-    };
+  const [previews, setPreviews] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
-    const isLoggedIn = context?.isLogin;
-    const name       = context?.userData?.name  || "";
-    const email      = context?.userData?.email || "";
-    const initials   = name ? name.charAt(0).toUpperCase() : null;
+  const context = useAppContext();
 
-    return (
-        <aside style={S.sidebar}>
+  useEffect(() => {
+    const userAvtar = [];
+    if (context?.userData?.avatar !== "" && context?.userData?.avatar !== undefined) {
+      userAvtar.push(context?.userData?.avatar);
+      setPreviews(userAvtar)
+    }
 
-            {/* Avatar + User Info */}
-            <div style={S.userSection}>
-                <div style={S.avatar}>
-                    {initials ?? <FaUser size={18} />}
-                </div>
-                <div style={S.userInfo}>
-                    <p style={S.userName}>{name || "Guest User"}</p>
-                    <p style={S.userEmail}>{email || "Not logged in"}</p>
-                </div>
-            </div>
+  }, [context?.userData])
 
-            <hr style={S.hr} />
+  let selectedImages = [];
 
-            {/* Navigation */}
-            <nav style={S.nav}>
-                {menuItems.map(({ label, path, icon }) => (
-                    <NavItem
-                        key={path}
-                        label={label}
-                        icon={icon}
-                        active={location.pathname === path}
-                        onClick={() => navigate(path)}
+  const formdata = new FormData();
+
+  const onChangeFile = async (e, apiEndPoint) => {
+    try {
+      setPreviews([]);
+      const files = e.target.files;
+      setUploading(true);
+
+
+      for (var i = 0; i < files.length; i++) {
+        if (files[i] && (files[i].type === "image/jpeg" || files[i].type === "image/jpg" ||
+          files[i].type === "image/png" ||
+          files[i].type === "image/webp")
+        ) {
+
+          const file = files[i];
+
+          selectedImages.push(file);
+          formdata.append(`avatar`, file);
+
+
+        } else {
+          context.alertBox("error", "Please select a valid JPG , PNG or webp image file.");
+          setUploading(false);
+          return false;
+        }
+      }
+
+      uploadImage("/api/user/user-avatar", formdata).then((res) => {
+        setUploading(false);
+        let avatar = [];
+        avatar.push(res?.data?.avtar);
+        setPreviews(avatar);
+        context.alertBox("success", "Profile picture updated successfully!");
+        fetchDataFromApi(`/api/user/user-details`).then((res) => {
+          context?.setUserData(res.data);
+        })
+
+      })
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
+   const logout = () => {
+
+      fetchDataFromApi(`/api/user/logout?token=${localStorage.getItem('accessToken')}`, { withCredentials: true }).then((res) => {
+        if (res?.error === false) {
+          context.setIsLogin(false);
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          context.setUserData(null);
+          context?.setCartData([]);
+          context?.setMyListData([]);
+          history("/");
+        }
+  
+  
+      })
+  
+    }
+  return (
+    <div className="card bg-white shadow-md rounded-md sticky top-[160px]">
+      <div className="w-full p-5 flex items-center justify-center flex-col">
+        <div className="w-[110px] h-[110px] rounded-full overflow-hidden mb-4 relative group flex items-center justify-center bg-gray-200">
+
+          {
+            uploading === true ? <CircularProgress color="inherit" /> :
+              <>
+                {
+                  previews?.length !== 0 ? previews?.map((img, index) => {
+                    return (
+                      <img
+                        src={img}
+                        key={index}
+                        className="w-full h-full object-cover"
+                      />
+                    )
+                  })
+                    :
+                    <img
+                      src={"/user.jpg"}
+                      className="w-full h-full object-cover"
                     />
-                ))}
-            </nav>
 
-            <hr style={S.hr} />
+                }
+              </>
 
-            {/* Login / Logout */}
-            <div style={S.authSection}>
-                {isLoggedIn ? (
-                    <AuthButton
-                        icon={<FaSignOutAlt size={14} />}
-                        label="Logout"
-                        variant="logout"
-                        onClick={handleLogout}
-                    />
-                ) : (
-                    <AuthButton
-                        icon={<FaSignInAlt size={14} />}
-                        label="Login"
-                        variant="login"
-                        onClick={() => navigate("/login")}
-                    />
-                )}
-            </div>
-        </aside>
-    );
+          }
+
+
+          <div className="overlay w-[100%] h-[100%] absolute top-0 left-0 z-50 bg-[rgba(0,0,0,0.7)] flex items-center justify-center cursor-pointer opacity-0 transition-all group-hover:opacity-100">
+            <FaCloudUploadAlt className="text-[#fff] text-[25px]" />
+            <input
+              type="file"
+              className="absolute top-0 left-0 w-full h-full opacity-0"
+              accept='image/*'
+              onChange={(e) =>
+                onChangeFile(e, "/api/user/user-avatar")
+              }
+              name="avatar"
+            />
+          </div>
+        </div>
+
+        <h3>{context?.userData?.name}</h3>
+        <h6 className="text-[13px] font-[500]">{context?.userData?.email}</h6>
+      </div>
+
+      <ul className="list-none pb-5 bg-[#f1f1f1] myAccountTabs">
+        <li className="w-full">
+          <NavLink to="/my-account" exact={true} activeClassName="isActive">
+            <Button className="w-full !text-left !py-2 !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
+              <FaRegUser className="text-[15px]" /> My Profile
+            </Button>
+          </NavLink>
+        </li>
+
+        <li className="w-full">
+          <NavLink to="/address" exact={true} activeClassName="isActive">
+            <Button className="w-full !text-left !py-2 !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
+              <LuMapPin className="text-[18px]" /> Address
+            </Button>
+          </NavLink>
+        </li>
+
+        <li className="w-full">
+          <NavLink to="/my-list" exact={true} activeClassName="isActive">
+            <Button className="w-full !py-2  !text-left !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
+              <IoMdHeartEmpty className="text-[17px]" /> My List
+            </Button>
+          </NavLink>
+        </li>
+
+        <li className="w-full">
+          <NavLink to="/my-orders" exact={true} activeClassName="isActive">
+            <Button className="w-full  !py-2 !text-left !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
+              <IoBagCheckOutline className="text-[17px]" /> My Orders
+            </Button>
+          </NavLink>
+        </li>
+
+        <li className="w-full">
+          <Button className="w-full !py-2  !text-left !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2" onClick={logout}>
+            <IoIosLogOut className="text-[18px]" /> Logout
+          </Button>
+        </li>
+      </ul>
+    </div>
+  );
 };
 
-/* ── NavItem ── */
-const NavItem = ({ label, icon, active, onClick }) => {
-    const [hovered, setHovered] = React.useState(false);
-
-    return (
-        <button
-            onClick={onClick}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            style={{
-                ...S.navItem,
-                background: active ? '#eff6ff' : hovered ? '#f8fafc' : 'transparent',
-                color:      active ? '#2563eb' : '#475569',
-                fontWeight: active ? '600' : '500',
-            }}
-        >
-            <span style={{ ...S.navIcon, color: active ? '#2563eb' : '#94a3b8' }}>
-                {icon}
-            </span>
-            <span style={S.navLabel}>{label}</span>
-            {active && (
-                <FaChevronRight size={10} style={{ marginLeft: 'auto', color: '#2563eb' }} />
-            )}
-        </button>
-    );
-};
-
-/* ── AuthButton ── */
-const AuthButton = ({ icon, label, variant, onClick }) => {
-    const [hovered, setHovered] = React.useState(false);
-
-    const hoverStyle = variant === 'logout'
-        ? { background: '#fff1f1', color: '#b91c1c', borderColor: '#fca5a5' }
-        : { background: '#1d4ed8' };
-
-    return (
-        <button
-            onClick={onClick}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            style={{
-                ...(variant === 'logout' ? S.logoutBtn : S.loginBtn),
-                ...(hovered ? hoverStyle : {}),
-            }}
-        >
-            {icon}
-            <span>{label}</span>
-        </button>
-    );
-};
-
-/* ── Styles ── */
-const S = {
-    sidebar: {
-        background: '#ffffff',
-        borderRadius: '16px',
-        boxShadow: '0 2px 20px rgba(0,0,0,0.06)',
-        padding: '18px 12px',
-        width: '100%',
-        fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
-        border: '1px solid #f1f5f9',
-    },
-    userSection: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '4px 8px 14px',
-    },
-    avatar: {
-        width: '46px',
-        height: '46px',
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
-        color: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '18px',
-        fontWeight: '700',
-        flexShrink: 0,
-        boxShadow: '0 4px 12px rgba(37,99,235,0.28)',
-        userSelect: 'none',
-    },
-    userInfo: {
-        overflow: 'hidden',
-        flex: 1,
-    },
-    userName: {
-        margin: 0,
-        fontSize: '14px',
-        fontWeight: '700',
-        color: '#1e293b',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-    },
-    userEmail: {
-        margin: '2px 0 0',
-        fontSize: '11.5px',
-        color: '#94a3b8',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-    },
-    hr: {
-        border: 'none',
-        borderTop: '1px solid #f1f5f9',
-        margin: '2px 0',
-    },
-    nav: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '2px',
-        padding: '8px 0',
-    },
-    navItem: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        padding: '10px 12px',
-        borderRadius: '10px',
-        border: 'none',
-        cursor: 'pointer',
-        width: '100%',
-        textAlign: 'left',
-        fontSize: '13.5px',
-        transition: 'background 0.12s, color 0.12s',
-    },
-    navIcon: {
-        display: 'flex',
-        fontSize: '14px',
-        flexShrink: 0,
-        transition: 'color 0.12s',
-    },
-    navLabel: {
-        flex: 1,
-    },
-    authSection: {
-        padding: '10px 4px 2px',
-    },
-    logoutBtn: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
-        width: '100%',
-        padding: '10px 14px',
-        borderRadius: '10px',
-        border: '1.5px solid #fecaca',
-        background: 'transparent',
-        color: '#ef4444',
-        fontSize: '13.5px',
-        fontWeight: '600',
-        cursor: 'pointer',
-        transition: 'all 0.15s ease',
-    },
-    loginBtn: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
-        width: '100%',
-        padding: '10px 14px',
-        borderRadius: '10px',
-        border: 'none',
-        background: '#2563eb',
-        color: '#ffffff',
-        fontSize: '13.5px',
-        fontWeight: '600',
-        cursor: 'pointer',
-        transition: 'background 0.15s ease',
-        boxShadow: '0 4px 14px rgba(37,99,235,0.28)',
-    },
-};
 
 export default AccountSidebar;
