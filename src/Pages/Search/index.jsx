@@ -25,23 +25,40 @@ const CSS = `
   @keyframes sp-pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
   @keyframes sp-slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
 
-  .sp-toolbar { position:sticky; top:68px; z-index:99; transition:transform 0.34s cubic-bezier(0.22,0.61,0.36,1),opacity 0.3s ease; will-change:transform,opacity; }
+  /* ── Toolbar: sticky, scroll-aware ── */
+  .sp-toolbar { position:sticky; top:64px; z-index:99; transition:transform 0.38s cubic-bezier(0.22,0.61,0.36,1),opacity 0.28s ease; will-change:transform,opacity; margin-bottom:4px; }
   .sp-toolbar.sp-show { transform:translateY(0); opacity:1; pointer-events:all; }
-  .sp-toolbar.sp-hide { transform:translateY(-130%); opacity:0; pointer-events:none; }
-  .sp-toolbar-inner { background:rgba(255,255,255,0.96); border:1px solid #e8e8f0; border-radius:14px; padding:9px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; box-shadow:0 2px 12px rgba(0,0,0,0.06),0 1px 3px rgba(0,0,0,0.04); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); }
+  .sp-toolbar.sp-hide { transform:translateY(-120%); opacity:0; pointer-events:none; }
 
+  /* Card wrapper */
+  .sp-toolbar-inner { background:rgba(255,255,255,0.97); border:1px solid #e8e8f0; border-radius:16px; box-shadow:0 2px 16px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); overflow:hidden; }
+
+  /* Row 1: filter + count + views + sort */
+  .sp-tb-row1 { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 14px; border-bottom:1px solid transparent; transition:border-color 0.2s; }
+  .sp-tb-row1.has-pills { border-bottom-color:#f1f2f6; }
+
+  /* Row 2: pills */
+  .sp-tb-row2 { padding:8px 14px 10px; animation:sp-pillsIn 0.22s ease both; }
+  @keyframes sp-pillsIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+
+  /* Filter button */
   .sp-filter-btn { display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 14px; background:#0d0d12; color:#fff; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; outline:none; flex-shrink:0; transition:transform 0.17s ease,box-shadow 0.17s ease,background 0.17s ease; -webkit-tap-highlight-color:transparent; }
   .sp-filter-btn:hover { background:#1d1d28; transform:translateY(-1px); box-shadow:0 5px 16px rgba(13,13,18,0.2); }
   .sp-filter-btn:active { transform:scale(0.97); }
   .sp-badge { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; background:#E8362A; color:#fff; border-radius:20px; font-size:10px; font-weight:800; line-height:1; animation:sp-badgePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
 
-  .sp-pills { display:flex; align-items:center; gap:5px; overflow-x:auto; flex:1; min-width:0; scrollbar-width:none; }
+  /* Pills row */
+  .sp-pills-wrap { position:relative; }
+  .sp-pills-wrap::after { content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to right,transparent,rgba(255,255,255,0.97)); pointer-events:none; }
+  .sp-pills { display:flex; align-items:center; gap:6px; overflow-x:auto; flex-wrap:nowrap; scrollbar-width:none; padding-bottom:2px; padding-right:40px; }
   .sp-pills::-webkit-scrollbar { display:none; }
-  .sp-pill { display:inline-flex; align-items:center; gap:4px; height:26px; padding:0 9px; background:#f1f2f6; color:#374151; border:1px solid #e8e8f0; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; cursor:pointer; outline:none; flex-shrink:0; transition:all 0.15s ease; animation:sp-fadeIn 0.2s ease both; }
-  .sp-pill:hover { background:#fef2f2; color:#E8362A; border-color:#fecdd3; }
-  .sp-pill-clear { background:#fef2f2; color:#E8362A; border-color:#fecdd3; font-weight:700; }
+  .sp-pills-meta { font-size:11px; color:#9ca3af; font-weight:500; white-space:nowrap; flex-shrink:0; padding-right:8px; border-right:1.5px solid #e8e8f0; margin-right:2px; }
+  .sp-pill { display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 11px; background:#f4f4f8; color:#374151; border:1px solid #e4e4ec; border-radius:20px; font-size:11.5px; font-weight:600; white-space:nowrap; cursor:pointer; outline:none; flex-shrink:0; transition:all 0.15s ease; animation:sp-fadeIn 0.18s ease both; }
+  .sp-pill:hover { background:#fff0f0; color:#E8362A; border-color:#fecdd3; }
+  .sp-pill-clear { background:#fff0f0; color:#E8362A; border-color:#fecdd3; font-weight:700; }
   .sp-pill-clear:hover { background:#E8362A; color:#fff; border-color:#E8362A; }
 
+  /* Sort button */
   .sp-sort-btn { display:inline-flex; align-items:center; gap:5px; height:36px; padding:0 12px; background:#f8f8fb; color:#0d0d12; border:1.5px solid #e8e8f0; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; outline:none; flex-shrink:0; white-space:nowrap; transition:all 0.17s ease; -webkit-tap-highlight-color:transparent; }
   .sp-sort-btn:hover { background:#fff; border-color:#0d0d12; box-shadow:0 3px 10px rgba(0,0,0,0.07); }
   .sp-sort-icon { transition:transform 0.22s ease; }
@@ -430,84 +447,104 @@ const SearchPage = () => {
             {/* Scroll-aware toolbar */}
             <div
               className={`sp-toolbar ${scrollDir === "down" ? "sp-hide" : "sp-show"}`}
-              style={{ marginTop: 12, marginBottom: 14 }}
+              style={{ marginTop: 12 }}
             >
               <div className="sp-toolbar-inner">
 
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0, overflow: "hidden" }}>
-                  <button className="sp-filter-btn" onClick={() => context?.setOpenFilter(true)}>
-                    <MdTune size={16} />
-                    Filters
-                    {activeFiltersCount > 0 && <span className="sp-badge">{activeFiltersCount}</span>}
-                  </button>
+                {/* ── ROW 1: Filter btn · count · views · sort ── */}
+                <div className={`sp-tb-row1${filterPills.length > 0 ? " has-pills" : ""}`}>
 
-                  {filterPills.length > 0 && (
-                    <div className="sp-pills">
-                      {filterPills.map((pill, i) => (
-                        <button key={i} className="sp-pill" onClick={pill.clear}>
-                          {pill.label} <MdClose size={10} />
-                        </button>
-                      ))}
-                      <button className="sp-pill sp-pill-clear" onClick={handleResetAllFilters}>
-                        Clear all <MdClose size={10} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                  {!isLoading && totalProducts > 0 && (
-                    <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 500, whiteSpace: "nowrap" }} className="hidden sm:inline">
-                      <strong style={{ color: "#0d0d12" }}>{totalProducts.toLocaleString("en-IN")}</strong> total
-                    </span>
-                  )}
-
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <button className={`sp-vbtn${itemView === "grid" ? " sp-vact" : ""}`} onClick={() => setItemView("grid")} title="Grid">
-                      <HiViewGrid size={15} />
+                  {/* LEFT: filter + count */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <button className="sp-filter-btn" onClick={() => context?.setOpenFilter(true)}>
+                      <MdTune size={16} />
+                      Filters
+                      {activeFiltersCount > 0 && <span className="sp-badge">{activeFiltersCount}</span>}
                     </button>
-                    <button className={`sp-vbtn${itemView === "list" ? " sp-vact" : ""}`} onClick={() => setItemView("list")} title="List">
-                      <HiViewList size={15} />
-                    </button>
+
+                    {!isLoading && totalProducts > 0 && (
+                      <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 500, whiteSpace: "nowrap" }} className="hidden sm:inline">
+                        <strong style={{ color: "#0d0d12" }}>{totalProducts.toLocaleString("en-IN")}</strong> items
+                      </span>
+                    )}
                   </div>
 
-                  <button
-                    id="sort-btn"
-                    className={`sp-sort-btn${open ? " sp-sort-open" : ""}`}
-                    onClick={e => setAnchorEl(e.currentTarget)}
-                  >
-                    <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 500 }} className="hidden sm:inline">Sort:</span>
-                    <span style={{ maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {sortLabel}
-                    </span>
-                    <MdKeyboardArrowDown className="sp-sort-icon" size={17} style={{ color: "#9ca3af" }} />
-                  </button>
+                  {/* RIGHT: views + sort */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button className={`sp-vbtn${itemView === "grid" ? " sp-vact" : ""}`} onClick={() => setItemView("grid")} title="Grid">
+                        <HiViewGrid size={15} />
+                      </button>
+                      <button className={`sp-vbtn${itemView === "list" ? " sp-vact" : ""}`} onClick={() => setItemView("list")} title="List">
+                        <HiViewList size={15} />
+                      </button>
+                    </div>
 
-                  <Menu
-                    id="sort-menu" anchorEl={anchorEl} open={open}
-                    onClose={() => setAnchorEl(null)} className="sp-menu"
-                    MenuListProps={{ "aria-labelledby": "sort-btn" }}
-                    transformOrigin={{ horizontal: "right", vertical: "top" }}
-                    anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-                  >
-                    {SORT_OPTIONS.map(opt => (
-                      <MenuItem
-                        key={opt.value}
-                        selected={selectedSortType === opt.value}
-                        onClick={() => handleSortBy(opt.value)}
-                      >
-                        {opt.label}
-                        {selectedSortType === opt.value && (
-                          <span style={{ marginLeft: "auto", paddingLeft: 14 }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          </span>
-                        )}
-                      </MenuItem>
-                    ))}
-                  </Menu>
+                    <button
+                      id="sort-btn"
+                      className={`sp-sort-btn${open ? " sp-sort-open" : ""}`}
+                      onClick={e => setAnchorEl(e.currentTarget)}
+                    >
+                      <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 500 }} className="hidden sm:inline">Sort:</span>
+                      <span style={{ maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {sortLabel}
+                      </span>
+                      <MdKeyboardArrowDown className="sp-sort-icon" size={17} style={{ color: "#9ca3af" }} />
+                    </button>
+
+                    <Menu
+                      id="sort-menu" anchorEl={anchorEl} open={open}
+                      onClose={() => setAnchorEl(null)} className="sp-menu"
+                      MenuListProps={{ "aria-labelledby": "sort-btn" }}
+                      transformOrigin={{ horizontal: "right", vertical: "top" }}
+                      anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+                    >
+                      {SORT_OPTIONS.map(opt => (
+                        <MenuItem
+                          key={opt.value}
+                          selected={selectedSortType === opt.value}
+                          onClick={() => handleSortBy(opt.value)}
+                        >
+                          {opt.label}
+                          {selectedSortType === opt.value && (
+                            <span style={{ marginLeft: "auto", paddingLeft: 14 }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </span>
+                          )}
+                        </MenuItem>
+                      ))}
+                    </Menu>
+                  </div>
                 </div>
+
+                {/* ── ROW 2: Active filter pills (only when filters applied) ── */}
+                {filterPills.length > 0 && (
+                  <div className="sp-tb-row2">
+                    <div className="sp-pills-wrap">
+                      <div className="sp-pills">
+                        <span className="sp-pills-meta">
+                          {filterPills.length} filter{filterPills.length !== 1 ? "s" : ""}
+                        </span>
+                        {filterPills.map((pill, i) => (
+                          <button
+                            key={i}
+                            className="sp-pill"
+                            onClick={pill.clear}
+                            style={{ animationDelay: `${i * 30}ms` }}
+                          >
+                            {pill.label} <MdClose size={10} />
+                          </button>
+                        ))}
+                        <button className="sp-pill sp-pill-clear" onClick={handleResetAllFilters}>
+                          Clear all <MdClose size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               </div>
             </div>
 

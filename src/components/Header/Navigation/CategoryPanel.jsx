@@ -3,7 +3,7 @@ import Drawer from "@mui/material/Drawer";
 import { IoCloseSharp } from "react-icons/io5";
 import { FiChevronRight, FiChevronDown, FiSearch, FiX, FiGrid, FiPackage } from "react-icons/fi";
 import { useAppContext } from "../../../hooks/useAppContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 /* ═══════════════════════════════════════════════════════════
    URL BUILDER
@@ -97,6 +97,24 @@ const GLOBAL_CSS = `
   .cp-result-row:active { background:rgba(99,102,241,0.16)!important; }
 
   .cp-viewall:hover { color:#a5b4fc !important; }
+
+  /* ── auth button ── */
+  .cp-auth-btn {
+    position: relative; overflow: hidden;
+    transition: all 0.2s ease;
+  }
+  .cp-auth-btn::before {
+    content:''; position:absolute; inset:0;
+    background: rgba(255,255,255,0.04);
+    opacity:0; transition: opacity 0.2s;
+    border-radius: inherit;
+  }
+  .cp-auth-btn:hover::before { opacity:1; }
+  .cp-auth-btn.logout:hover { border-color: rgba(239,68,68,0.5) !important; color: #fca5a5 !important; box-shadow: 0 0 14px rgba(239,68,68,0.15) !important; }
+  .cp-auth-btn.login:hover  { border-color: rgba(99,102,241,0.7) !important; color: #a5b4fc !important; box-shadow: 0 0 14px rgba(99,102,241,0.2) !important; background: rgba(99,102,241,0.08) !important; }
+
+  @keyframes cpAuthIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .cp-auth-section { animation: cpAuthIn 0.3s ease 0.15s both; }
 `;
 
 function injectStyles(id, css) {
@@ -563,6 +581,7 @@ const CategoryPanel = (props) => {
 
 
   const context = useAppContext();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -607,10 +626,23 @@ const CategoryPanel = (props) => {
     return () => clearTimeout(debounceRef.current);
   }, [searchQuery, allFlat]);
 
+  /* Close panel */
   const closePanel = useCallback(() => {
     props.setIsOpenCatPanel(false);
     props.propsSetIsOpenCatPanel(false);
   }, [props]);
+
+  /* Logout handler */
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    context.setIsLogin(false);
+    context.setUserData({});
+    context.setCartData([]);
+    context.setMyListData([]);
+    closePanel();
+    navigate("/login");
+  }, [context, navigate, closePanel]);
 
   /* Called by any category/sub/subsub click → close panel */
   const handleNavigate = useCallback(() => {
@@ -806,12 +838,155 @@ const CategoryPanel = (props) => {
           )}
         </div>
 
+        {/* ══════════════ AUTH SECTION ══════════════ */}
+        <div className="cp-auth-section" style={{
+          padding: "10px 13px 0",
+          flexShrink: 0,
+          position: "relative", zIndex: 2,
+        }}>
+          {context?.isLogin ? (
+            /* ── LOGGED IN: show user info + logout ── */
+            <div style={{
+              background: "rgba(255,255,255,0.025)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 11,
+              padding: "10px 12px",
+              display: "flex", alignItems: "center", gap: 10,
+            }}>
+              {/* Avatar */}
+              <div style={{
+                width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+                background: "linear-gradient(135deg, #4f46e5, #818cf8)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 14, fontWeight: 700, color: "#fff",
+                boxShadow: "0 0 12px rgba(99,102,241,0.35)",
+                userSelect: "none",
+              }}>
+                {context?.userData?.name?.charAt(0)?.toUpperCase() ?? "U"}
+              </div>
+
+              {/* Name + email */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: 600, color: "#c8d3e0",
+                  fontFamily: "'DM Sans',sans-serif",
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>
+                  {context?.userData?.name || "User"}
+                </div>
+                <div style={{
+                  fontSize: 11, color: "#334155",
+                  fontFamily: "'DM Sans',sans-serif",
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                  marginTop: 1,
+                }}>
+                  {context?.userData?.email || ""}
+                </div>
+              </div>
+
+              {/* Logout button */}
+              <button
+                className="cp-auth-btn logout"
+                onClick={handleLogout}
+                title="Logout"
+                style={{
+                  flexShrink: 0,
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "6px 11px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(239,68,68,0.28)",
+                  background: "rgba(239,68,68,0.07)",
+                  color: "#f87171",
+                  fontSize: 12, fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "'DM Sans',sans-serif",
+                  letterSpacing: "0.01em",
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Logout
+              </button>
+            </div>
+          ) : (
+            /* ── NOT LOGGED IN: login prompt ── */
+            <div style={{
+              background: "rgba(99,102,241,0.04)",
+              border: "1px solid rgba(99,102,241,0.12)",
+              borderRadius: 11,
+              padding: "12px 13px",
+            }}>
+              {/* Prompt text */}
+              <div style={{ marginBottom: 9 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: 600, color: "#c8d3e0",
+                  fontFamily: "'DM Sans',sans-serif",
+                }}>
+                  Sign in to your account
+                </div>
+                <div style={{
+                  fontSize: 11, color: "#334155",
+                  fontFamily: "'DM Sans',sans-serif",
+                  marginTop: 2, lineHeight: 1.5,
+                }}>
+                  Track orders, save addresses & more
+                </div>
+              </div>
+
+              {/* Login button */}
+              <button
+                className="cp-auth-btn login"
+                onClick={() => { closePanel(); navigate("/login"); }}
+                style={{
+                  width: "100%",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                  padding: "9px 14px",
+                  borderRadius: 9,
+                  border: "1px solid rgba(99,102,241,0.35)",
+                  background: "rgba(99,102,241,0.1)",
+                  color: "#818cf8",
+                  fontSize: 13, fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "'DM Sans',sans-serif",
+                  letterSpacing: "0.01em",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                  <polyline points="10 17 15 12 10 7"/>
+                  <line x1="15" y1="12" x2="3" y2="12"/>
+                </svg>
+                Login to Continue
+              </button>
+
+              {/* Register link */}
+              <div style={{
+                marginTop: 8, textAlign: "center",
+                fontSize: 11, color: "#1e2535",
+                fontFamily: "'DM Sans',sans-serif",
+              }}>
+                New here?{" "}
+                <span
+                  onClick={() => { closePanel(); navigate("/register"); }}
+                  style={{ color: "#6366f1", fontWeight: 600, cursor: "pointer" }}
+                >
+                  Create account
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* ══════════════ FOOTER ══════════════ */}
         <div style={{
           borderTop: "1px solid rgba(255,255,255,0.05)",
           padding: "11px 16px",
           display: "flex", alignItems: "center", justifyContent: "space-between",
           flexShrink: 0, position: "relative", zIndex: 2,
+          marginTop: 10,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             <span style={{

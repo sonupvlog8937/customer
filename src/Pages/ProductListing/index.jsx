@@ -38,44 +38,60 @@ const CSS = `
   }
 
   /* ══════════════════════════════════════════════════
-     TOOLBAR — sticky, scroll-aware hide/show
+     TOOLBAR WRAPPER — sticky, scroll-aware hide/show
   ══════════════════════════════════════════════════ */
   .pl-toolbar {
     position: sticky;
-    top: 68px;
+    top: 64px;
     z-index: 99;
-    /* smooth slide via transform */
     transition:
-      transform  0.34s cubic-bezier(0.22, 0.61, 0.36, 1),
-      opacity    0.3s  ease,
+      transform  0.38s cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity    0.28s ease,
       box-shadow 0.3s  ease;
     will-change: transform, opacity;
+    margin-bottom: 4px;
   }
-  /* Visible = scrolling UP or at top */
   .pl-toolbar.pl-tb-show {
     transform: translateY(0);
     opacity: 1;
     pointer-events: all;
   }
-  /* Hidden = scrolling DOWN past threshold */
   .pl-toolbar.pl-tb-hide {
-    transform: translateY(-130%);
+    transform: translateY(-120%);
     opacity: 0;
     pointer-events: none;
   }
 
   .pl-toolbar-inner {
-    background: rgba(255,255,255,0.96);
+    background: rgba(255,255,255,0.97);
     border: 1px solid #e8e8f0;
-    border-radius: 14px;
-    padding: 9px 14px;
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    overflow: hidden;
+  }
+
+  /* Row 1: filter + controls */
+  .pl-tb-row1 {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    padding: 9px 14px;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+  .pl-tb-row1.has-pills { border-bottom-color: #f1f2f6; }
+
+  /* Row 2: pills */
+  .pl-tb-row2 {
+    padding: 8px 14px 10px;
+    animation: pl-pillsIn 0.22s ease both;
+  }
+  @keyframes pl-pillsIn {
+    from { opacity:0; transform:translateY(-5px); }
+    to   { opacity:1; transform:translateY(0); }
   }
 
   /* ── Filter button ── */
@@ -107,28 +123,45 @@ const CSS = `
     animation: pl-badgePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
   }
 
-  /* ── Active filter pills scrollable row ── */
+  /* ── Active filter pills row ── */
+  .pl-pills-wrap { position: relative; }
+  .pl-pills-wrap::after {
+    content: '';
+    position: absolute; right: 0; top: 0; bottom: 0; width: 40px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.97));
+    pointer-events: none;
+  }
   .pl-pills {
-    display: flex; align-items: center; gap: 5px;
-    overflow-x: auto; flex: 1; min-width: 0;
+    display: flex; align-items: center; gap: 6px;
+    overflow-x: auto; flex-wrap: nowrap;
     scrollbar-width: none;
+    padding-bottom: 2px;
+    padding-right: 40px;
   }
   .pl-pills::-webkit-scrollbar { display: none; }
 
+  .pl-pills-meta {
+    font-size: 11px; color: #9ca3af; font-weight: 500;
+    white-space: nowrap; flex-shrink: 0;
+    padding-right: 8px;
+    border-right: 1.5px solid #e8e8f0;
+    margin-right: 2px;
+  }
+
   .pl-pill {
-    display: inline-flex; align-items: center; gap: 4px;
-    height: 26px; padding: 0 9px;
-    background: #f1f2f6; color: #374151;
-    border: 1px solid #e8e8f0; border-radius: 20px;
-    font-size: 11px; font-weight: 600; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 28px; padding: 0 11px;
+    background: #f4f4f8; color: #374151;
+    border: 1px solid #e4e4ec; border-radius: 20px;
+    font-size: 11.5px; font-weight: 600; white-space: nowrap;
     cursor: pointer; outline: none; flex-shrink: 0;
     transition: all 0.15s ease;
-    animation: pl-fadeIn 0.2s ease both;
+    animation: pl-fadeIn 0.18s ease both;
   }
-  .pl-pill:hover { background:#fef2f2; color:#E8362A; border-color:#fecdd3; }
+  .pl-pill:hover { background:#fff0f0; color:#E8362A; border-color:#fecdd3; }
 
   .pl-pill-clear {
-    background: #fef2f2; color: #E8362A;
+    background: #fff0f0; color: #E8362A;
     border-color: #fecdd3; font-weight: 700;
   }
   .pl-pill-clear:hover { background: #E8362A; color: #fff; border-color: #E8362A; }
@@ -458,96 +491,109 @@ const ProductListing = () => {
             <div className={`pl-toolbar ${scrollDir === "down" ? "pl-tb-hide" : "pl-tb-show"}`}>
               <div className="pl-toolbar-inner">
 
-                {/* LEFT: filter btn + active pills */}
-                <div style={{ display:"flex", alignItems:"center", gap:8, flex:1, minWidth:0, overflow:"hidden" }}>
-                  <button className="pl-filter-btn" onClick={() => context?.setOpenFilter(true)}>
-                    <MdTune size={16} />
-                    Filters
-                    {activeFiltersCount > 0 && (
-                      <span className="pl-badge">{activeFiltersCount}</span>
+                {/* ── ROW 1: Filter btn · count · views · sort ── */}
+                <div className={`pl-tb-row1${filterPills.length > 0 ? " has-pills" : ""}`}>
+
+                  {/* LEFT */}
+                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <button className="pl-filter-btn" onClick={() => context?.setOpenFilter(true)}>
+                      <MdTune size={16} />
+                      Filters
+                      {activeFiltersCount > 0 && (
+                        <span className="pl-badge">{activeFiltersCount}</span>
+                      )}
+                    </button>
+
+                    {!isLoading && filteredProducts.length > 0 && (
+                      <span style={{ fontSize:12, color:"#9ca3af", fontWeight:500, whiteSpace:"nowrap" }}
+                        className="hidden sm:inline">
+                        <strong style={{ color:"#0d0d12" }}>{filteredProducts.length}</strong> items
+                      </span>
                     )}
-                  </button>
-
-                  {/* scrollable pills */}
-                  {filterPills.length > 0 && (
-                    <div className="pl-pills">
-                      {filterPills.map((pill, i) => (
-                        <button key={i} className="pl-pill" onClick={pill.clear}>
-                          {pill.label} <MdClose size={10} />
-                        </button>
-                      ))}
-                      <button className="pl-pill pl-pill-clear" onClick={resetAllFilters}>
-                        Clear all <MdClose size={10} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* RIGHT: count + view toggles + sort */}
-                <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-
-                  {/* results count */}
-                  {!isLoading && filteredProducts.length > 0 && (
-                    <span style={{ fontSize:12, color:"#9ca3af", fontWeight:500, whiteSpace:"nowrap" }}
-                      className="hidden sm:inline">
-                      <strong style={{ color:"#0d0d12" }}>{filteredProducts.length}</strong> items
-                    </span>
-                  )}
-
-                  {/* view toggle */}
-                  <div style={{ display:"flex", gap:4 }}>
-                    <button className={`pl-vbtn${viewMode==="grid"?" pl-vact":""}`}
-                      onClick={() => setViewMode("grid")} title="Grid view">
-                      <HiViewGrid size={15} />
-                    </button>
-                    <button className={`pl-vbtn${viewMode==="list"?" pl-vact":""}`}
-                      onClick={() => setViewMode("list")} title="List view">
-                      <HiViewList size={15} />
-                    </button>
                   </div>
 
-                  {/* sort */}
-                  <button
-                    id="sort-btn"
-                    className={`pl-sort-btn${open?" pl-sort-open":""}`}
-                    onClick={e => setAnchorEl(e.currentTarget)}
-                  >
-                    <span style={{ fontSize:11, color:"#9ca3af", fontWeight:500 }} className="hidden sm:inline">Sort:</span>
-                    <span style={{ maxWidth:110, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                      {selectedSortVal}
-                    </span>
-                    <MdKeyboardArrowDown className="pl-sort-icon" size={17} style={{ color:"#9ca3af" }} />
-                  </button>
+                  {/* RIGHT: view toggles + sort */}
+                  <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+                    <div style={{ display:"flex", gap:4 }}>
+                      <button className={`pl-vbtn${viewMode==="grid"?" pl-vact":""}`}
+                        onClick={() => setViewMode("grid")} title="Grid view">
+                        <HiViewGrid size={15} />
+                      </button>
+                      <button className={`pl-vbtn${viewMode==="list"?" pl-vact":""}`}
+                        onClick={() => setViewMode("list")} title="List view">
+                        <HiViewList size={15} />
+                      </button>
+                    </div>
 
-                  {/* Sort dropdown */}
-                  <Menu
-                    id="sort-menu"
-                    anchorEl={anchorEl}
-                    open={open}
-                    onClose={() => setAnchorEl(null)}
-                    className="pl-menu"
-                    MenuListProps={{ "aria-labelledby": "sort-btn" }}
-                    transformOrigin={{ horizontal:"right", vertical:"top" }}
-                    anchorOrigin={{ horizontal:"right", vertical:"bottom" }}
-                  >
-                    {SORT_OPTIONS.map(opt => (
-                      <MenuItem
-                        key={opt.value}
-                        selected={selectedSortType === opt.value}
-                        onClick={() => handleSortBy(opt.value, opt.label)}
-                      >
-                        {opt.label}
-                        {selectedSortType === opt.value && (
-                          <span style={{ marginLeft:"auto", paddingLeft:14 }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                              <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                          </span>
-                        )}
-                      </MenuItem>
-                    ))}
-                  </Menu>
+                    <button
+                      id="sort-btn"
+                      className={`pl-sort-btn${open?" pl-sort-open":""}`}
+                      onClick={e => setAnchorEl(e.currentTarget)}
+                    >
+                      <span style={{ fontSize:11, color:"#9ca3af", fontWeight:500 }} className="hidden sm:inline">Sort:</span>
+                      <span style={{ maxWidth:110, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {selectedSortVal}
+                      </span>
+                      <MdKeyboardArrowDown className="pl-sort-icon" size={17} style={{ color:"#9ca3af" }} />
+                    </button>
+
+                    <Menu
+                      id="sort-menu"
+                      anchorEl={anchorEl}
+                      open={open}
+                      onClose={() => setAnchorEl(null)}
+                      className="pl-menu"
+                      MenuListProps={{ "aria-labelledby": "sort-btn" }}
+                      transformOrigin={{ horizontal:"right", vertical:"top" }}
+                      anchorOrigin={{ horizontal:"right", vertical:"bottom" }}
+                    >
+                      {SORT_OPTIONS.map(opt => (
+                        <MenuItem
+                          key={opt.value}
+                          selected={selectedSortType === opt.value}
+                          onClick={() => handleSortBy(opt.value, opt.label)}
+                        >
+                          {opt.label}
+                          {selectedSortType === opt.value && (
+                            <span style={{ marginLeft:"auto", paddingLeft:14 }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <polyline points="20 6 9 17 4 12"/>
+                              </svg>
+                            </span>
+                          )}
+                        </MenuItem>
+                      ))}
+                    </Menu>
+                  </div>
                 </div>
+
+                {/* ── ROW 2: Active filter pills (only when filters applied) ── */}
+                {filterPills.length > 0 && (
+                  <div className="pl-tb-row2">
+                    <div className="pl-pills-wrap">
+                      <div className="pl-pills">
+                        <span className="pl-pills-meta">
+                          {filterPills.length} filter{filterPills.length !== 1 ? "s" : ""}
+                        </span>
+                        {filterPills.map((pill, i) => (
+                          <button
+                            key={i}
+                            className="pl-pill"
+                            onClick={pill.clear}
+                            style={{ animationDelay: `${i * 30}ms` }}
+                          >
+                            {pill.label}
+                            <MdClose size={10} />
+                          </button>
+                        ))}
+                        <button className="pl-pill pl-pill-clear" onClick={resetAllFilters}>
+                          Clear all <MdClose size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               </div>
             </div>
 
