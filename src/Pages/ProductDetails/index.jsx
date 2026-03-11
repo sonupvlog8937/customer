@@ -20,6 +20,8 @@ export const ProductDetails = () => {
   const [relatedProductsPage, setRelatedProductsPage] = useState(1);
   const [hasMoreRelatedProducts, setHasMoreRelatedProducts] = useState(false);
   const [isRelatedProductsLoading, setIsRelatedProductsLoading] = useState(false);
+  const [sellerProductsCount, setSellerProductsCount] = useState(0);
+  const [sellerProductsPreview, setSellerProductsPreview] = useState([]);
 
   const { id } = useParams();
   const reviewSec = useRef();
@@ -60,6 +62,18 @@ export const ProductDetails = () => {
         setProductData(res?.product);
         setActiveImages(res?.product?.images || []);
         setVisibleSpecifications(5);
+
+         if (res?.product?.seller?._id) {
+          fetchDataFromApi(`/api/product/store/${res.product.seller._id}`).then((storeRes) => {
+            if (storeRes?.success) {
+              setSellerProductsCount(storeRes?.total || 0);
+              setSellerProductsPreview((storeRes?.products || []).filter((item) => item?._id !== id).slice(0, 4));
+            }
+          });
+        } else {
+          setSellerProductsCount(0);
+        }
+
         await loadRelatedProducts(res?.product?.subCatId, 1, false);
         setTimeout(() => setIsLoading(false), 700);
       }
@@ -144,6 +158,59 @@ export const ProductDetails = () => {
                   </div>
                 </div>
               </div>
+
+              <div className="container" style={{ marginTop: "14px" }}>
+                <div
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "14px",
+                    padding: "16px 18px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div>
+                    <p style={{ fontSize: 12, color: "#64748b", marginBottom: 2 }}>Sold by</p>
+                    <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>
+                      {productData?.seller?.storeProfile?.storeName || productData?.seller?.name || "Marketplace Seller"}
+                    </p>
+                    <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+                      {sellerProductsCount} products in this store
+                    </p>
+                  </div>
+
+                  {productData?.seller?._id && (
+                    <Link
+                      to={`/store/${productData.seller._id}`}
+                      className="pd-load-more-btn"
+                      style={{ textDecoration: "none", display: "inline-flex", width: "auto", padding: "10px 16px" }}
+                    >
+                      Visit Seller Store
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              {sellerProductsPreview?.length > 0 && (
+                <div className="container" style={{ marginTop: "14px" }}>
+                  <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: "16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>More from this seller</h3>
+                      {productData?.seller?._id && <Link to={`/store/${productData.seller._id}`} className="pd-breadcrumb-link">See all</Link>}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {sellerProductsPreview.map((item) => (
+                        <ProductItem key={item?._id} item={item} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
 
               {/* ── Product Details & Specs + Why Buy ── */}
               <div className="container pd-section">
