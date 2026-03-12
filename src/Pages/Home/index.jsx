@@ -497,10 +497,10 @@ const Home = () => {
                     Shop Now <FaArrowRight className="text-[12px]" />
                   </button>
                 </Link>
-                <Link to="/categories">
+                <Link to="https://zeedaddy-tenminutes.vercel.app">
                   <button className="cta-secondary inline-flex items-center h-[46px] px-6 rounded-xl font-[600] text-[14px] text-white"
                     style={{ border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.06)" }}>
-                    View Categories
+                    Ten-Minutes
                   </button>
                 </Link>
               </div>
