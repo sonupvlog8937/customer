@@ -491,16 +491,16 @@ const Home = () => {
               </p>
 
               <div className="anim-fadeup anim-delay-4 flex flex-wrap gap-3">
-                <Link to="https://zeedaddy-tenminutes.vercel.app">
+                <Link to="/products">
                   <button className="cta-primary inline-flex items-center gap-2 h-[46px] px-6 rounded-xl font-[600] text-[14px] text-white"
                     style={{ background: "#E8362A" }}>
-                    10-Minutes <FaArrowRight className="text-[12px]" />
+                    Shop Now <FaArrowRight className="text-[12px]" />
                   </button>
                 </Link>
                 <Link to="https://zeedaddycom.vercel.app">
                   <button className="cta-secondary inline-flex items-center h-[46px] px-6 rounded-xl font-[600] text-[14px] text-white"
                     style={{ border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.06)" }}>
-                    30-Minutes
+                    10-Minutes
                   </button>
                 </Link>
               </div>
