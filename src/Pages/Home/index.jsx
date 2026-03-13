@@ -4,7 +4,7 @@ import HomeCatSlider from "../../components/HomeCatSlider";
 import { LiaShippingFastSolid } from "react-icons/lia";
 import AdsBannerSlider from "../../components/AdsBannerSlider";
 import AdsBannerSliderV2 from "../../components/AdsBannerSliderV2";
-
+import "./style.css"
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import ProductsSlider from "../../components/ProductsSlider";
