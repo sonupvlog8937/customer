@@ -199,10 +199,11 @@ export const ProductDetails = () => {
                           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                           <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
                         </svg>
-                        Details.
+                        Details
                         {productData?.specifications?.length > 0 && (
                           <span className="pd-qa-badge">{productData.specifications.length}</span>
                         )}
+
                       </button>
 
                       {/* Reviews button */}
@@ -260,7 +261,7 @@ export const ProductDetails = () => {
                     </p>
                   </div>
 
-                  {/* FIX: Use navigate() so click actually goes to store page */}
+                  {/* FIX: Use navigate() so click actuahlly goes to store page */}
                   {sellerId && (
                     <button
                       onClick={() => navigate(`/store/${sellerId}`)}
