@@ -58,7 +58,7 @@ export const ProductDetails = () => {
     setRelatedProductData([]);
     setRelatedProductsPage(1);
     setHasMoreRelatedProducts(false);
-    // Reset seller state on product change hai
+    // Reset seller state on product change
     setSellerProductsCount(0);
     setSellerProductsPreview([]);
 
@@ -192,7 +192,8 @@ export const ProductDetails = () => {
                       }
                     `}</style>
 
-                    {/* <div className="pd-qa-row">
+                    <div className="pd-qa-row">
+                      {/* Details / Specifications button */}
                       <button className="pd-qa-btn pd-qa-btn-spec" onClick={gotoSpecs}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -202,8 +203,9 @@ export const ProductDetails = () => {
                         {productData?.specifications?.length > 0 && (
                           <span className="pd-qa-badge">{productData.specifications.length}</span>
                         )}
-
                       </button>
+
+                      {/* Reviews button */}
                       <button className="pd-qa-btn pd-qa-btn-rev" onClick={gotoReviews}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -213,7 +215,7 @@ export const ProductDetails = () => {
                           <span className="pd-qa-rev-badge">{reviewsCount}</span>
                         )}
                       </button>
-                    </div> */}
+                    </div>
                   </div>
                   <div className="pd-content-col">
                     <ProductDetailsComponent
@@ -258,7 +260,7 @@ export const ProductDetails = () => {
                     </p>
                   </div>
 
-                  {/* FIX: Use navigate() so click actuahlly goes to store page */}
+                  {/* FIX: Use navigate() so click actually goes to store page */}
                   {sellerId && (
                     <button
                       onClick={() => navigate(`/store/${sellerId}`)}
