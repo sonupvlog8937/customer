@@ -58,7 +58,7 @@ export const ProductDetails = () => {
     setRelatedProductData([]);
     setRelatedProductsPage(1);
     setHasMoreRelatedProducts(false);
-    // Reset seller state on product change
+    // Reset seller state on product change hai
     setSellerProductsCount(0);
     setSellerProductsPreview([]);
 
@@ -161,11 +161,11 @@ export const ProductDetails = () => {
                     {/* ── Quick-action row below images ── */}
                     <style>{`
                       @keyframes qaFadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-                      .pd-qa-row { display:flex; gap:10px; margin-top:14px; margin-bottom:14px; animation: qaFadeUp .4s .1s both; }
+                      .pd-qa-row { display:flex; gap:10px; margin-top:14px; animation: qaFadeUp .4s .1s both; }
                       .pd-qa-btn {
                         flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
-                        padding:10px 14px; border-radius:10px; font-size:13px; font-weight:600;
-                        cursor:pointer; border:1.5px solid; transition:all .18s; font-family:inherit;
+                        padding:10px 14px; font-size:13px; font-weight:600;
+                        cursor:pointer; transition:all .18s; font-family:inherit;
                       }
                       .pd-qa-btn-spec {
                         background:#fff; border-color:#2563eb; color:#2563eb;
@@ -193,7 +193,6 @@ export const ProductDetails = () => {
                     `}</style>
 
                     <div className="pd-qa-row">
-                      {/* Details / Specifications button */}
                       <button className="pd-qa-btn pd-qa-btn-spec" onClick={gotoSpecs}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -203,10 +202,9 @@ export const ProductDetails = () => {
                         {productData?.specifications?.length > 0 && (
                           <span className="pd-qa-badge">{productData.specifications.length}</span>
                         )}
-                      </button>
 
-                      {/* Reviews button */}
-                      <button className="pd-qa-btn pd-qa-btn-rev" onClick={gotoReviews}>
+                      </button>
+                      {/* <button className="pd-qa-btn pd-qa-btn-rev" onClick={gotoReviews}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                         </svg>
@@ -214,7 +212,7 @@ export const ProductDetails = () => {
                         {reviewsCount > 0 && (
                           <span className="pd-qa-rev-badge">{reviewsCount}</span>
                         )}
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                   <div className="pd-content-col">
@@ -260,7 +258,7 @@ export const ProductDetails = () => {
                     </p>
                   </div>
 
-                  {/* FIX: Use navigate() so click actually goes to store page */}
+                  {/* FIX: Use navigate() so click actuahlly goes to store page */}
                   {sellerId && (
                     <button
                       onClick={() => navigate(`/store/${sellerId}`)}
