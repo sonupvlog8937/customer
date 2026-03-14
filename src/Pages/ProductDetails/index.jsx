@@ -157,6 +157,7 @@ export const ProductDetails = () => {
                       images={activeImages?.length !== 0 ? activeImages : productData?.images}
                     />
 
+
                     {/* ── Quick-action row below images ── */}
                     <style>{`
                       @keyframes qaFadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
