@@ -164,11 +164,11 @@ export const ProductDetails = () => {
                       .pd-qa-row { display:flex; gap:10px; animation: qaFadeUp .4s .1s both; }
                       .pd-qa-btn {
                         flex:1; display:flex; align-items:center; justify-content:right; gap:7px;
-                        padding:10px 24px; font-size:13px; font-weight:600;
+                        padding:10px 24px; border-radius: 20px; border: 1.5px solid #111; font-size:13px; font-weight:600;
                         cursor:pointer; transition:all .18s; font-family:inherit;
                       }
                       .pd-qa-btn-spec {
-                        background:#fff; border-color:#2563eb; color:#2563eb;
+                        background:#fff; border-color:#2563eb; color:#111;
                       }
                       .pd-qa-btn-spec:hover {
                         background:#2563eb; color:#fff; transform:translateY(-1px);
