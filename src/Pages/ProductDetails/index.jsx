@@ -161,9 +161,9 @@ export const ProductDetails = () => {
                     {/* ── Quick-action row below images ── */}
                     <style>{`
                       @keyframes qaFadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-                      .pd-qa-row { display:flex; gap:10px; margin-top:14px; animation: qaFadeUp .4s .1s both; }
+                      .pd-qa-row { display:flex; gap:10px; animation: qaFadeUp .4s .1s both; }
                       .pd-qa-btn {
-                        flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
+                        flex:1; display:flex; align-items:right; justify-content:center; gap:7px;
                         padding:10px 14px; font-size:13px; font-weight:600;
                         cursor:pointer; transition:all .18s; font-family:inherit;
                       }
@@ -193,6 +193,7 @@ export const ProductDetails = () => {
                     `}</style>
 
                     <div className="pd-qa-row">
+                      {/* Details / Specifications button */}
                       <button className="pd-qa-btn pd-qa-btn-spec" onClick={gotoSpecs}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -204,6 +205,8 @@ export const ProductDetails = () => {
                         )}
 
                       </button>
+
+                      {/* Reviews button */}
                       {/* <button className="pd-qa-btn pd-qa-btn-rev" onClick={gotoReviews}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
