@@ -163,8 +163,8 @@ export const ProductDetails = () => {
                       @keyframes qaFadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
                       .pd-qa-row { display:flex; gap:10px; animation: qaFadeUp .4s .1s both; }
                       .pd-qa-btn {
-                        flex:1; display:flex; align-items:right; justify-content:center; gap:7px;
-                        padding:10px 14px; font-size:13px; font-weight:600;
+                        flex:1; display:flex; align-items:center; justify-content:right; gap:7px;
+                        padding:10px 24px; font-size:13px; font-weight:600;
                         cursor:pointer; transition:all .18s; font-family:inherit;
                       }
                       .pd-qa-btn-spec {
