@@ -192,8 +192,7 @@ export const ProductDetails = () => {
                       }
                     `}</style>
 
-                    <div className="pd-qa-row">
-                      {/* Details / Specifications button */}
+                    {/* <div className="pd-qa-row">
                       <button className="pd-qa-btn pd-qa-btn-spec" onClick={gotoSpecs}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -205,8 +204,6 @@ export const ProductDetails = () => {
                         )}
 
                       </button>
-
-                      {/* Reviews button */}
                       <button className="pd-qa-btn pd-qa-btn-rev" onClick={gotoReviews}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -216,7 +213,7 @@ export const ProductDetails = () => {
                           <span className="pd-qa-rev-badge">{reviewsCount}</span>
                         )}
                       </button>
-                    </div>
+                    </div> */}
                   </div>
                   <div className="pd-content-col">
                     <ProductDetailsComponent
