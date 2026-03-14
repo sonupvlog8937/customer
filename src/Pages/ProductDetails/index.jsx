@@ -58,7 +58,7 @@ export const ProductDetails = () => {
     setRelatedProductData([]);
     setRelatedProductsPage(1);
     setHasMoreRelatedProducts(false);
-    // Reset seller state on product change
+    // Reset seller state on product change hai
     setSellerProductsCount(0);
     setSellerProductsPreview([]);
 
