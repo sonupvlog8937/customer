@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ProductZoom } from "../../components/ProductZoom";
 import { ProductDetailsComponent } from "../../components/ProductDetails";
 import ProductItem from "../../components/ProductItem";
@@ -20,15 +20,19 @@ export const ProductDetails = () => {
   const [relatedProductsPage, setRelatedProductsPage] = useState(1);
   const [hasMoreRelatedProducts, setHasMoreRelatedProducts] = useState(false);
   const [isRelatedProductsLoading, setIsRelatedProductsLoading] = useState(false);
+  const [sellerProductsCount, setSellerProductsCount] = useState(0);
+  const [sellerProductsPreview, setSellerProductsPreview] = useState([]);
 
   const { id } = useParams();
+  const navigate = useNavigate();
   const reviewSec = useRef();
+  const specSec = useRef();
 
   useEffect(() => {
     fetchDataFromApi(`/api/user/getReviews?productId=${id}`).then((res) => {
       if (res?.error === false) setReviewsCount(res.reviews.length);
     });
-  }, [reviewsCount]);
+  }, [id]);
 
   const loadRelatedProducts = async (subCatId, pageToLoad, shouldAppend = false) => {
     if (!subCatId) return;
@@ -54,14 +58,36 @@ export const ProductDetails = () => {
     setRelatedProductData([]);
     setRelatedProductsPage(1);
     setHasMoreRelatedProducts(false);
+    // Reset seller state on product change
+    setSellerProductsCount(0);
+    setSellerProductsPreview([]);
 
     fetchDataFromApi(`/api/product/${id}`).then(async (res) => {
       if (res?.error === false) {
-        setProductData(res?.product);
-        setActiveImages(res?.product?.images || []);
+        const product = res?.product;
+        setProductData(product);
+        setActiveImages(product?.images || []);
         setVisibleSpecifications(5);
-        await loadRelatedProducts(res?.product?.subCatId, 1, false);
+
+        // FIX: Use seller._id properly and accept both response shapes
+        const sellerId = product?.seller?._id || product?.seller;
+        if (sellerId) {
+          fetchDataFromApi(`/api/product/store/${sellerId}?limit=6&page=1&thirdLavelCatId=${product?.thirdsubCatId || ''}`).then((storeRes) => {
+            if (storeRes?.error === false || storeRes?.success === true) {
+              setSellerProductsCount(storeRes?.total || 0);
+              setSellerProductsPreview(
+                (storeRes?.products || [])
+                  .filter((item) => String(item?._id) !== String(id))
+                  .slice(0, 5)
+              );
+            }
+          });
+        }
+
+        await loadRelatedProducts(product?.subCatId, 1, false);
         setTimeout(() => setIsLoading(false), 700);
+      } else {
+        setIsLoading(false);
       }
     });
 
@@ -72,6 +98,16 @@ export const ProductDetails = () => {
     window.scrollTo({ top: reviewSec?.current?.offsetTop - 170, behavior: "smooth" });
     setActiveTab(1);
   };
+
+  const gotoSpecs = () => {
+    if (specSec?.current) {
+      const top = specSec.current.getBoundingClientRect().top + window.scrollY - 90;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  };
+
+  // Seller ID for navigation — handles both populated and non-populated
+  const sellerId = productData?.seller?._id || productData?.seller;
 
   const breadcrumbItems = [
     productData?.catName && productData?.catId
@@ -87,9 +123,6 @@ export const ProductDetails = () => {
 
   return (
     <>
-      {/* Inject styles once */}
-      
-
       <div className="pd-root">
 
         {/* ── Breadcrumb ── */}
@@ -119,24 +152,76 @@ export const ProductDetails = () => {
               {/* ── Hero: Image + Details ── */}
               <div className="container">
                 <div className="pd-hero">
-
-                  {/* Full-width on mobile image */}
                   <div className="pd-image-wrapper">
-                    
                     <ProductZoom
                       images={activeImages?.length !== 0 ? activeImages : productData?.images}
                     />
-                    
-                  </div>
-                  
 
-                  {/* Details column */}
+                    {/* ── Quick-action row below images ── */}
+                    <style>{`
+                      @keyframes qaFadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+                      .pd-qa-row { display:flex; gap:10px; margin-top:14px; margin-bottom: 14px; animation: qaFadeUp .4s .1s both; }
+                      .pd-qa-btn {
+                        flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
+                        padding:10px 14px; border-radius:10px; font-size:13px; font-weight:600;
+                        cursor:pointer; border:1.5px solid; transition:all .18s; font-family:inherit;
+                      }
+                      .pd-qa-btn-spec {
+                        background:#fff; border-color:#2563eb; color:#2563eb;
+                      }
+                      .pd-qa-btn-spec:hover {
+                        background:#2563eb; color:#fff; transform:translateY(-1px);
+                        box-shadow:0 4px 14px rgba(37,99,235,.25);
+                      }
+                      .pd-qa-btn-rev {
+                        background:#fff; border-color:#e2e8f0; color:#475569;
+                      }
+                      .pd-qa-btn-rev:hover {
+                        background:#f8fafc; border-color:#94a3b8; transform:translateY(-1px);
+                      }
+                      .pd-qa-badge {
+                        background:#eff6ff; color:#2563eb; border-radius:99px;
+                        font-size:10px; font-weight:700; padding:1px 6px; min-width:18px; text-align:center;
+                        transition:background .18s,color .18s;
+                      }
+                      .pd-qa-btn-spec:hover .pd-qa-badge { background:rgba(255,255,255,.25); color:#fff; }
+                      .pd-qa-rev-badge {
+                        background:#f1f5f9; color:#64748b; border-radius:99px;
+                        font-size:10px; font-weight:700; padding:1px 6px;
+                      }
+                    `}</style>
+
+                    <div className="pd-qa-row">
+                      {/* Details / Specifications button */}
+                      <button className="pd-qa-btn pd-qa-btn-spec" onClick={gotoSpecs}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                        </svg>
+                        Details
+                        {productData?.specifications?.length > 0 && (
+                          <span className="pd-qa-badge">{productData.specifications.length}</span>
+                        )}
+                      </button>
+
+                      {/* Reviews button */}
+                      <button className="pd-qa-btn pd-qa-btn-rev" onClick={gotoReviews}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        Reviews
+                        {reviewsCount > 0 && (
+                          <span className="pd-qa-rev-badge">{reviewsCount}</span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   <div className="pd-content-col">
-                    
                     <ProductDetailsComponent
                       item={productData}
                       reviewsCount={reviewsCount}
                       gotoReviews={gotoReviews}
+                      gotoSpecs={gotoSpecs}
                       onColorChange={(images) =>
                         setActiveImages(images?.length !== 0 ? images : productData?.images || [])
                       }
@@ -145,69 +230,217 @@ export const ProductDetails = () => {
                 </div>
               </div>
 
-              {/* ── Product Details & Specs + Why Buy ── */}
-              <div className="container pd-section">
+              {/* ── Seller Store Card ── */}
+              <div className="container" style={{ marginTop: "14px" }}>
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr",
-                    gap: "20px",
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "14px",
+                    padding: "16px 18px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    flexWrap: "wrap",
                   }}
                 >
-                  {/* Specs */}
+                  <div>
+                    <p style={{ fontSize: 12, color: "#64748b", marginBottom: 2 }}>Sold by</p>
+                    <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>
+                      {productData?.seller?.storeProfile?.storeName ||
+                        productData?.seller?.name ||
+                        "Marketplace Seller"}
+                    </p>
+                    <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+                      {sellerProductsCount > 0
+                        ? `${sellerProductsCount} products in this store`
+                        : "Visit seller's store"}
+                    </p>
+                  </div>
+
+                  {/* FIX: Use navigate() so click actually goes to store page */}
+                  {sellerId && (
+                    <button
+                      onClick={() => navigate(`/store/${sellerId}`)}
+                      className="pd-load-more-btn"
+                      style={{ cursor: "pointer", border: "none", display: "inline-flex", width: "auto", padding: "10px 16px" }}
+                    >
+                      Visit Seller Store →
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* ── More From This Seller ── */}
+              {sellerProductsPreview?.length > 0 && (
+                <div className="container" style={{ marginTop: "14px" }}>
                   <div
                     style={{
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-lg)",
-                      padding: "24px",
-                      boxShadow: "var(--shadow-card)",
+                      background: "#fff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 14,
+                      padding: "16px",
                     }}
                   >
-                    <h2 className="pd-section-title">Product Specifications</h2>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 12,
+                      }}
+                    >
+                      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>
+                        More from this seller
+                      </h3>
+                      {sellerId && (
+                        <span
+                          onClick={() => navigate(`/store/${sellerId}`)}
+                          className="pd-breadcrumb-link"
+                          style={{ cursor: "pointer" }}
+                        >
+                          See all →
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                      {sellerProductsPreview.map((item) => (
+                        <ProductItem key={item?._id} item={item} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
+              {/* ── Product Specifications ── */}
+              <div className="container pd-section" ref={specSec}>
+                <style>{`
+                  @keyframes specFadeIn {
+                    from { opacity: 0; transform: translateY(18px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                  }
+                  .pd-spec-block { animation: specFadeIn 0.38s cubic-bezier(0.22,1,0.36,1) both; }
+                  .pd-spec-header {
+                    display: flex; align-items: center; justify-content: space-between;
+                    margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid #f1f5f9;
+                  }
+                  .pd-spec-title-row {
+                    display: flex; align-items: center; gap: 10px;
+                  }
+                  .pd-spec-icon {
+                    width: 36px; height: 36px; border-radius: 10px;
+                    background: linear-gradient(135deg,#2563eb,#1d4ed8);
+                    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                  }
+                  .pd-spec-count-badge {
+                    background: #eff6ff; color: #2563eb; border-radius: 99px;
+                    font-size: 11px; font-weight: 700; padding: 2px 9px;
+                  }
+                  .pd-spec-table-wrap { border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
+                  .pd-spec-tbl { width: 100%; border-collapse: collapse; }
+                  .pd-spec-tbl tr { transition: background .15s; }
+                  .pd-spec-tbl tr:hover td { background: #f0f7ff !important; }
+                  .pd-spec-tbl tr:nth-child(odd) td { background: #f8fafc; }
+                  .pd-spec-tbl tr:nth-child(even) td { background: #ffffff; }
+                  .pd-spec-tbl td {
+                    padding: 11px 16px; font-size: 13px;
+                    border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+                  }
+                  .pd-spec-tbl tr:last-child td { border-bottom: none; }
+                  .pd-spec-tbl td:first-child {
+                    color: #64748b; font-weight: 600; width: 36%;
+                    border-right: 1px solid #f1f5f9;
+                  }
+                  .pd-spec-tbl td:last-child { color: #0f172a; font-weight: 500; }
+                  .pd-spec-show-btn {
+                    display: flex; align-items: center; justify-content: center; gap: 6px;
+                    margin: 14px auto 0; padding: 8px 22px;
+                    border: 1.5px solid #e2e8f0; border-radius: 8px;
+                    background: #fff; color: #475569; font-size: 12px; font-weight: 600;
+                    cursor: pointer; transition: all .15s; font-family: inherit;
+                  }
+                  .pd-spec-show-btn:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+                  .pd-trust-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+                  .pd-trust-pill {
+                    display: flex; align-items: center; gap: 6px;
+                    background: #f0fdf4; border: 1px solid #bbf7d0;
+                    border-radius: 99px; padding: 5px 12px;
+                    font-size: 11px; color: #166534; font-weight: 600;
+                  }
+                `}</style>
+
+                <div
+                  className="pd-spec-block"
+                  style={{
+                    background: "#fff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "16px",
+                    padding: "24px",
+                    boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  {/* Header */}
+                  <div className="pd-spec-header">
+                    <div className="pd-spec-title-row">
+                      <div className="pd-spec-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: 0 }}>Product Specifications</h2>
+                        <p style={{ fontSize: 11, color: "#94a3b8", margin: "2px 0 0" }}>Complete technical details</p>
+                      </div>
+                    </div>
                     {productData?.specifications?.length > 0 && (
-                      <>
-                        <div className="pd-specs-grid">
-                          {productData.specifications
-                            .slice(0, visibleSpecifications)
-                            .map((spec, i) => (
-                              <div key={`${spec?.key}-${i}`} className="pd-spec-item">
-                                <p className="pd-spec-key">{spec?.key}</p>
-                                <p className="pd-spec-val">{spec?.value}</p>
-                              </div>
-                            ))}
-                        </div>
-
-                        {productData.specifications.length > visibleSpecifications && (
-                          <button
-                            className="pd-see-btn"
-                            onClick={() => setVisibleSpecifications((p) => p + 5)}
-                          >
-                            ↓ See More
-                          </button>
-                        )}
-                        {visibleSpecifications > 5 &&
-                          productData.specifications.length <= visibleSpecifications && (
-                            <button
-                              className="pd-see-btn"
-                              onClick={() => setVisibleSpecifications(5)}
-                            >
-                              ↑ See Less
-                            </button>
-                          )}
-                      </>
+                      <span className="pd-spec-count-badge">{productData.specifications.length} specs</span>
                     )}
                   </div>
 
-                  {/* Why buy */}
-                  <div className="pd-why-card">
-                    <p className="pd-why-title">Why buy from us?</p>
-                    <ul className="pd-why-list">
-                      <li>Fresh stock with dynamic pricing from live product database.</li>
-                      <li>Fast delivery and secure checkout support.</li>
-                      <li>Detailed specifications and verified customer reviews.</li>
-                    </ul>
+                  {/* Table */}
+                  {productData?.specifications?.length > 0 ? (
+                    <>
+                      <div className="pd-spec-table-wrap">
+                        <table className="pd-spec-tbl">
+                          <tbody>
+                            {productData.specifications
+                              .slice(0, visibleSpecifications)
+                              .map((spec, i) => (
+                                <tr key={`${spec?.key}-${i}`}>
+                                  <td>{spec?.key}</td>
+                                  <td>{spec?.value}</td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {productData.specifications.length > visibleSpecifications && (
+                        <button className="pd-spec-show-btn" onClick={() => setVisibleSpecifications((p) => p + 5)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+                          Show {Math.min(5, productData.specifications.length - visibleSpecifications)} more specifications
+                        </button>
+                      )}
+                      {visibleSpecifications > 5 && productData.specifications.length <= visibleSpecifications && (
+                        <button className="pd-spec-show-btn" onClick={() => setVisibleSpecifications(5)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 15l-6-6-6 6"/></svg>
+                          Show less
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "28px 0" }}>
+                      No specifications available for this product.
+                    </p>
+                  )}
+
+                  {/* Trust pills */}
+                  <div className="pd-trust-row">
+                    {["✓ Verified product","✓ Fast delivery","✓ Easy returns","✓ 24/7 support"].map((t) => (
+                      <span key={t} className="pd-trust-pill">{t}</span>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -252,7 +485,7 @@ export const ProductDetails = () => {
                           {isRelatedProductsLoading ? (
                             <>
                               <CircularProgress size={14} style={{ color: "#fff" }} />
-                              Loading…
+                              &nbsp;Loading…
                             </>
                           ) : (
                             "Load More"
