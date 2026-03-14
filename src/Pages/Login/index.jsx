@@ -276,17 +276,17 @@ const Login = () => {
               </button>
 
               {/* Divider */}
-              <div className="divider">
+              {/* <div className="divider">
                 <span className="divider-line" />
                 <span className="divider-text">or continue with</span>
                 <span className="divider-line" />
-              </div>
+              </div> */}
 
               {/* Google */}
-              <button type="button" className="btn-google" onClick={authWithGoogle} disabled={isLoading}>
+              {/* <button type="button" className="btn-google" onClick={authWithGoogle} disabled={isLoading}>
                 <GoogleIcon />
                 <span>Continue with Google</span>
-              </button>
+              </button> */}
 
               {/* Register link */}
               <p className="login-footer-text">
