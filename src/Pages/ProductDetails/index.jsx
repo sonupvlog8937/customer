@@ -157,6 +157,7 @@ export const ProductDetails = () => {
                       images={activeImages?.length !== 0 ? activeImages : productData?.images}
                     />
 
+
                     {/* ── Quick-action row below images ── */}
                     <style>{`
                       @keyframes qaFadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
@@ -198,7 +199,7 @@ export const ProductDetails = () => {
                           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                           <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
                         </svg>
-                        Details
+                        Detailss
                         {productData?.specifications?.length > 0 && (
                           <span className="pd-qa-badge">{productData.specifications.length}</span>
                         )}
