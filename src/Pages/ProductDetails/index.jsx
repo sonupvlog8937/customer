@@ -160,7 +160,7 @@ export const ProductDetails = () => {
                     {/* ── Quick-action row below images ── */}
                     <style>{`
                       @keyframes qaFadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-                      .pd-qa-row { display:flex; gap:10px; margin-top:14px; animation: qaFadeUp .4s .1s both; }
+                      .pd-qa-row { display:flex; gap:10px; margin-top:14px; margin-bottom: 14px; animation: qaFadeUp .4s .1s both; }
                       .pd-qa-btn {
                         flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
                         padding:10px 14px; border-radius:10px; font-size:13px; font-weight:600;
