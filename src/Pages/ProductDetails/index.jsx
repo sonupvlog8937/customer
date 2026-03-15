@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ProductZoom } from "../../components/ProductZoom";
@@ -9,107 +9,163 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { Reviews } from "./reviews";
 import "./style.css";
 
+// ─── Module-level cache — component unmount ke baad bhi data rehta hai ───────
+// Same product dobara open = 0ms load, no API call
+const _cache = new Map(); // key: productId → { product, relatedProducts, sellerData, ts }
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function cacheGet(id) {
+  const e = _cache.get(id);
+  if (!e || Date.now() - e.ts > CACHE_TTL) { _cache.delete(id); return null; }
+  return e;
+}
+function cacheSet(id, data) {
+  _cache.set(id, { ...data, ts: Date.now() });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const ProductDetails = () => {
-  const [activeTab, setActiveTab] = useState(0);
-  const [productData, setProductData] = useState();
-  const [isLoading, setIsLoading] = useState(false);
-  const [reviewsCount, setReviewsCount] = useState(0);
+  const [activeTab, setActiveTab]                   = useState(0);
+  const [productData, setProductData]               = useState(null);
+  const [isLoading, setIsLoading]                   = useState(false);
+  const [reviewsCount, setReviewsCount]             = useState(0);
   const [relatedProductData, setRelatedProductData] = useState([]);
-  const [activeImages, setActiveImages] = useState([]);
+  const [activeImages, setActiveImages]             = useState([]);
   const [visibleSpecifications, setVisibleSpecifications] = useState(5);
-  const [relatedProductsPage, setRelatedProductsPage] = useState(1);
+  const [relatedProductsPage, setRelatedProductsPage]     = useState(1);
   const [hasMoreRelatedProducts, setHasMoreRelatedProducts] = useState(false);
   const [isRelatedProductsLoading, setIsRelatedProductsLoading] = useState(false);
-  const [sellerProductsCount, setSellerProductsCount] = useState(0);
+  const [sellerProductsCount, setSellerProductsCount]   = useState(0);
   const [sellerProductsPreview, setSellerProductsPreview] = useState([]);
 
   const { id } = useParams();
   const navigate = useNavigate();
   const reviewSec = useRef();
-  const specSec = useRef();
+  const specSec   = useRef();
 
+  // ── Reviews count — separate, lightweight call ──────────────────────────
   useEffect(() => {
+    if (!id) return;
     fetchDataFromApi(`/api/user/getReviews?productId=${id}`).then((res) => {
-      if (res?.error === false) setReviewsCount(res.reviews.length);
+      if (res?.error === false) setReviewsCount(res.reviews?.length || 0);
     });
   }, [id]);
 
-  const loadRelatedProducts = async (subCatId, pageToLoad, shouldAppend = false) => {
+  // ── Load More related products (pagination) ──────────────────────────────
+  const loadRelatedProducts = useCallback(async (subCatId, pageToLoad, shouldAppend = false) => {
     if (!subCatId) return;
     setIsRelatedProductsLoading(true);
-    const res = await fetchDataFromApi(
-      `/api/product/getAllProductsBySubCatId/${subCatId}?page=${pageToLoad}&perPage=10`
-    );
-    if (res?.error === false) {
-      const filteredData = (res?.products || []).filter((item) => item?._id !== id);
-      setRelatedProductData((prev) => {
-        if (!shouldAppend) return filteredData;
-        const existingIds = new Set(prev.map((item) => item?._id));
-        return [...prev, ...filteredData.filter((item) => !existingIds.has(item?._id))];
-      });
-      setHasMoreRelatedProducts((res?.products || []).length === 10);
-      setRelatedProductsPage(pageToLoad);
+    try {
+      const res = await fetchDataFromApi(
+        `/api/product/getAllProductsBySubCatId/${subCatId}?page=${pageToLoad}&perPage=10`
+      );
+      if (res?.error === false) {
+        const filtered = (res?.products || []).filter((item) => item?._id !== id);
+        setRelatedProductData((prev) => {
+          if (!shouldAppend) return filtered;
+          const seen = new Set(prev.map((p) => p?._id));
+          return [...prev, ...filtered.filter((p) => !seen.has(p?._id))];
+        });
+        setHasMoreRelatedProducts((res?.products || []).length === 10);
+        setRelatedProductsPage(pageToLoad);
+      }
+    } finally {
+      setIsRelatedProductsLoading(false);
     }
-    setIsRelatedProductsLoading(false);
-  };
+  }, [id]);
 
+  // ── Main data fetch — with cache ─────────────────────────────────────────
   useEffect(() => {
+    if (!id) return;
+
+    window.scrollTo(0, 0);
+
+    // ✅ FIX 1: Cache hit → instant render, no loading spinner at all
+    const cached = cacheGet(id);
+    if (cached) {
+      setProductData(cached.product);
+      setActiveImages(cached.product?.images || []);
+      setRelatedProductData(cached.relatedProducts || []);
+      setHasMoreRelatedProducts((cached.relatedProducts || []).length >= 10);
+      setSellerProductsCount(cached.sellerData?.total || 0);
+      setSellerProductsPreview(cached.sellerData?.preview || []);
+      setVisibleSpecifications(5);
+      setRelatedProductsPage(1);
+      return; // no loading state needed
+    }
+
+    // Cache miss — fresh fetch
     setIsLoading(true);
     setRelatedProductData([]);
     setRelatedProductsPage(1);
     setHasMoreRelatedProducts(false);
-    // Reset seller state on product change
     setSellerProductsCount(0);
     setSellerProductsPreview([]);
 
     fetchDataFromApi(`/api/product/${id}`).then(async (res) => {
-      if (res?.error === false) {
-        const product = res?.product;
-        setProductData(product);
-        setActiveImages(product?.images || []);
-        setVisibleSpecifications(5);
+      if (res?.error !== false) { setIsLoading(false); return; }
 
-        // FIX: Use seller._id properly and accept both response shapes
-        const sellerId = product?.seller?._id || product?.seller;
-        if (sellerId) {
-          fetchDataFromApi(`/api/product/store/${sellerId}?limit=6&page=1&thirdLavelCatId=${product?.thirdsubCatId || ''}`).then((storeRes) => {
-            if (storeRes?.error === false || storeRes?.success === true) {
-              setSellerProductsCount(storeRes?.total || 0);
-              setSellerProductsPreview(
-                (storeRes?.products || [])
-                  .filter((item) => String(item?._id) !== String(id))
-                  .slice(0, 5)
-              );
-            }
-          });
-        }
+      const product = res?.product;
+      setProductData(product);
+      setActiveImages(product?.images || []);
+      setVisibleSpecifications(5);
 
-        await loadRelatedProducts(product?.subCatId, 1, false);
-        setTimeout(() => setIsLoading(false), 700);
-      } else {
-        setIsLoading(false);
-      }
+      const sellerId = product?.seller?._id || product?.seller;
+
+      // ✅ FIX 2: Product + Related + Seller — teeno parallel mein fetch karo
+      // Pehle ek ke baad ek hota tha — ab sab saath
+      const [relatedRes, sellerRes] = await Promise.all([
+        product?.subCatId
+          ? fetchDataFromApi(`/api/product/getAllProductsBySubCatId/${product.subCatId}?page=1&perPage=10`)
+          : Promise.resolve(null),
+        sellerId
+          ? fetchDataFromApi(`/api/product/store/${sellerId}?limit=6&page=1&thirdLavelCatId=${product?.thirdsubCatId || ''}`)
+          : Promise.resolve(null),
+      ]);
+
+      const relatedProducts = relatedRes?.error === false
+        ? (relatedRes.products || []).filter((item) => item?._id !== id)
+        : [];
+
+      const sellerData = (sellerRes?.error === false || sellerRes?.success === true)
+        ? {
+            total:   sellerRes?.total || 0,
+            preview: (sellerRes?.products || []).filter((item) => String(item?._id) !== String(id)).slice(0, 5),
+          }
+        : { total: 0, preview: [] };
+
+      setRelatedProductData(relatedProducts);
+      setHasMoreRelatedProducts(relatedProducts.length >= 10);
+      setSellerProductsCount(sellerData.total);
+      setSellerProductsPreview(sellerData.preview);
+
+      // ✅ FIX 3: Save to cache for instant future loads
+      cacheSet(id, { product, relatedProducts, sellerData });
+
+      // ✅ FIX 4: Remove artificial setTimeout(700) delay — was slowing page by 700ms
+      setIsLoading(false);
     });
-
-    window.scrollTo(0, 0);
   }, [id]);
 
-  const gotoReviews = () => {
+  const gotoReviews = useCallback(() => {
     window.scrollTo({ top: reviewSec?.current?.offsetTop - 170, behavior: "smooth" });
     setActiveTab(1);
-  };
+  }, []);
 
-  const gotoSpecs = () => {
+  const gotoSpecs = useCallback(() => {
     if (specSec?.current) {
       const top = specSec.current.getBoundingClientRect().top + window.scrollY - 90;
       window.scrollTo({ top, behavior: "smooth" });
     }
-  };
+  }, []);
 
-  // Seller ID for navigation — handles both populated and non-populated
-  const sellerId = productData?.seller?._id || productData?.seller;
+  // ✅ FIX 5: useMemo — har render pe recalculate nahi hoga
+  const sellerId = useMemo(
+    () => productData?.seller?._id || productData?.seller,
+    [productData?.seller]
+  );
 
-  const breadcrumbItems = [
+  const breadcrumbItems = useMemo(() => [
     productData?.catName && productData?.catId
       ? { label: productData.catName, to: `/products?catId=${productData.catId}` }
       : null,
@@ -119,7 +175,7 @@ export const ProductDetails = () => {
     productData?.thirdsubCat && productData?.thirdsubCatId
       ? { label: productData.thirdsubCat, to: `/products?thirdLavelCatId=${productData.thirdsubCatId}` }
       : null,
-  ].filter(Boolean);
+  ].filter(Boolean), [productData]);
 
   return (
     <>
@@ -192,7 +248,6 @@ export const ProductDetails = () => {
                     `}</style>
 
                     <div className="pd-qa-row">
-                      {/* Details / Specifications button */}
                       <button className="pd-qa-btn pd-qa-btn-spec" onClick={gotoSpecs}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -204,7 +259,6 @@ export const ProductDetails = () => {
                         )}
                       </button>
 
-                      {/* Reviews button */}
                       <button className="pd-qa-btn pd-qa-btn-rev" onClick={gotoReviews}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -216,6 +270,7 @@ export const ProductDetails = () => {
                       </button>
                     </div>
                   </div>
+
                   <div className="pd-content-col">
                     <ProductDetailsComponent
                       item={productData}
@@ -234,15 +289,10 @@ export const ProductDetails = () => {
               <div className="container" style={{ marginTop: "14px" }}>
                 <div
                   style={{
-                    background: "#ffffff",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "14px",
-                    padding: "16px 18px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "12px",
-                    flexWrap: "wrap",
+                    background: "#ffffff", border: "1px solid #e2e8f0",
+                    borderRadius: "14px", padding: "16px 18px",
+                    display: "flex", alignItems: "center",
+                    justifyContent: "space-between", gap: "12px", flexWrap: "wrap",
                   }}
                 >
                   <div>
@@ -258,8 +308,6 @@ export const ProductDetails = () => {
                         : "Visit seller's store"}
                     </p>
                   </div>
-
-                  {/* FIX: Use navigate() so click actually goes to store page */}
                   {sellerId && (
                     <button
                       onClick={() => navigate(`/store/${sellerId}`)}
@@ -275,25 +323,9 @@ export const ProductDetails = () => {
               {/* ── More From This Seller ── */}
               {sellerProductsPreview?.length > 0 && (
                 <div className="container" style={{ marginTop: "14px" }}>
-                  <div
-                    style={{
-                      background: "#fff",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: 14,
-                      padding: "16px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>
-                        More from this seller
-                      </h3>
+                  <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: "16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>More from this seller</h3>
                       {sellerId && (
                         <span
                           onClick={() => navigate(`/store/${sellerId}`)}
@@ -325,9 +357,7 @@ export const ProductDetails = () => {
                     display: flex; align-items: center; justify-content: space-between;
                     margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid #f1f5f9;
                   }
-                  .pd-spec-title-row {
-                    display: flex; align-items: center; gap: 10px;
-                  }
+                  .pd-spec-title-row { display: flex; align-items: center; gap: 10px; }
                   .pd-spec-icon {
                     width: 36px; height: 36px; border-radius: 10px;
                     background: linear-gradient(135deg,#2563eb,#1d4ed8);
@@ -348,10 +378,7 @@ export const ProductDetails = () => {
                     border-bottom: 1px solid #f1f5f9; vertical-align: middle;
                   }
                   .pd-spec-tbl tr:last-child td { border-bottom: none; }
-                  .pd-spec-tbl td:first-child {
-                    color: #64748b; font-weight: 600; width: 36%;
-                    border-right: 1px solid #f1f5f9;
-                  }
+                  .pd-spec-tbl td:first-child { color: #64748b; font-weight: 600; width: 36%; border-right: 1px solid #f1f5f9; }
                   .pd-spec-tbl td:last-child { color: #0f172a; font-weight: 500; }
                   .pd-spec-show-btn {
                     display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -373,14 +400,11 @@ export const ProductDetails = () => {
                 <div
                   className="pd-spec-block"
                   style={{
-                    background: "#fff",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "16px",
-                    padding: "24px",
+                    background: "#fff", border: "1px solid #e2e8f0",
+                    borderRadius: "16px", padding: "24px",
                     boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
                   }}
                 >
-                  {/* Header */}
                   <div className="pd-spec-header">
                     <div className="pd-spec-title-row">
                       <div className="pd-spec-icon">
@@ -399,7 +423,6 @@ export const ProductDetails = () => {
                     )}
                   </div>
 
-                  {/* Table */}
                   {productData?.specifications?.length > 0 ? (
                     <>
                       <div className="pd-spec-table-wrap">
@@ -416,7 +439,6 @@ export const ProductDetails = () => {
                           </tbody>
                         </table>
                       </div>
-
                       {productData.specifications.length > visibleSpecifications && (
                         <button className="pd-spec-show-btn" onClick={() => setVisibleSpecifications((p) => p + 5)}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
@@ -436,7 +458,6 @@ export const ProductDetails = () => {
                     </p>
                   )}
 
-                  {/* Trust pills */}
                   <div className="pd-trust-row">
                     {["✓ Verified product","✓ Fast delivery","✓ Easy returns","✓ 24/7 support"].map((t) => (
                       <span key={t} className="pd-trust-pill">{t}</span>
@@ -477,16 +498,11 @@ export const ProductDetails = () => {
                       <div style={{ display: "flex", justifyContent: "center", marginTop: "28px" }}>
                         <button
                           className="pd-load-more-btn"
-                          onClick={() =>
-                            loadRelatedProducts(productData?.subCatId, relatedProductsPage + 1, true)
-                          }
+                          onClick={() => loadRelatedProducts(productData?.subCatId, relatedProductsPage + 1, true)}
                           disabled={isRelatedProductsLoading}
                         >
                           {isRelatedProductsLoading ? (
-                            <>
-                              <CircularProgress size={14} style={{ color: "#fff" }} />
-                              &nbsp;Loading…
-                            </>
+                            <><CircularProgress size={14} style={{ color: "#fff" }} />&nbsp;Loading…</>
                           ) : (
                             "Load More"
                           )}
