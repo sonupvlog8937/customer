@@ -489,7 +489,7 @@ const Header = () => {
                         <span className="qm-dot" />
                         <span className="qm-dot" />
                       </span>
-                      {notifCount > 0 && !quickMenuOpen && <span className="qm-notif-pip" />}
+                      {/* {notifCount > 0 && !quickMenuOpen && <span className="qm-notif-pip" />} */}
                     </button>
                   </Tooltip>
                 </li>
