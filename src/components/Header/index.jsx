@@ -469,7 +469,7 @@ const Header = () => {
         }
       }}
     >
-      <IoSearch fontSize="small" />
+      <IoSearch />
     </IconButton>
   </Tooltip>
 </li>
