@@ -225,10 +225,10 @@ const QuickMenu = ({ onClose, notifCount }) => {
     {
       key: "notif",
       label: "Notifications",
-      desc: notifCount > 0 ? `${notifCount} new` : "Stay updated",
+      desc: notifCount > 0 ? "new messages" : "Stay updated",
       icon: "🔔",
       ic: "ic-notif",
-      badge: notifCount > 0 ? notifCount : null,
+      // badge: notifCount > 0 ? notifCount : null,
       action: () => go("/notifications"),
     },
     {
@@ -469,7 +469,7 @@ const Header = () => {
         }
       }}
     >
-      <IoSearch />
+      <IoSearch fontSize="small" />
     </IconButton>
   </Tooltip>
 </li>
