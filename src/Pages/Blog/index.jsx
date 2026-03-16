@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion"; // <-- Framer motion import karein
 import BlogItem from "../../components/BlogItem";
 import { fetchDataFromApi } from "../../utils/api";
 
@@ -12,7 +13,13 @@ const Blog = () => {
   }, []);
 
   return (
-    <section className="py-6 bg-white min-h-[60vh]">
+    // <section> ko <motion.section> mein badal dein
+    <motion.section 
+      initial={{ opacity: 0, y: -50 }} // Page load hone se pehle: Invisible aur 50px upar
+      animate={{ opacity: 1, y: 0 }}   // Animate hokar kahan aana hai: Visible aur original position par
+      transition={{ duration: 0.5, ease: "easeOut" }} // Animation ki speed aur style
+      className="py-6 bg-white min-h-[60vh]"
+    >
       <div className="container">
         <h1 className="text-[24px] font-[700] mb-5">Our Blogs</h1>
 
@@ -29,7 +36,7 @@ const Blog = () => {
           </div>
         )}
       </div>
-    </section>
+    </motion.section>
   );
 };
 
