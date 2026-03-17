@@ -45,6 +45,7 @@ import {
 } from "./store/appSlice";
 import NotificationSettings from "./Pages/NotificationSettings";
 import ScrollToTop from "./components/ScrollToTop";
+import PrivacyPolicy from "./Pages/PrivacyPolicy";
 // import Settings from "./Pages/Settings";
 
 /* ─────────────────────────────────────────
@@ -196,6 +197,7 @@ const AppContent = () => {
         <Route path="/notification-settings" exact={true} element={<NotificationSettings />} />
         <Route path="/notifications" exact={true} element={<NotificationsPage />} />
         <Route path="/become-seller" exact={true} element={<BecomeSeller />} />
+        <Route path="/privacy-policy" exact={true} element={<PrivacyPolicy />} />
        {/* <Route path="/settings" exact={true} element={<Settings />} /> */}
         <Route path="/store/:sellerId" exact={true} element={<StorePage />} />
       </Routes>

@@ -184,6 +184,14 @@ const AccountSidebar = () => {
         </li>
 
         <li className="w-full">
+          <NavLink to="/offers" exact={true} activeClassName="isActive">
+            <Button className="w-full !py-2 !text-left !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
+              <MdLocalOffer className="text-[18px]" /> Offers & Coupons
+            </Button>
+          </NavLink>
+        </li>
+
+        <li className="w-full">
           <NavLink to="/settings" exact={true} activeClassName="isActive">
             <Button className="w-full !py-2 !text-left !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
               <MdOutlineNotificationsActive className="text-[18px]" /> Settings
@@ -200,9 +208,9 @@ const AccountSidebar = () => {
         </li>
 
         <li className="w-full">
-          <NavLink to="/offers" exact={true} activeClassName="isActive">
+          <NavLink to="/privacy-policy" exact={true} activeClassName="isActive">
             <Button className="w-full !py-2 !text-left !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
-              <MdLocalOffer className="text-[18px]" /> Offers & Coupons
+              <MdLocalOffer className="text-[18px]" /> Privacy & Policy
             </Button>
           </NavLink>
         </li>
