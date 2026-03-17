@@ -377,7 +377,7 @@ const Header = () => {
               </Button>
             )}
 
-            <div className="col1 w-[40%] lg:w-[25%] item-center" style={{ marginRight: "135px"}}>
+            <div className="col1 w-[30%] lg:w-[25%] item-center" style={{ marginRight: "135px"}}>
               <Link to="/">
                 <img src={localStorage.getItem("logo")} className="max-w-[140px] lg:max-w-[200px]"
                   loading="eager" width="200" height="50" alt="Zeedaddy" />
@@ -388,7 +388,7 @@ const Header = () => {
               <Search />
             </div>
 
-            <div className="col3 w-[10%] lg:w-[30%] flex items-center pl-7">
+            <div className="col3 w-[10%] lg:w-[40%] flex items-center pl-7">
               <ul className="flex items-center justify-end gap-0 lg:gap-3 w-full">
 
                 {/* Login/Register */}
