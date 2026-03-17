@@ -409,14 +409,13 @@ const Register = () => {
                 )}
               </button>
 
-              Divider
               <div className="divider">
                 <span className="divider-line" />
                 <span className="divider-text">or sign up with</span>
                 <span className="divider-line" />
               </div>
 
-              Google
+             
               <button type="button" className="btn-google" onClick={authWithGoogle} disabled={isLoading}>
                 <GoogleIcon />
                 <span>Continue with Google</span>
