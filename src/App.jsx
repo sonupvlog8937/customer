@@ -44,6 +44,7 @@ import {
   setWindowWidth,
 } from "./store/appSlice";
 import NotificationSettings from "./Pages/NotificationSettings";
+import ScrollToTop from "./components/ScrollToTop";
 // import Settings from "./Pages/Settings";
 
 /* ─────────────────────────────────────────
@@ -236,6 +237,7 @@ function App() {
   return (
     <>
       <BrowserRouter>
+        <ScrollToTop />
         <AppContent />
       </BrowserRouter>
       <Toaster
