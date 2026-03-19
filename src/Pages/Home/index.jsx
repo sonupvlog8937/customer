@@ -299,12 +299,12 @@ const Home = () => {
                     Shop Now <FaArrowRight className="text-[12px]" />
                   </button>
                 </Link>
-                <Link to="https://zeedaddy-tenminutes.vercel.app">
+                <Link to="/categories">
                   <button className="inline-flex items-center h-[48px] px-7 rounded-xl font-[700] text-[14px] transition-all duration-200"
                     style={{ border: "2px solid #E9ECEF", color: "#374151", background: "white" }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = "#FF6B2B"; e.currentTarget.style.color = "#FF6B2B"; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = "#E9ECEF"; e.currentTarget.style.color = "#374151"; }}>
-                    10-Minutes Delivery
+                    View Categories
                   </button>
                 </Link>
               </div>
