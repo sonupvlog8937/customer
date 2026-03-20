@@ -211,7 +211,7 @@ const QuickMenu = ({ onClose, notifCount }) => {
       desc: "Faster mobile experience",
       icon: "📲",
       ic: "ic-app",
-      href: "/699b044d39ee2939e558446e.apk",
+      href: "/app-apk-69bca4b2757bd-1773970610.apk",
       download: true,
     },
     {
