@@ -284,7 +284,7 @@ const QuickMenu = ({ onClose, notifCount }) => {
 
         <div className="qm-foot">
           <span className="qm-foot-ver">Zeedaddy v2.0 &middot; &#169; 2026</span>
-          <a href="/699b044d39ee2939e558446e.apk" download className="qm-dl-chip">
+          <a href="/app-apk-69bca4b2757bd-1773970610.apk" download className="qm-dl-chip">
             &#x1F4F2; Get App
           </a>
         </div>
