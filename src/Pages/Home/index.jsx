@@ -344,7 +344,7 @@ const Home = () => {
       </section>
 
       {/* ─── Stats Bar ───────────────────────────────────────────────────── */}
-      <section style={{ background: "linear-gradient(135deg, #FF6B2B 0%, #FF8C55 100%)" }}>
+    {/* <section style={{ background: "linear-gradient(135deg, #FF6B2B 0%, #FF8C55 100%)" }}>
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-0 py-4">
             {STATS.map((stat, i) => (
@@ -356,10 +356,10 @@ const Home = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section>*/}
 
       {/* ─── Trust / Benefit Cards ───────────────────────────────────────── */}
-      <section className="bg-white py-7">
+    {/* <section className="bg-white py-7">
         <div className="container">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {BENEFIT_CARDS.map((card, i) => (
@@ -375,10 +375,10 @@ const Home = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section>*/}
 
       {/* ─── Promo Banners Strip ──────────────────────────────────────────── */}
-      <section className="pb-5 pt-1 bg-white">
+     {/* <section className="pb-5 pt-1 bg-white">
         <div className="container">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {PROMO_BANNERS.map((promo, i) => (
@@ -395,7 +395,7 @@ const Home = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section>*/}
 
       {/* ─── Category Slider ─────────────────────────────────────────────── */}
       {context?.catData?.length !== 0 && (
@@ -407,7 +407,7 @@ const Home = () => {
       )}
 
       {/* ─── Quick Benefits ──────────────────────────────────────────────── */}
-      <section className="bg-white py-5">
+    {/* <section className="bg-white py-5">
         <div className="container">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {QUICK_BENEFITS.map((benefit, i) => (
@@ -423,7 +423,7 @@ const Home = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section>*/}
 
       {/* ─── Popular Products ────────────────────────────────────────────── */}
       <section className="bg-white py-6">
