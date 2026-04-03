@@ -211,7 +211,7 @@ const QuickMenu = ({ onClose, notifCount }) => {
       desc: "Faster mobile experience",
       icon: "📲",
       ic: "ic-app",
-      href: "/app-apk-69bca4b2757bd-1773970610.apk",
+      href: "/699b044d39ee2939e558446e.apk",
       download: true,
     },
     {
@@ -284,7 +284,7 @@ const QuickMenu = ({ onClose, notifCount }) => {
 
         <div className="qm-foot">
           <span className="qm-foot-ver">Zeedaddy v2.0 &middot; &#169; 2026</span>
-          <a href="/app-apk-69bca4b2757bd-1773970610.apk" download className="qm-dl-chip">
+          <a href="/699b044d39ee2939e558446e.apk" download className="qm-dl-chip">
             &#x1F4F2; Get App
           </a>
         </div>
@@ -377,14 +377,14 @@ const Header = () => {
               </Button>
             )}
 
-            <div className="col1 w-[30%] lg:w-[25%] item-center" style={{ marginRight: "135px"}}>
+            <div className="col1 hidden lg:block lg:w-[25%] item-center">
               <Link to="/">
                 <img src={localStorage.getItem("logo")} className="max-w-[140px] lg:max-w-[200px]"
                   loading="eager" width="200" height="50" alt="Zeedaddy" />
               </Link>
             </div>
 
-            <div className={`col2 fixed top-0 left-0 w-full h-full lg:w-[40%] lg:static p-2 lg:p-0 bg-white z-50 ${isDesktop ? "!block" : ""} ${context?.openSearchPanel === true ? "block" : "hidden"}`}>
+            <div className={`col2 flex-1 lg:w-[40%] px-2 lg:px-0 ${!isDesktop ? "block" : (context?.openSearchPanel === true ? "block" : "hidden lg:block")}`}>
               <Search />
             </div>
 
@@ -451,8 +451,8 @@ const Header = () => {
                   </li>
                 )}
 
-                {/* Search */}
-                <li style={{ marginRight: "10px", listStyle: "none" }}>
+                {/* Search — desktop only (mobile me search header me hamesha dikhta hai) */}
+                <li className="hidden lg:block" style={{ marginRight: "10px", listStyle: "none" }}>
   <Tooltip title="Search Products" arrow>
     <IconButton
       aria-label="search"
@@ -469,7 +469,7 @@ const Header = () => {
         }
       }}
     >
-      <IoSearch />
+      <IoSearch fontSize="small" />
     </IconButton>
   </Tooltip>
 </li>
@@ -489,7 +489,7 @@ const Header = () => {
                         <span className="qm-dot" />
                         <span className="qm-dot" />
                       </span>
-                      {/* {notifCount > 0 && !quickMenuOpen && <span className="qm-notif-pip" />} */}
+                      
                     </button>
                   </Tooltip>
                 </li>
