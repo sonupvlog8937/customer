@@ -82,8 +82,8 @@ const HomeSlider = (props) => {
         .slide-clickable:hover img { transform: scale(1.02); }
       `}</style>
 
-      <section className="homeSlider w-full py-3 lg:py-4">
-        <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-6">
+      <section className="homeSlider w-full py-1 lg:py-2">
+        <div className="w-full max-w-[1400px] mx-auto px-2 sm:px-3 lg:px-4">
 
           {/* ── Main Banner Swiper ── */}
           <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl group">
@@ -213,7 +213,7 @@ const HomeSlider = (props) => {
 
           {/* ── Thumbnail Strip (desktop 3+ slides) ── */}
           {!isMobile && slides.length >= 3 && (
-            <div className="hidden lg:flex gap-2 mt-3 justify-center">
+            <div className="hidden lg:flex gap-1.5 mt-2 justify-center">
               {slides.map((item, index) => (
                 <button
                   key={index}
