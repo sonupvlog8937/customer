@@ -318,7 +318,7 @@ const Home = () => {
       {/* ─── HERO BANNER ─────────────────────────────────────────────────── */}
       <section className="hero-bg relative overflow-hidden" style={{ background: "linear-gradient(135deg, #FFF8F4 0%, #FFF4EE 100%)" }}>
         <div className="container relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center pb-2 lg:py-14">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center py-2 lg:py-4">
 
             {/* Right: Slider — ✅ FIX 7: first image eager load, baaki lazy */}
             <div className="lg:col-span-12 anim-slide-right">
