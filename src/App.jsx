@@ -111,7 +111,7 @@ const GlobalBackButton = () => {
   return (
     <>
       <div className="gb-glow" aria-hidden="true" />
-      <button
+      {/* <button
         className="gb-btn"
         onClick={handleGoBack}
         aria-label="Go back to previous page"
@@ -123,7 +123,7 @@ const GlobalBackButton = () => {
           </span>
           <span className="gb-label">Back</span>
         </span>
-      </button>
+      </button> */}
     </>
   );
 };

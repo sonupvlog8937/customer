@@ -784,6 +784,7 @@ export const ProductDetailsComponent = (props) => {
               <QtyBox handleSelecteQty={handleSelecteQty} />
             </div>
           </div>
+
           {/* Cart + Buy Now */}
           <div style={{ display: "flex", gap: "10px" }}>
             <button
@@ -921,7 +922,17 @@ export const ProductDetailsComponent = (props) => {
         <div className="pdc-section" style={S.divider} />
 
         {/* ── 8. QTY + BUTTONS ── */}
-        <div className="pdc-section" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>         
+        <div className="pdc-section" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {/* Qty */}
+          {/* <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ ...S.label, margin: 0 }}>Qty</span>
+            <div className="qtyBoxWrapper w-[80px]">
+              <QtyBox handleSelecteQty={handleSelecteQty} />
+            </div>
+          </div> */}
+
+          
+
           {/* Wishlist + Compare */}
           <div style={{ display: "flex", gap: "10px" }}>
             <button

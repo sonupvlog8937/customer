@@ -22,6 +22,9 @@ import "./Navigation/style.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Navigation = lazy(() => import("./Navigation"));
+import CategoryPanel from "./Navigation/CategoryPanel";
+import { RiMenu2Fill } from "react-icons/ri";
+import { LiaAngleDownSolid } from "react-icons/lia";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   "& .MuiBadge-badge": {
@@ -344,10 +347,10 @@ const Header = () => {
     <>
       <style>{QM_STYLES}</style>
 
-      <header className="bg-white fixed lg:sticky left-0 w-full top-0 lg:-top-[47px] z-[101]">
+      <header className="bg-white fixed lg:sticky left-0 w-full top-0 z-[101]">
 
         {/* Top strip */}
-        <div className="top-strip hidden lg:block py-2 border-t-[1px] border-gray-250 border-b-[1px]">
+        {/* <div className="top-strip hidden lg:block py-2 border-t-[1px] border-gray-250 border-b-[1px]">
           <div className="container">
             <div className="flex items-center justify-between">
               <p className="text-[12px] font-[500] mt-0 mb-0 col1 w-[50%] hidden lg:block">
@@ -365,10 +368,10 @@ const Header = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Main bar */}
-        <div className="header py-2 lg:py-4 border-b-[1px] border-gray-250">
+        <div className="header py-2 lg:py-2 border-b-[1px] border-gray-250">
           <div className="container flex items-center justify-between">
 
             {!isDesktop && (
@@ -378,10 +381,14 @@ const Header = () => {
             )}
 
             <div className="col1 hidden lg:block lg:w-[25%] item-center">
-              <Link to="/">
-                <img src={localStorage.getItem("logo")} className="max-w-[140px] lg:max-w-[200px]"
-                  loading="eager" width="200" height="50" alt="Zeedaddy" />
-              </Link>
+              <Button
+                className="!text-black gap-2 w-full !justify-start"
+                onClick={() => setIsOpenCatPanel(true)}
+              >
+                <RiMenu2Fill className="text-[18px]" />
+                Shop By Categories
+                <LiaAngleDownSolid className="text-[13px] ml-auto font-bold" />
+              </Button>
             </div>
 
             <div className={`col2 flex-1 lg:w-[40%] px-2 lg:px-0 ${!isDesktop ? "block" : (context?.openSearchPanel === true ? "block" : "hidden lg:block")}`}>
@@ -499,10 +506,20 @@ const Header = () => {
           </div>
         </div>
 
-        {(!hideNavigationOnPage || isOpenCatPanel) && (
+        {/* {(!hideNavigationOnPage || isOpenCatPanel) && (
           <Suspense fallback={null}>
             <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} />
           </Suspense>
+        )} */}
+
+        {/* Category Panel - logo ki jagah Shop By Categories button se open hoga */}
+        {context?.catData?.length !== 0 && (
+          <CategoryPanel
+            isOpenCatPanel={isOpenCatPanel}
+            setIsOpenCatPanel={setIsOpenCatPanel}
+            propsSetIsOpenCatPanel={setIsOpenCatPanel}
+            data={context?.catData}
+          />
         )}
       </header>
 
