@@ -506,11 +506,11 @@ const Header = () => {
           </div>
         </div>
 
-        {/* {(!hideNavigationOnPage || isOpenCatPanel) && (
+        {(!hideNavigationOnPage || isOpenCatPanel) && (
           <Suspense fallback={null}>
             <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} />
           </Suspense>
-        )} */}
+        )}
 
         {/* Category Panel - logo ki jagah Shop By Categories button se open hoga */}
         {context?.catData?.length !== 0 && (
