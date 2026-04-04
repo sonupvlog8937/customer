@@ -777,13 +777,6 @@ export const ProductDetailsComponent = (props) => {
         </div>
 
         <div className="pdc-section mt-4" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          {/* Qty */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ ...S.label, margin: 0 }}>Qty</span>
-            <div className="qtyBoxWrapper w-[80px]">
-              <QtyBox handleSelecteQty={handleSelecteQty} />
-            </div>
-          </div>
 
           {/* Cart + Buy Now */}
           <div style={{ display: "flex", gap: "10px" }}>
