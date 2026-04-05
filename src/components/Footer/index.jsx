@@ -391,7 +391,7 @@ const css = `
   /* Live chat floating button */
   .zd-chat-bubble {
     position: fixed;
-    bottom: 34px; right: 24px;
+    bottom: 24px; right: 24px;
     z-index: 9999;
     background: var(--zd-primary);
     color: white;
@@ -410,7 +410,7 @@ const css = `
   /* Scroll-to-top */
   .zd-scroll-top {
     position: fixed;
-    bottom: 37px; right: 24px;
+    bottom: 47px; right: 24px;
     z-index: 9998;
     background: rgba(255,107,0,0.1);
     backdrop-filter: blur(8px);
