@@ -122,7 +122,7 @@ const CSS = `
   @media (max-width: 991px) {
     .sp-toolbar {
       position: fixed;
-      top: 60px;
+      top: 40px;
       bottom: auto;
       left: 0;
       right: 0;
@@ -461,7 +461,7 @@ const SearchPage = () => {
           )}
 
           {/* ══ RIGHT CONTENT ══ */}
-          <div style={{ flex: 1, minWidth: 0, paddingTop: "20px" }}>
+          <div style={{ flex: 1, minWidth: 0, paddingTop: "37px" }}>
 
             {/* Search meta */}
             {searchQuery && !isLoading && (

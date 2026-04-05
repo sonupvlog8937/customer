@@ -266,7 +266,7 @@ const CSS = `
   @media (max-width: 991px) {
     .pl-toolbar {
       position: fixed;
-      top: 60px;
+      top: 53px;
       bottom: auto;
       left: 0;
       right: 0;
@@ -515,7 +515,7 @@ const ProductListing = () => {
           )}
 
           {/* ══ RIGHT CONTENT ══ */}
-          <div style={{ flex: 1, minWidth: 0, paddingTop: "20px" }}>
+          <div style={{ flex: 1, minWidth: 0, paddingTop: "20px" }} className="lg:pt-5 pt-[110px]">
 
             {/* ══════════════════════════════════════════════════════
                 SCROLL-AWARE TOOLBAR
@@ -633,7 +633,7 @@ const ProductListing = () => {
 
             {/* ══ Product Grid ══ */}
             <div
-              style={{ marginTop: 14 }}
+              style={{ marginTop: 32 }}
               className={`pl-grid${viewMode === "list" ? " pl-list" : ""}`}
             >
               {isLoading ? (
