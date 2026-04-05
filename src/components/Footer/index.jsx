@@ -391,7 +391,7 @@ const css = `
   /* Live chat floating button */
   .zd-chat-bubble {
     position: fixed;
-    bottom: 24px; right: 24px;
+    bottom: 34px; right: 24px;
     z-index: 9999;
     background: var(--zd-primary);
     color: white;
