@@ -656,7 +656,7 @@ export const ProductDetailsComponent = (props) => {
               </div>
               {tabError && (
                 <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "8px", display: "flex", alignItems: "center", gap: "4px", animation: "pdc-fadeIn 0.2s ease" }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                   Please select a size first
                 </p>
               )}
@@ -698,7 +698,7 @@ export const ProductDetailsComponent = (props) => {
           )}
 
           {/* AGE */}
-          {props?.item?.productAge?.length !== 0 && (
+          {/* {props?.item?.productAge?.length !== 0 && (
             <div>
               <span style={S.label}>Age Group</span>
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -710,10 +710,10 @@ export const ProductDetailsComponent = (props) => {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* STYLES */}
-          {props?.item?.styleOptions?.length !== 0 && (
+          {/* {props?.item?.styleOptions?.length !== 0 && (
             <div>
               <span style={S.label}>Style</span>
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -725,7 +725,7 @@ export const ProductDetailsComponent = (props) => {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* COLOR / PRODUCT OPTIONS */}
           {props?.item?.colorOptions?.length !== 0 && (
@@ -758,7 +758,7 @@ export const ProductDetailsComponent = (props) => {
                       <span style={{ fontSize: "13px", fontWeight: 600, color: "#111" }}>{colorItem?.name}</span>
                       {isActive && (
                         <span style={{ marginLeft: "2px", color: "#111", animation: "pdc-popIn 0.3s ease" }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                         </span>
                       )}
                     </button>
@@ -821,12 +821,42 @@ export const ProductDetailsComponent = (props) => {
               }}
             >
               {isBuyingNow ? <CircularProgress size={18} color="inherit" /> : (
-                <><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Buy Now</>
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>Buy Now</>
               )}
             </button>
           </div>
 
-          
+          {/* ── 9. SHARE ── */}
+          <div className="pdc-section" style={{ marginBottom: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+              <IoShareSocialOutline style={{ fontSize: "15px", color: "rgba(0,0,0,0.38)" }} />
+              <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)" }}>Share this product</span>
+            </div>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {[
+                { key: "whatsapp", label: "WhatsApp", bg: "#edfff2", border: "#bbf7d0", color: "#16a34a", Icon: FaWhatsapp },
+                { key: "facebook", label: "Facebook", bg: "#eff6ff", border: "#bfdbfe", color: "#1d4ed8", Icon: FaFacebookF },
+                { key: "instagram", label: "Instagram", bg: "#fff0f7", border: "#fecdd3", color: "#e1306c", Icon: RiInstagramFill },
+                { key: "telegram", label: "Telegram", bg: "#f0f9ff", border: "#bae6fd", color: "#0369a1", Icon: FaTelegramPlane },
+                { key: "x", label: "X", bg: "#f9fafb", border: "#e5e7eb", color: "#111", Icon: BsTwitterX },
+              ].map(({ key, label, bg, border, color, Icon }) => (
+                <button
+                  key={key} type="button" className="pdc-share-btn" onClick={() => handleShareProduct(key)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "6px", padding: "7px 13px",
+                    background: bg, border: `1px solid ${border}`, borderRadius: "8px",
+                    fontSize: "12px", fontWeight: 700, color, cursor: "pointer", outline: "none",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 12px ${border}`}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+                >
+                  <Icon style={{ fontSize: "13px" }} /> {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+
         </div>
 
         <div className="pdc-section" style={S.divider} />
@@ -860,7 +890,7 @@ export const ProductDetailsComponent = (props) => {
           padding: "16px", marginBottom: "14px", background: "#fff",
         }}>
           <p style={{ fontSize: "13px", fontWeight: 700, color: "#111", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
             Check Delivery Availability
           </p>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -892,7 +922,7 @@ export const ProductDetailsComponent = (props) => {
           </div>
           {deliveryMessage && (
             <p style={{ fontSize: "12px", marginTop: "8px", color: "#16a34a", fontWeight: 600, display: "flex", alignItems: "center", gap: "5px", animation: "pdc-fadeUp 0.25s ease" }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
               {deliveryMessage}
             </p>
           )}
@@ -931,7 +961,7 @@ export const ProductDetailsComponent = (props) => {
             </div>
           </div> */}
 
-          
+
 
           {/* Wishlist + Compare */}
           <div style={{ display: "flex", gap: "10px" }}>
@@ -979,35 +1009,7 @@ export const ProductDetailsComponent = (props) => {
 
         <div className="pdc-section" style={S.divider} />
 
-        {/* ── 9. SHARE ── */}
-        <div className="pdc-section" style={{ marginBottom: "4px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-            <IoShareSocialOutline style={{ fontSize: "15px", color: "rgba(0,0,0,0.38)" }} />
-            <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(0,0,0,0.38)" }}>Share this product</span>
-          </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            {[
-              { key: "whatsapp", label: "WhatsApp", bg: "#edfff2", border: "#bbf7d0", color: "#16a34a", Icon: FaWhatsapp },
-              { key: "facebook", label: "Facebook", bg: "#eff6ff", border: "#bfdbfe", color: "#1d4ed8", Icon: FaFacebookF },
-              { key: "instagram", label: "Instagram", bg: "#fff0f7", border: "#fecdd3", color: "#e1306c", Icon: RiInstagramFill },
-              { key: "telegram", label: "Telegram", bg: "#f0f9ff", border: "#bae6fd", color: "#0369a1", Icon: FaTelegramPlane },
-              { key: "x", label: "X", bg: "#f9fafb", border: "#e5e7eb", color: "#111", Icon: BsTwitterX },
-            ].map(({ key, label, bg, border, color, Icon }) => (
-              <button
-                key={key} type="button" className="pdc-share-btn" onClick={() => handleShareProduct(key)}
-                style={{
-                  display: "flex", alignItems: "center", gap: "6px", padding: "7px 13px",
-                  background: bg, border: `1px solid ${border}`, borderRadius: "8px",
-                  fontSize: "12px", fontWeight: 700, color, cursor: "pointer", outline: "none",
-                }}
-                onMouseEnter={e => e.currentTarget.style.boxShadow = `0 4px 12px ${border}`}
-                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
-              >
-                <Icon style={{ fontSize: "13px" }} /> {label}
-              </button>
-            ))}
-          </div>
-        </div>
+
 
       </div>
     </>
