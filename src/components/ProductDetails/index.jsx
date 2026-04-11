@@ -68,16 +68,52 @@ export const ProductDetailsComponent = (props) => {
   }, [selectedStyle, selectedColor, props?.item?.images]);
 
   const activePrice = useMemo(() => {
+    // 1. Style/color variant price (admin & seller both)
     const variantPrice = selectedStyle?.price ?? selectedColor?.price;
-    const sizePrice = props?.item?.sizePriceMap?.[selectedTabName]?.price;
-    return Number(variantPrice ?? sizePrice ?? props?.item?.price ?? 0);
-  }, [selectedStyle, selectedColor, selectedTabName, props?.item?.sizePriceMap, props?.item?.price]);
+    if (variantPrice !== undefined && variantPrice !== null && Number(variantPrice) > 0) {
+      return Number(variantPrice);
+    }
+
+    // 2. sizePriceMap (admin products)
+    if (selectedTabName && props?.item?.sizePriceMap?.[selectedTabName]?.price) {
+      return Number(props.item.sizePriceMap[selectedTabName].price);
+    }
+
+    // 3. priceVariants array (some seller product structures)
+    if (selectedTabName && Array.isArray(props?.item?.priceVariants)) {
+      const match = props.item.priceVariants.find(
+        (v) => v?.size === selectedTabName || v?.label === selectedTabName || v?.name === selectedTabName
+      );
+      if (match?.price) return Number(match.price);
+    }
+
+    // 4. Fallback: root-level price
+    return Number(props?.item?.price ?? 0);
+  }, [selectedStyle, selectedColor, selectedTabName, props?.item?.sizePriceMap, props?.item?.priceVariants, props?.item?.price]);
 
   const activeOldPrice = useMemo(() => {
+    // 1. Style/color variant oldPrice (admin & seller both)
     const variantOldPrice = selectedStyle?.oldPrice ?? selectedColor?.oldPrice;
-    const sizeOldPrice = props?.item?.sizePriceMap?.[selectedTabName]?.oldPrice;
-    return Number(variantOldPrice ?? sizeOldPrice ?? props?.item?.oldPrice ?? 0);
-  }, [selectedStyle, selectedColor, selectedTabName, props?.item?.sizePriceMap, props?.item?.oldPrice]);
+    if (variantOldPrice !== undefined && variantOldPrice !== null && Number(variantOldPrice) > 0) {
+      return Number(variantOldPrice);
+    }
+
+    // 2. sizePriceMap (admin products)
+    if (selectedTabName && props?.item?.sizePriceMap?.[selectedTabName]?.oldPrice) {
+      return Number(props.item.sizePriceMap[selectedTabName].oldPrice);
+    }
+
+    // 3. priceVariants array (some seller product structures)
+    if (selectedTabName && Array.isArray(props?.item?.priceVariants)) {
+      const match = props.item.priceVariants.find(
+        (v) => v?.size === selectedTabName || v?.label === selectedTabName || v?.name === selectedTabName
+      );
+      if (match?.oldPrice) return Number(match.oldPrice);
+    }
+
+    // 4. Fallback: root-level oldPrice
+    return Number(props?.item?.oldPrice ?? 0);
+  }, [selectedStyle, selectedColor, selectedTabName, props?.item?.sizePriceMap, props?.item?.priceVariants, props?.item?.oldPrice]);
 
   const activeDiscount = useMemo(() => {
     if (activeOldPrice > activePrice && activeOldPrice > 0) {
