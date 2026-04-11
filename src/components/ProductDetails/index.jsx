@@ -791,7 +791,7 @@ export const ProductDetailsComponent = (props) => {
                         transition: "transform 0.22s ease",
                         transform: isActive ? "scale(1.05)" : "scale(1)",
                       }} />
-                      <span style={{ fontSize: "13px", fontWeight: 600, color: "#111" }}>{colorItem?.name}</span>
+                      {/* <span style={{ fontSize: "13px", fontWeight: 600, color: "#111" }}>{colorItem?.name}</span> */}
                       {isActive && (
                         <span style={{ marginLeft: "2px", color: "#111", animation: "pdc-popIn 0.3s ease" }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
