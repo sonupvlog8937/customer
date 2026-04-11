@@ -595,7 +595,7 @@ export const ProductDetailsComponent = (props) => {
           </h1>
 
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-            <Rating name="size-small" value={props?.item?.rating} size="small" readOnly />
+            <Rating name="size-small" value={Number(props?.item?.rating) || 0} size="small" readOnly />
             <span
               style={{ fontSize: "12px", color: "#2563eb", cursor: "pointer", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "2px", transition: "opacity 0.15s" }}
               onClick={props.gotoReviews}
