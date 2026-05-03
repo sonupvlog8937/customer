@@ -40,6 +40,51 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
 const QM_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
+  /* Logo Styles */
+  .logo-wrapper {
+    display: inline-block;
+  }
+
+  .logo-wrapper img {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));
+  }
+
+  .logo-wrapper:hover img {
+    filter: drop-shadow(0 4px 12px rgba(255,107,43,0.25));
+  }
+
+  /* Mobile Search Overlay */
+  .mobile-search-overlay {
+    animation: slideInFromTop 0.3s ease-out;
+  }
+
+  @keyframes slideInFromTop {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Slide In Animation for inline search */
+  .animate-slideIn {
+    animation: slideInFromRight 0.3s ease-out;
+  }
+
+  @keyframes slideInFromRight {
+    from {
+      transform: translateX(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
   .qm-trigger {
     position: relative;
     display: flex; align-items: center; justify-content: center;
@@ -303,6 +348,8 @@ const Header = () => {
   const [anchorEl, setAnchorEl]             = useState(null);
   const [isOpenCatPanel, setIsOpenCatPanel] = useState(false);
   const [quickMenuOpen, setQuickMenuOpen]   = useState(false);
+  const [showSearchBar, setShowSearchBar]   = useState(false);
+  const searchInputRef = useRef(null);
 
   const context  = useAppContext();
   const location = useLocation();
@@ -317,6 +364,16 @@ const Header = () => {
 
   const handleClose     = useCallback(() => setAnchorEl(null), []);
   const handleUserClick = useCallback((e) => setAnchorEl(e.currentTarget), []);
+
+  // Focus on search input when search bar appears
+  useEffect(() => {
+    if (showSearchBar && searchInputRef.current) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+    }
+  }, [showSearchBar]);
 
   useEffect(() => {
     if (localStorage.getItem("logo")) return;
@@ -347,7 +404,7 @@ const Header = () => {
     <>
       <style>{QM_STYLES}</style>
 
-      <header className="bg-white fixed lg:sticky left-0 w-full top-0 z-[101]">
+      <header className="bg-white fixed lg:sticky left-0 w-full top-0 z-[101]" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
 
         {/* Top strip */}
         {/* <div className="top-strip hidden lg:block py-2 border-t-[1px] border-gray-250 border-b-[1px]">
@@ -375,14 +432,60 @@ const Header = () => {
           <div className="container flex items-center justify-between">
 
             {!isDesktop && (
-              <Button className="!w-[35px] !min-w-[35px] !h-[35px] !rounded-full !text-gray-800" onClick={() => setIsOpenCatPanel(true)}>
+              <Button className="!w-[40px] !min-w-[40px] !h-[40px] !rounded-full !text-gray-800 !bg-gray-100 hover:!bg-orange-500 hover:!text-white !transition-all" 
+                onClick={() => setIsOpenCatPanel(true)}>
                 <HiOutlineMenu size={22} />
               </Button>
             )}
 
-            <div className="col1 hidden lg:block lg:w-[25%] item-center">
+            {/* Logo - Mobile & Desktop */}
+            <div className={`logo-container ${!isDesktop ? 'flex-1 px-2' : ''} ${showSearchBar && !isDesktop ? 'hidden' : ''}`}>
+              <Link to="/" className="flex items-center">
+                <div className="logo-wrapper relative group">
+                  {localStorage.getItem("logo") ? (
+                    <img 
+                      src={localStorage.getItem("logo")} 
+                      alt="Logo" 
+                      className="h-[40px] lg:h-[48px] w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                      style={{ maxWidth: '160px' }}
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="w-[40px] h-[40px] lg:w-[48px] lg:h-[48px] rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
+                        <span className="text-white font-[900] text-[18px] lg:text-[24px]">Z</span>
+                      </div>
+                      <span className="text-[18px] lg:text-[24px] font-[900] text-gray-900 hidden sm:block">Zeedaddy</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 -z-10 blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"
+                    style={{ background: 'radial-gradient(circle, #FF6B2B 0%, transparent 70%)' }} />
+                </div>
+              </Link>
+            </div>
+
+            {/* Mobile: Inline Expandable Search Bar */}
+            {showSearchBar && !isDesktop && (
+              <div className="flex-1 flex items-center gap-2 animate-slideIn">
+                <div className="flex-1">
+                  <Search 
+                    onSearchComplete={() => setShowSearchBar(false)} 
+                    inputRef={searchInputRef}
+                  />
+                </div>
+                <button 
+                  onClick={() => setShowSearchBar(false)}
+                  className="w-[36px] h-[36px] rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition flex-shrink-0"
+                  aria-label="Close search"
+                >
+                  <span className="text-[18px] font-bold">✕</span>
+                </button>
+              </div>
+            )}
+
+            {/* Desktop: Category Button */}
+            <div className="col1 hidden lg:block lg:w-[22%]">
               <Button
-                className="!text-black gap-2 w-full !justify-start"
+                className="!text-black gap-2 w-full !justify-start !py-2.5 !px-4 !rounded-xl !font-[600] !text-[14px]"
                 onClick={() => setIsOpenCatPanel(true)}
               >
                 <RiMenu2Fill className="text-[18px]" />
@@ -391,11 +494,13 @@ const Header = () => {
               </Button>
             </div>
 
-            <div className={`col2 flex-1 lg:w-[40%] px-2 lg:px-0 ${!isDesktop ? "block" : (context?.openSearchPanel === true ? "block" : "hidden lg:block")}`}>
+            {/* Desktop: Search Bar */}
+            <div className="col2 hidden lg:block flex-1 lg:w-[36%]">
               <Search />
             </div>
 
-            <div className="col3 w-[10%] lg:w-[40%] flex items-center pl-7">
+            {/* Right Side Actions */}
+            <div className={`col3 lg:w-[42%] flex items-center justify-end gap-2 lg:gap-0 pl-2 lg:pl-7 ${showSearchBar && !isDesktop ? 'hidden' : ''}`}>
               <ul className="flex items-center justify-end gap-0 lg:gap-3 w-full">
 
                 {/* Login/Register */}
@@ -458,45 +563,60 @@ const Header = () => {
                   </li>
                 )}
 
-                {/* Search — desktop only (mobile me search header me hamesha dikhta hai) */}
-                <li className="hidden lg:block" style={{ marginRight: "10px", listStyle: "none" }}>
-  <Tooltip title="Search Products" arrow>
-    <IconButton
-      aria-label="search"
-      onClick={() => context?.setOpenSearchPanel(true)}
-      sx={{
-        backgroundColor: "#f5f5f5",
-        width: "40px",
-        height: "40px",
-        transition: "all 0.3s ease",
-        "&:hover": {
-          backgroundColor: "#1976d2",
-          color: "#fff",
-          transform: "scale(1.1)"
-        }
-      }}
-    >
-      <IoSearch fontSize="small" />
-    </IconButton>
-  </Tooltip>
-</li>
+                {/* Search Icon - Mobile & Desktop */}
+                <li style={{ listStyle: "none" }}>
+                  <Tooltip title="Search Products" arrow>
+                    <IconButton
+                      aria-label="search"
+                      onClick={() => {
+                        if (isDesktop) {
+                          context?.setOpenSearchPanel(true);
+                        } else {
+                          setShowSearchBar(true);
+                        }
+                      }}
+                      sx={{
+                        backgroundColor: "#f8f9fa",
+                        width: "40px",
+                        height: "40px",
+                        border: '1.5px solid rgba(0,0,0,0.08)',
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          backgroundColor: "#FF6B2B",
+                          borderColor: "#FF6B2B",
+                          color: "#fff",
+                          transform: "scale(1.08)",
+                          boxShadow: '0 4px 12px rgba(255,107,43,0.3)'
+                        }
+                      }}
+                    >
+                      <IoSearch fontSize="medium" />
+                    </IconButton>
+                  </Tooltip>
+                </li>
 
-                {/* Three-dot Quick Menu */}
-                <li style={{ position: "relative" }}>
-                  <Tooltip title="More">
+                {/* Three-dot Quick Menu - Mobile & Desktop */}
+                <li style={{ position: "relative", listStyle: "none" }}>
+                  <Tooltip title="More" arrow>
                     <button
                       className={`qm-trigger${quickMenuOpen ? " qm-open" : ""}`}
                       onClick={() => setQuickMenuOpen(p => !p)}
                       aria-label="More options"
                       aria-expanded={quickMenuOpen}
                       aria-haspopup="dialog"
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        border: '1.5px solid rgba(0,0,0,0.08)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                      }}
                     >
                       <span className="qm-dots">
                         <span className="qm-dot" />
                         <span className="qm-dot" />
                         <span className="qm-dot" />
                       </span>
-                      
+                      {/* {notifCount > 0 && <span className="qm-notif-pip" />} */}
                     </button>
                   </Tooltip>
                 </li>
