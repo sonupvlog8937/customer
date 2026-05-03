@@ -1,0 +1,52 @@
+/* Dual Banner Styles */
+.dual-banner-section {
+  border-top: 1.5px solid #F1F3F5;
+}
+
+.dual-banner-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+}
+
+.dual-banner-card:hover {
+  box-shadow: 0 16px 48px rgba(255, 107, 43, 0.25);
+  transform: translateY(-6px);
+  border-color: rgba(255, 107, 43, 0.2);
+}
+
+.dual-banner-card img {
+  transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scale effect */
+.group:hover .group-hover\:scale-115 {
+  transform: scale(1.15);
+}
+
+/* Shine animation */
+@keyframes shine-dual {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .dual-banner-card {
+    min-height: 280px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dual-banner-card {
+    min-height: 360px !important;
+  }
+}
+

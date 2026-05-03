@@ -1,0 +1,46 @@
+/* Full Width Banner Styles */
+.full-width-banner-section {
+  border-top: 1.5px solid #F1F3F5;
+}
+
+.full-width-banner {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+}
+
+.full-width-banner:hover {
+  box-shadow: 0 20px 60px rgba(255, 107, 43, 0.3);
+  transform: translateY(-4px);
+  border-color: rgba(255, 107, 43, 0.2);
+}
+
+.full-width-banner img {
+  transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Shine animation */
+@keyframes shine-banner {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .full-width-banner {
+    min-height: 320px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .full-width-banner {
+    min-height: 380px !important;
+  }
+}
+

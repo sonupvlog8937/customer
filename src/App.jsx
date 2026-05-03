@@ -213,21 +213,44 @@ function App() {
   const dispatch = useDispatch();
   const isLogin  = useSelector((state) => state.app.isLogin);
 
+  // ✅ OPTIMIZATION: Fetch only counts initially for header badge, full data lazy load
   useEffect(() => {
     localStorage.removeItem("userEmail");
     const token = localStorage.getItem("accessToken");
     if (token !== undefined && token !== null && token !== "") {
       dispatch(setIsLogin(true));
+      // ✅ Fetch cart and wishlist counts for header badges
+      // Full data will be fetched when user visits respective pages
       dispatch(fetchCartItems());
       dispatch(fetchMyListData());
-      dispatch(fetchUserDetails());
+      // User details can be fetched lazily when needed
+      // dispatch(fetchUserDetails());
     } else {
       dispatch(setIsLogin(false));
     }
   }, [dispatch, isLogin]);
 
+  // ✅ OPTIMIZATION: Categories cache ke saath fetch karo
   useEffect(() => {
-    dispatch(fetchCategories());
+    // Cache check - agar already fetched hai toh skip karo
+    const cachedCategories = localStorage.getItem('categories_cache');
+    const cacheTime = localStorage.getItem('categories_cache_time');
+    const now = Date.now();
+    
+    // 5 minute cache
+    if (cachedCategories && cacheTime && (now - parseInt(cacheTime)) < 300000) {
+      // Use cached data
+      dispatch({ type: 'app/fetchCategories/fulfilled', payload: JSON.parse(cachedCategories) });
+    } else {
+      // Fetch fresh data
+      dispatch(fetchCategories()).then((result) => {
+        if (result.payload) {
+          localStorage.setItem('categories_cache', JSON.stringify(result.payload));
+          localStorage.setItem('categories_cache_time', now.toString());
+        }
+      });
+    }
+    
     const handleResize = () => dispatch(setWindowWidth(window.innerWidth));
     window.addEventListener("resize", handleResize);
     return () => {

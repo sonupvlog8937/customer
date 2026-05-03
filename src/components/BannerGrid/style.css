@@ -1,0 +1,63 @@
+/* Banner Grid Styles */
+.banner-grid-section {
+  border-top: 1.5px solid #F1F3F5;
+}
+
+.banner-grid {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 1024px) {
+  .banner-grid {
+    gap: 20px;
+  }
+}
+
+.banner-grid-item {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+}
+
+.banner-grid-item:hover {
+  box-shadow: 0 16px 40px rgba(255, 107, 43, 0.25);
+  transform: translateY(-6px);
+  border-color: rgba(255, 107, 43, 0.2);
+}
+
+.banner-grid-item img {
+  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Shine animation */
+@keyframes shine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Responsive grid */
+@media (max-width: 768px) {
+  .banner-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+  }
+  
+  .banner-grid-item {
+    aspect-ratio: 3/4 !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .banner-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+

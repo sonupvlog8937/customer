@@ -288,6 +288,13 @@ const CartPage = () => {
 
   const context = useAppContext();
 
+  // ✅ OPTIMIZATION: Fetch cart data only when cart page is opened
+  useEffect(() => {
+    if (context?.isLogin) {
+      context?.getCartItems();
+    }
+  }, [context?.isLogin]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
 
