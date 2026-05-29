@@ -91,7 +91,7 @@ const QM_STYLES = `
     width: 38px; height: 38px;
     border-radius: 50%;
     border: 1.5px solid rgba(0,0,0,0.11);
-    background: #fff;
+    background: #f6f3fa;
     cursor: pointer;
     transition: all 0.18s cubic-bezier(0.4,0,0.2,1);
     flex-shrink: 0;
@@ -99,7 +99,7 @@ const QM_STYLES = `
   }
   .qm-trigger:hover { background: #f5f5f5; border-color: rgba(0,0,0,0.2); transform: scale(1.06); }
   .qm-trigger.qm-open { background: #111; border-color: #111; }
-  .qm-trigger.qm-open .qm-dot { background: #fff; }
+  .qm-trigger.qm-open .qm-dot { background: #f6f3fa; }
 
   .qm-dots { display: flex; flex-direction: column; gap: 3.5px; align-items: center; }
   .qm-dot { width: 4px; height: 4px; border-radius: 50%; background: #222; transition: background 0.15s; }
@@ -107,7 +107,7 @@ const QM_STYLES = `
   .qm-notif-pip {
     position: absolute; top: 4px; right: 4px;
     width: 8px; height: 8px; border-radius: 50%;
-    background: #ef4444; border: 1.5px solid #fff;
+    background: #ef4444; border: 1.5px solid #f6f3fa;
     animation: qmPulse 2.2s ease-in-out infinite;
   }
   @keyframes qmPulse {
@@ -128,7 +128,7 @@ const QM_STYLES = `
     top: 66px; right: 16px;
     z-index: 1201;
     width: 296px;
-    background: #fff;
+    background: #f6f3fa;
     border-radius: 20px;
     box-shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 8px 28px rgba(0,0,0,0.12), 0 32px 64px rgba(0,0,0,0.07);
     overflow: hidden;
@@ -198,7 +198,7 @@ const QM_STYLES = `
   .qm-badge {
     font-size: 10px; font-weight: 700;
     padding: 2px 7px; border-radius: 99px;
-    background: #ef4444; color: #fff;
+    background: #ef4444; color: #f6f3fa;
     flex-shrink: 0;
     animation: qmBadge 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
   }
@@ -404,7 +404,7 @@ const Header = () => {
     <>
       <style>{QM_STYLES}</style>
 
-      <header className="bg-white fixed lg:sticky left-0 w-full top-0 z-[101]" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+      <header className="bg-white fixed lg:sticky left-0 w-full top-0 z-[101]" style={{ backgroundColor: '#fff' }}>
 
         {/* Top strip */}
         {/* <div className="top-strip hidden lg:block py-2 border-t-[1px] border-gray-250 border-b-[1px]">
@@ -441,25 +441,23 @@ const Header = () => {
             {/* Logo - Mobile & Desktop */}
             <div className={`logo-container ${!isDesktop ? 'flex-1 px-2' : ''} ${showSearchBar && !isDesktop ? 'hidden' : ''}`}>
               <Link to="/" className="flex items-center">
-                <div className="logo-wrapper relative group">
+                <div className=" relative group">
                   {localStorage.getItem("logo") ? (
                     <img 
                       src={localStorage.getItem("logo")} 
                       alt="Logo" 
-                      className="h-[40px] lg:h-[48px] w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                      className="h-[40px] lg:h-[48px] w-auto"
                       style={{ maxWidth: '160px' }}
                     />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <div className="w-[40px] h-[40px] lg:w-[48px] lg:h-[48px] rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
+                      <div className="w-[40px] h-[40px] lg:w-[48px] lg:h-[48px] rounded-xl flex items-center justify-center">
                         <span className="text-white font-[900] text-[18px] lg:text-[24px]">Z</span>
                       </div>
                       <span className="text-[18px] lg:text-[24px] font-[900] text-gray-900 hidden sm:block">Zeedaddy</span>
                     </div>
                   )}
-                  <div className="absolute inset-0 -z-10 blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"
-                    style={{ background: 'radial-gradient(circle, #FF6B2B 0%, transparent 70%)' }} />
-                </div>
+                  </div>
               </Link>
             </div>
 
