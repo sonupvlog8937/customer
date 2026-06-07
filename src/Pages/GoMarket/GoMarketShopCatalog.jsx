@@ -1,9 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchDataFromApi } from "../../utils/api";
+import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import { fetchDataFromApi, postData } from "../../utils/api";
 import { img } from "../../utils/goMarketMedia";
 import { useDebouncedValue, SkeletonGrid, ResultBar } from "./shared";
 import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
+import { addToCart, fetchMyListData } from "../../store/appSlice";
+import { normalizeProductOptions } from "./GoMarketProductOptions";
+import "./style.css"
 
 const SORT_OPTIONS = [
   { value: "", label: "Smart tab order" },
@@ -47,6 +52,8 @@ export const GoMarketShopCatalog = ({
   onQueryChange,
 }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { isLogin, userData, myListData } = useSelector((s) => s.app);
   const [search, setSearch] = useState(initialQuery);
   const debouncedSearch = useDebouncedValue(search, 350);
   const [tab, setTab] = useState("featured");
@@ -69,6 +76,8 @@ export const GoMarketShopCatalog = ({
 
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [optionProduct, setOptionProduct] = useState(null);
+  const [quickSelections, setQuickSelections] = useState({});
 
   useEffect(() => {
     setSearch(initialQuery);
@@ -181,6 +190,59 @@ export const GoMarketShopCatalog = ({
   const subCatsForCategory = (filterMeta?.subCategories || []).filter(
     (sc) => !categoryId || String(sc.parentId) === String(categoryId),
   );
+
+  const optionGroups = normalizeProductOptions(optionProduct?.productOptions || []);
+  
+  // Calculate price and MRP based on selected options
+  const getSelectedOptionData = () => {
+    let price = Number(optionProduct?.price || 0);
+    let oldPrice = optionProduct?.oldPrice || optionProduct?.mrp || optionProduct?.price || 0;
+    
+    optionGroups.forEach((opt) => {
+      const key = opt.name || opt.label;
+      const selectedLabel = quickSelections[key];
+      if (selectedLabel) {
+        const found = (opt.values || []).find((v) => v.label === selectedLabel || v.value === selectedLabel);
+        if (found) {
+          if (Number(found.price) > 0) {
+            price = Number(found.price);
+          }
+          if (Number(found.oldPrice) > 0) {
+            oldPrice = Number(found.oldPrice);
+          }
+        }
+      }
+    });
+    
+    return { price, oldPrice };
+  };
+  
+  const { price: quickPrice, oldPrice: quickOldPrice } = optionProduct ? getSelectedOptionData() : { price: 0, oldPrice: 0 };
+  const addProductWithOptions = async (product, selectedOptions = {}, priceOverride = null) => {
+    if (!isLogin) { toast.error("Please login first"); navigate("/login"); return; }
+    const cartProduct = { _id: product._id, name: product.name, price: priceOverride ?? (product.discountPrice > 0 ? product.discountPrice : product.price), oldPrice: product.oldPrice || product.price, image: product.image, images: product.images || [product.image], countInStock: product.countInStock ?? product.stock ?? 99, rating: product.rating || product.averageRating || 0, brand: product.brand || "GoMarket", discount: product.discount, selectedOptions };
+    await dispatch(addToCart({ product: cartProduct, userId: userData?._id, quantity: 1 }));
+  };
+  const handleQuickAdd = (e, product) => {
+    e.preventDefault(); e.stopPropagation();
+    const options = normalizeProductOptions(product.productOptions || []);
+    if (options.length) { setOptionProduct(product); setQuickSelections({}); return; }
+    addProductWithOptions(product);
+  };
+  const handleQuickWishlist = async (e, product) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!isLogin) { toast.error("Please login first"); navigate("/login"); return; }
+    if (myListData?.some((item) => item?.productId === product._id)) { toast.success("Already in wishlist"); return; }
+    const res = await postData("/api/myList/add", { productTitle: product.name, image: product.image, rating: product.rating || product.averageRating || 0, price: product.discountPrice > 0 ? product.discountPrice : product.price, oldPrice: product.oldPrice || product.price, productId: product._id, brand: product.brand || "GoMarket", discount: product.discount });
+    if (res?.error === false) { toast.success("Added to wishlist"); dispatch(fetchMyListData()); } else toast.error(res?.message || "Wishlist failed");
+  };
+  const confirmOptionAdd = () => {
+    const complete = optionGroups.every((opt) => quickSelections[opt.name || opt.label]);
+    if (!complete) { toast.error("Select all options"); return; }
+    addProductWithOptions(optionProduct, quickSelections, quickPrice);
+    setOptionProduct(null); setQuickSelections({});
+  };
+
 
   return (
     <div>
@@ -389,23 +451,147 @@ export const GoMarketShopCatalog = ({
       ) : (
         <div className="gmp-product-grid">
           {products.map((p) => {
-            const price = p.discountPrice > 0 ? p.discountPrice : p.price;
+            // Server sends: price = selling price, oldPrice/mrp = original MRP
+            const sellingPrice = p.price || 0;
+            const mrp = p.oldPrice || p.mrp || p.price;
+            const hasDiscount = mrp > sellingPrice && sellingPrice > 0;
+            const discountPct = p.discount || (hasDiscount ? Math.round(((mrp - sellingPrice) / mrp) * 100) : 0);
+            const saveAmount = hasDiscount ? mrp - sellingPrice : 0;
+            const rating = Number(p.rating || p.averageRating || 0);
+            const reviewCount = p.reviewCount || p.totalReviews || 0;
+            
             return (
               <Link to={`/go-market/product/grocery/${p._id}`} className="gmp-product-tile" key={p._id}>
-                <img src={img(p.image)} alt={p.name} />
+                <div className="gmp-tile-img-wrap">
+                  <img src={img(p.image)} alt={p.name} />
+                  {discountPct > 0 && (
+                    <span className="gmp-tile-badge">{discountPct}% OFF</span>
+                  )}
+                  {p.stock === 0 && (
+                    <div className="gmp-tile-oos-overlay">Out of Stock</div>
+                  )}
+                </div>
+                <button className="gmp-card-icon gmp-card-heart" onClick={(e) => handleQuickWishlist(e, p)}>♡</button>
+                <button className="gmp-card-icon gmp-card-plus" onClick={(e) => handleQuickAdd(e, p)}>+</button>
                 <div className="gmp-product-body">
+                  {p.brand && <div className="gmp-tile-brand">{p.brand}</div>}
                   <div className="gmp-product-name">{p.name}</div>
-                  <div className="gmp-product-price">
-                    <b>₹{price}</b>
-                    {p.discountPrice > 0 && p.price > p.discountPrice && <del>₹{p.price}</del>}
+                  {p.description && (
+                    <div className="gmp-tile-desc">{p.description}</div>
+                  )}
+                  {rating > 0 && (
+                    <div className="gmp-tile-rating">
+                      <span className="gmp-tile-stars">
+                        {"★".repeat(Math.round(rating))}{"☆".repeat(5 - Math.round(rating))}
+                      </span>
+                      <span className="gmp-tile-rating-val">{rating.toFixed(1)}</span>
+                      {reviewCount > 0 && <span className="gmp-tile-review-count">({reviewCount})</span>}
+                    </div>
+                  )}
+                  <div className="gmp-tile-price-row">
+                    <span className="gmp-tile-price">₹{sellingPrice}</span>
+                    {hasDiscount && mrp > sellingPrice && (
+                      <>
+                        <del className="gmp-tile-mrp">₹{mrp}</del>
+                        {saveAmount > 0 && (
+                          <span className="gmp-tile-save">Save ₹{saveAmount}</span>
+                        )}
+                      </>
+                    )}
                   </div>
-                  <div style={{ fontSize: 11, color: p.stock > 0 ? "#16a34a" : "#dc2626", marginTop: 4 }}>
-                    {p.stock > 0 ? `${p.stock} in stock` : "Out of stock"}
+                  <div className="gmp-tile-stock" style={{ color: p.stock > 0 ? "#16a34a" : "#dc2626" }}>
+                    {p.stock > 0 ? `✓ ${p.stock} in stock` : "✕ Out of stock"}
                   </div>
                 </div>
               </Link>
             );
           })}
+        </div>
+      )}
+
+      {optionProduct && (
+        <div className="gmp-option-modal" onClick={() => setOptionProduct(null)}>
+          <div className="gmp-option-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="gmp-option-sheet-header">
+              <div className="gmp-option-sheet-img">
+                {optionProduct.image && <img src={img(optionProduct.image)} alt={optionProduct.name} />}
+              </div>
+              <div className="gmp-option-sheet-meta">
+                {optionProduct.brand && <div className="gmp-tile-brand">{optionProduct.brand}</div>}
+                <h3 className="gmp-option-sheet-title">{optionProduct.name}</h3>
+                {optionProduct.description && (
+                  <p className="gmp-option-sheet-desc">{optionProduct.description}</p>
+                )}
+                {(() => {
+                  const r = Number(optionProduct.rating || optionProduct.averageRating || 0);
+                  const rc = optionProduct.reviewCount || optionProduct.totalReviews || 0;
+                  return r > 0 ? (
+                    <div className="gmp-tile-rating" style={{ marginTop: 4 }}>
+                      <span className="gmp-tile-stars">{"★".repeat(Math.round(r))}{"☆".repeat(5 - Math.round(r))}</span>
+                      <span className="gmp-tile-rating-val">{r.toFixed(1)}</span>
+                      {rc > 0 && <span className="gmp-tile-review-count">({rc} reviews)</span>}
+                    </div>
+                  ) : null;
+                })()}
+                <div className="gmp-tile-price-row" style={{ marginTop: 6 }}>
+                  <span className="gmp-pd-price">₹{quickPrice}</span>
+                  {(() => {
+                    const hasDiscount = quickOldPrice > quickPrice;
+                    const discountPct = hasDiscount ? Math.round(((quickOldPrice - quickPrice) / quickOldPrice) * 100) : (optionProduct.discount || 0);
+                    return (
+                      <>
+                        {hasDiscount && quickOldPrice > quickPrice && (
+                          <del className="gmp-tile-mrp">₹{quickOldPrice}</del>
+                        )}
+                        {discountPct > 0 && (
+                          <span className="gmp-tile-badge" style={{ position: "static", marginLeft: 6 }}>{discountPct}% OFF</span>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+            <p className="gmp-option-sheet-hint">Select options — price updates dynamically</p>
+            {optionGroups.map((opt) => (
+              <div key={opt.name || opt.label} className="gmp-option-group">
+                <b className="gmp-option-group-label">{opt.label || opt.name}</b>
+                <div className="gmp-option-chips">
+                  {opt.values.map((v) => {
+                    const optPrice = v.price || optionProduct.price;
+                    const optOldPrice = v.oldPrice || optionProduct.oldPrice || optionProduct.mrp || optionProduct.price;
+                    const hasOptDiscount = optOldPrice > optPrice;
+                    
+                    return (
+                      <button
+                        key={v.value || v.label}
+                        type="button"
+                        className={`gmp-option-chip${quickSelections[opt.name || opt.label] === v.label ? " active" : ""}`}
+                        onClick={() => setQuickSelections((prev) => ({ ...prev, [opt.name || opt.label]: v.label }))}
+                      >
+                        <span>{v.label}</span>
+                        <span className="gmp-chip-price">
+                          ₹{optPrice}
+                          {hasOptDiscount && (
+                            <del style={{ marginLeft: 6, fontSize: 10, opacity: 0.6 }}>₹{optOldPrice}</del>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <div className="gmp-option-sheet-footer">
+              <div className="gmp-option-total">
+                <span>Total</span>
+                <span className="gmp-pd-price">₹{quickPrice}</span>
+              </div>
+              <button className="gmp-btn gmp-btn-primary" style={{ flex: 1 }} onClick={confirmOptionAdd}>
+                🛒 Add to Cart
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
