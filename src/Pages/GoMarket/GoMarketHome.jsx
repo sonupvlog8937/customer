@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import { fetchMarkets, fetchNearbyMarkets, savePreferredMarket } from "../../store/goMarketSlice";
 import { fetchDataFromApi } from "../../utils/api";
 import { STYLES, useMyLocation } from "./shared";
@@ -16,6 +17,7 @@ const GoMarketHome = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [collections, setCollections] = useState([]);
+  const [showNearbyOnly, setShowNearbyOnly] = useState(false);
 
   // Redirect to login if not logged in
   useEffect(() => {
@@ -67,6 +69,19 @@ const GoMarketHome = () => {
   };
 
   const filtered = useMemo(() => {
+    // If showing nearby markets, filter nearbyMarkets only
+    if (showNearbyOnly && nearbyMarkets.length > 0) {
+      const q = search.trim().toLowerCase();
+      if (!q) return nearbyMarkets;
+      return nearbyMarkets.filter(
+        (m) =>
+          fuzzyMatch(m.name, q) ||
+          fuzzyMatch(m.city, q) ||
+          String(m.pincode || "").includes(q),
+      );
+    }
+
+    // Otherwise show all markets with normal filtering
     const q = search.trim().toLowerCase();
     if (!q) return allMarkets;
     return allMarkets.filter(
@@ -75,7 +90,7 @@ const GoMarketHome = () => {
         fuzzyMatch(m.city, q) ||
         String(m.pincode || "").includes(q),
     );
-  }, [allMarkets, search]);
+  }, [allMarkets, search, nearbyMarkets, showNearbyOnly]);
 
   const onSearch = (e) => {
     e.preventDefault();
@@ -116,23 +131,42 @@ const GoMarketHome = () => {
   };
 
   const useLocation = useMyLocation((lat, lng) => {
+    console.log("📍 Getting nearby markets for coordinates:", { lat, lng });
     dispatch(fetchNearbyMarkets({ latitude: lat, longitude: lng }))
       .unwrap()
       .then((response) => {
         console.log("📍 Nearby markets response:", response);
-        // Get the nearest market (first one in the sorted list)
+        
         if (response?.data && response.data.length > 0) {
-          const nearestMarket = response.data[0];
-          console.log("🎯 Navigating to nearest market:", nearestMarket.name);
-          // Save preferred market and navigate
-          dispatch(savePreferredMarket(nearestMarket._id));
-          openMarket(nearestMarket._id);
+          // Filter markets within 5km
+          const marketsWithin5km = response.data.filter((m) => m.distanceKm != null && m.distanceKm <= 5);
+          
+          if (marketsWithin5km.length > 0) {
+            // Auto-navigate to the nearest market within 5km
+            const nearestMarket = marketsWithin5km[0];
+            console.log(`🎯 Found market within 5km: ${nearestMarket.name} (${nearestMarket.distanceKm} km away)`);
+            console.log("🚀 Auto-navigating to nearest market...");
+            toast.success(`Found ${nearestMarket.name} (${nearestMarket.distanceKm} km away)`, { id: "gm-nav" });
+            // Save preferred market and navigate
+            dispatch(savePreferredMarket(nearestMarket._id));
+            setTimeout(() => openMarket(nearestMarket._id), 500); // Small delay for toast visibility
+          } else {
+            // Show all nearby markets but let user choose
+            console.log(`⚠️ No markets within 5km. Found ${response.data.length} markets further away.`);
+            setShowNearbyOnly(true);
+            setSearch("");
+            toast.error(`No markets within 5km. Showing ${response.data.length} nearby markets.`, { id: "gm-nav" });
+          }
         } else {
           console.log("⚠️ No nearby markets found");
+          toast.error("No markets found near your location", { id: "gm-nav" });
+          setShowNearbyOnly(false);
         }
       })
       .catch((error) => {
         console.error("❌ Error fetching nearby markets:", error);
+        toast.error("Failed to detect nearby markets", { id: "gm-nav" });
+        setShowNearbyOnly(false);
       });
   });
 
@@ -228,7 +262,26 @@ const GoMarketHome = () => {
 
       <div className="gmp-container" style={{ marginTop: 24 }}>
         <p style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 8 }}>
-          Select a market to continue
+          {showNearbyOnly ? "📍 Nearby Markets" : "Select a market to continue"}
+          {showNearbyOnly && (
+            <button
+              type="button"
+              onClick={() => setShowNearbyOnly(false)}
+              style={{
+                marginLeft: 12,
+                padding: "3px 8px",
+                fontSize: 11,
+                fontWeight: 600,
+                background: "#2563eb",
+                color: "#fff",
+                border: "none",
+                borderRadius: 6,
+                cursor: "pointer"
+              }}
+            >
+              Show All
+            </button>
+          )}
         </p>
 
         {loading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading markets…</p>}
@@ -236,7 +289,7 @@ const GoMarketHome = () => {
         {!loading && filtered.length === 0 && (
           <div className="gmp-empty">
             <span className="gmp-empty-icon">🗺️</span>
-            No markets found. Try another search or enable location.
+            {showNearbyOnly ? "No nearby markets found. Try adjusting your location." : "No markets found. Try another search or enable location."}
           </div>
         )}
 
