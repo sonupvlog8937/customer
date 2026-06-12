@@ -29,8 +29,7 @@ const GoMarketProduct = () => {
   const [activeImg, setActiveImg] = useState(0);
 
   const [related, setRelated] = useState([]);
-  const [relatedPage, setRelatedPage] = useState(1);
-  const [relatedTotalPages, setRelatedTotalPages] = useState(1);
+  const [totalRelatedCount, setTotalRelatedCount] = useState(0);
   const [loadingRelated, setLoadingRelated] = useState(false);
 
   const loadProduct = useCallback(() => {
@@ -41,9 +40,22 @@ const GoMarketProduct = () => {
     return fetchDataFromApi(endpoint).then((res) => {
       if (res?.success || res?.error === false) {
         setData(res);
-        setRelated(res.related || []);
-        setRelatedPage(1);
-        setRelatedTotalPages(res.relatedPagination?.totalPages || 1);
+        
+        // Handle multiple field names for related products
+        const relatedData = res.related || res.relatedProducts || res.suggestionProducts || [];
+        setRelated(relatedData);
+        
+        // Get total count - handle multiple field names
+        let totalCount = relatedData.length;
+        if (res.relatedTotal) totalCount = res.relatedTotal;
+        else if (res.totalRelated) totalCount = res.totalRelated;
+        else if (res.relatedPagination?.total) totalCount = res.relatedPagination.total;
+        else if (res.relatedPagination?.totalItems) totalCount = res.relatedPagination.totalItems;
+        else if (res.relatedCount) totalCount = res.relatedCount;
+        
+        console.log('[Product Load] Related:', relatedData.length, 'Total:', totalCount);
+        setTotalRelatedCount(totalCount);
+        
         setSelectedOptions({});
         const offerParams = new URLSearchParams({
           audience: kind === "restaurant" ? "restaurant" : "grocery",
@@ -62,22 +74,62 @@ const GoMarketProduct = () => {
   }, [loadProduct]);
 
   const loadMoreRelated = useCallback(async () => {
-    if (kind !== "grocery" || relatedPage >= relatedTotalPages || loadingRelated) return;
+    const ITEMS_PER_PAGE = 8;
+    const itemsLoaded = related.length;
+    
+    // If already loaded all items, return
+    if (itemsLoaded >= totalRelatedCount || loadingRelated) {
+      console.log(`[Load More] Already have all: ${itemsLoaded}/${totalRelatedCount}`);
+      return;
+    }
+    
+    const nextPage = Math.floor(itemsLoaded / ITEMS_PER_PAGE) + 1;
+    console.log(`[Load More] Fetching page ${nextPage}. Have ${itemsLoaded}, Total ${totalRelatedCount}`);
+    
     setLoadingRelated(true);
-    const next = relatedPage + 1;
     try {
-      const res = await fetchDataFromApi(
-        `/api/go-market/catalog/grocery-product/${id}?relatedPage=${next}&relatedLimit=8`,
-      );
+      // Use page & limit params
+      const endpoint = kind === "restaurant"
+        ? `/api/go-market/catalog/restaurant-item/${id}?page=${nextPage}&limit=${ITEMS_PER_PAGE}`
+        : `/api/go-market/catalog/grocery-product/${id}?page=${nextPage}&limit=${ITEMS_PER_PAGE}`;
+      
+      console.log(`[Load More] URL: ${endpoint}`);
+      const res = await fetchDataFromApi(endpoint);
+      console.log(`[Load More] Response:`, res);
+      
       if (res?.success || res?.error === false) {
-        setRelated((prev) => [...prev, ...(res.related || [])]);
-        setRelatedPage(next);
-        setRelatedTotalPages(res.relatedPagination?.totalPages || next);
+        // Try multiple field names
+        const newItems = res.related || res.relatedProducts || res.data || res.products || [];
+        console.log(`[Load More] Got ${newItems.length} items`);
+        
+        if (newItems.length > 0) {
+          setRelated((prev) => {
+            const updated = [...prev, ...newItems];
+            console.log(`[Load More] Total: ${updated.length}`);
+            return updated;
+          });
+          
+          // Update total
+          let backendTotal = totalRelatedCount;
+          if (res.relatedTotal) backendTotal = res.relatedTotal;
+          else if (res.totalRelated) backendTotal = res.totalRelated;
+          else if (res.total) backendTotal = res.total;
+          else if (res.count) backendTotal = res.count;
+          
+          setTotalRelatedCount(backendTotal);
+        } else {
+          setTotalRelatedCount(itemsLoaded);
+        }
+      } else {
+        setTotalRelatedCount(itemsLoaded);
       }
+    } catch (error) {
+      console.error(`[Load More] Error:`, error);
+      setTotalRelatedCount(itemsLoaded);
     } finally {
       setLoadingRelated(false);
     }
-  }, [kind, id, relatedPage, relatedTotalPages, loadingRelated]);
+  }, [kind, id, related.length, totalRelatedCount, loadingRelated]);
 
   const product = data?.product;
   const specs = data?.specifications || [];
@@ -205,6 +257,8 @@ const GoMarketProduct = () => {
     kind === "restaurant"
       ? `/go-market/restaurant/${product.restaurantId}`
       : `/go-market/shop/${product.shopId}`;
+
+  const hasMoreProducts = related.length < totalRelatedCount;
 
   return (
     <div className="gmp-root">
@@ -482,7 +536,7 @@ const GoMarketProduct = () => {
                 );
               })}
             </div>
-            {relatedPage < relatedTotalPages && (
+            {hasMoreProducts && (
               <button
                 type="button"
                 onClick={loadMoreRelated}
@@ -526,10 +580,26 @@ const GoMarketProduct = () => {
                 ) : (
                   <>
                     <span style={{ fontSize: 16 }}>↓</span>
-                    Load More Products
+                    Load More Products ({related.length}/{totalRelatedCount})
                   </>
                 )}
               </button>
+            )}
+            {!hasMoreProducts && related.length > 0 && totalRelatedCount > 0 && (
+              <div style={{
+                marginTop: 20,
+                padding: "12px 24px",
+                background: "#dcfce7",
+                border: "1px solid #bbf7d0",
+                borderRadius: 12,
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#16a34a",
+                textAlign: "center",
+                width: "100%",
+              }}>
+                ✓ All {totalRelatedCount} products loaded
+              </div>
             )}
           </section>
         )}
