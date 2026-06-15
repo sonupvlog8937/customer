@@ -27,6 +27,7 @@ const GoMarketProduct = () => {
   const [selectedOptions, setSelectedOptions] = useState({});
   const [offers, setOffers] = useState([]);
   const [activeImg, setActiveImg] = useState(0);
+  const [shopData, setShopData] = useState(null);
 
   const [related, setRelated] = useState([]);
   const [totalRelatedCount, setTotalRelatedCount] = useState(0);
@@ -40,6 +41,13 @@ const GoMarketProduct = () => {
     return fetchDataFromApi(endpoint).then((res) => {
       if (res?.success || res?.error === false) {
         setData(res);
+        
+        // Store shop/restaurant data for isOpen check
+        if (kind === "restaurant" && res.restaurant) {
+          setShopData(res.restaurant);
+        } else if (kind !== "restaurant" && res.shop) {
+          setShopData(res.shop);
+        }
         
         // Handle multiple field names for related products
         const relatedData = res.related || res.relatedProducts || res.suggestionProducts || [];
@@ -199,6 +207,11 @@ const GoMarketProduct = () => {
       toast.error("This item is out of stock");
       return;
     }
+    // Check if shop/restaurant is open
+    if (shopData && shopData.isOpen === false) {
+      toast.error(kind === "restaurant" ? "Restaurant is currently closed. You cannot add items to cart." : "Shop is currently closed. You cannot add items to cart.");
+      return;
+    }
     setBusy(true);
     await dispatch(addToCart({ product: cartProduct, userId, quantity }));
     setBusy(false);
@@ -216,6 +229,11 @@ const GoMarketProduct = () => {
     }
     if (!cartProduct?.countInStock) {
       toast.error("This item is out of stock");
+      return;
+    }
+    // Check if shop/restaurant is open
+    if (shopData && shopData.isOpen === false) {
+      toast.error(kind === "restaurant" ? "Restaurant is currently closed. You cannot buy this item." : "Shop is currently closed. You cannot buy this item.");
       return;
     }
     navigate("/checkout", {
@@ -401,7 +419,7 @@ const GoMarketProduct = () => {
                 type="button"
                 className="gmp-btn gmp-btn-primary"
                 style={{ width: "100%", justifyContent: "center" }}
-                disabled={busy || !optionsComplete}
+                disabled={busy || !optionsComplete || (shopData && shopData.isOpen === false)}
                 onClick={handleAddToCart}
               >
                 🛒 Add to cart
@@ -410,7 +428,7 @@ const GoMarketProduct = () => {
                 type="button"
                 className="gmp-btn gmp-btn-outline"
                 style={{ width: "100%", justifyContent: "center" }}
-                disabled={busy || !optionsComplete}
+                disabled={busy || !optionsComplete || (shopData && shopData.isOpen === false)}
                 onClick={handleBuyNow}
               >
                 ⚡ Buy now
@@ -427,6 +445,23 @@ const GoMarketProduct = () => {
             >
               {product.countInStock > 0 ? `✓ ${product.countInStock} available` : "Currently unavailable"}
             </p>
+
+            {shopData && shopData.isOpen === false && (
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#dc2626",
+                  marginTop: 8,
+                  fontWeight: 600,
+                  background: "#fef2f2",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #fecaca",
+                }}
+              >
+                {kind === "restaurant" ? "🔴 Restaurant is currently closed" : "🔴 Shop is currently closed"}
+              </p>
+            )}
           </div>
         </div>
 
