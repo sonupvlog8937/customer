@@ -70,38 +70,50 @@ const AccountSidebar = () => {
 
       console.log("📤 Uploading to:", apiEndPoint);
       
-      uploadImage("/api/user/user-avatar", formdata).then((res) => {
-        console.log("📸 Client upload response:", res);
-        setUploading(false);
-        
-        if (res?.error === false || res?.success === true) {
-          // Extract avatar URL from various possible response formats
-          const avatarUrl = res?.avatar || res?.data?.avatar || res?.imageUrl || "";
-          console.log("✅ Avatar URL extracted:", avatarUrl);
+      uploadImage("/api/user/user-avatar", formdata)
+        .then((res) => {
+          console.log("📸 Client upload response:", res);
+          console.log("📸 Response type:", typeof res);
+          console.log("📸 Response keys:", res ? Object.keys(res) : "null");
           
-          if (avatarUrl) {
-            setPreviews([avatarUrl]);
-            context.alertBox("success", "Profile picture updated successfully!");
+          setUploading(false);
+          
+          // Check if response indicates success
+          const isSuccess = res?.error === false || res?.success === true;
+          console.log("📸 Is success:", isSuccess);
+          
+          if (isSuccess) {
+            // Extract avatar URL from various possible response formats
+            const avatarUrl = res?.avatar || res?.data?.avatar || res?.imageUrl || "";
+            console.log("✅ Avatar URL extracted:", avatarUrl);
             
-            // Refresh user data
-            fetchDataFromApi(`/api/user/user-details`).then((userRes) => {
-              if (userRes?.data) {
-                context?.setUserData(userRes.data);
-              }
-            });
+            if (avatarUrl) {
+              setPreviews([avatarUrl]);
+              context.alertBox("success", "Profile picture updated successfully!");
+              
+              // Refresh user data
+              fetchDataFromApi(`/api/user/user-details`).then((userRes) => {
+                if (userRes?.data) {
+                  context?.setUserData(userRes.data);
+                }
+              });
+            } else {
+              console.error("⚠️ No avatar URL in response");
+              context.alertBox("warning", "Image uploaded but URL not found");
+            }
           } else {
-            console.error("⚠️ No avatar URL in response");
-            context.alertBox("warning", "Image uploaded but URL not found");
+            const errorMsg = res?.message || res?.error?.message || "Failed to upload profile picture";
+            console.error("❌ Upload failed:", errorMsg);
+            console.error("❌ Full response:", JSON.stringify(res, null, 2));
+            context.alertBox("error", errorMsg);
           }
-        } else {
-          console.error("❌ Upload failed:", res?.message);
-          context.alertBox("error", res?.message || "Failed to upload profile picture");
-        }
-      }).catch((error) => {
-        console.error("❌ Upload error:", error);
-        setUploading(false);
-        context.alertBox("error", "Failed to upload profile picture");
-      });
+        })
+        .catch((error) => {
+          console.error("❌ Upload error:", error);
+          console.error("❌ Error details:", error.message, error.response);
+          setUploading(false);
+          context.alertBox("error", error?.message || "Failed to upload profile picture");
+        });
 
     } catch (error) {
       console.log(error);
