@@ -29,36 +29,47 @@ const AccountSidebar = () => {
 
   }, [context?.userData])
 
-  let selectedImages = [];
-
-  const formdata = new FormData();
-
   const onChangeFile = async (e, apiEndPoint) => {
     try {
       setPreviews([]);
       const files = e.target.files;
+      
+      if (!files || files.length === 0) {
+        return;
+      }
+      
       setUploading(true);
 
+      // Create fresh FormData for each upload
+      const formdata = new FormData();
+      let validFileFound = false;
 
-      for (var i = 0; i < files.length; i++) {
-        if (files[i] && (files[i].type === "image/jpeg" || files[i].type === "image/jpg" ||
-          files[i].type === "image/png" ||
-          files[i].type === "image/webp")
-        ) {
-
-          const file = files[i];
-
-          selectedImages.push(file);
-          formdata.append(`avatar`, file);
-
-
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        if (file && (
+          file.type === "image/jpeg" || 
+          file.type === "image/jpg" ||
+          file.type === "image/png" ||
+          file.type === "image/webp"
+        )) {
+          formdata.append('avatar', file);
+          validFileFound = true;
+          console.log("📎 File added to FormData:", file.name, file.type);
         } else {
-          context.alertBox("error", "Please select a valid JPG , PNG or webp image file.");
+          context.alertBox("error", "Please select a valid JPG, PNG or WEBP image file.");
           setUploading(false);
-          return false;
+          return;
         }
       }
 
+      if (!validFileFound) {
+        setUploading(false);
+        return;
+      }
+
+      console.log("📤 Uploading to:", apiEndPoint);
+      
       uploadImage("/api/user/user-avatar", formdata).then((res) => {
         console.log("📸 Client upload response:", res);
         setUploading(false);
