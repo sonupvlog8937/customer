@@ -32,6 +32,8 @@ import OffersPage from "./Pages/Offers";
 import NotificationsPage from "./Pages/Notifications";
 import BecomeSeller from "./Pages/Becomeseller";
 import Contact from "./Pages/Contact";
+import About from "./Pages/About";
+import FAQ from "./Pages/FAQ";
 
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -208,6 +210,8 @@ const AppContent = () => {
         <Route path="/notifications" exact={true} element={<NotificationsPage />} />
         <Route path="/become-seller" exact={true} element={<BecomeSeller />} />
         <Route path="/contact" exact={true} element={<Contact />} />
+        <Route path="/about" exact={true} element={<About />} />
+        <Route path="/faq" exact={true} element={<FAQ />} />
         <Route path="/privacy-policy" exact={true} element={<PrivacyPolicy />} />
         <Route path="/go-market" exact={true} element={<GoMarketHome />} />
         <Route path="/go-market/market/:marketId" exact={true} element={<GoMarketMarket />} />
