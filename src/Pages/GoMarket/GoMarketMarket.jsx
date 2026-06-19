@@ -10,7 +10,7 @@ import {
 import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
 
 const SORT_OPTIONS = [
-  { value: "rating", label: "Top rated" },
+  { value: "rating", label: "Following + top rated" },
   { value: "name", label: "Name A–Z" },
   { value: "followers", label: "Most popular" },
   { value: "newest", label: "Newest" },
