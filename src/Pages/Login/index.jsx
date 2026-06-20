@@ -353,7 +353,7 @@ const Login = () => {
             {/* OTP STEP */}
             {step === "otp" && (
               <form onSubmit={handleVerifyOtp} className="login-form" noValidate>
-                <button
+                {/* <button
                   type="button"
                   className="back-btn"
                   onClick={handleBack}
@@ -369,7 +369,7 @@ const Login = () => {
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                   Back
-                </button>
+                </button> */}
 
                 <FloatingInput
                   label="Enter 6-digit OTP"
