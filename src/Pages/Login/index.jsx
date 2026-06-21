@@ -38,6 +38,7 @@ const Login = () => {
   const [name, setName] = useState("");
   const [isNewUser, setIsNewUser] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [shake, setShake] = useState(false);
 
   const context = useAppContext();
@@ -228,8 +229,7 @@ const Login = () => {
   };
 
   const handleResendOtp = async () => {
-    setIsLoading(true);
-    context.setGlobalLoading(true);
+    setIsResending(true);
     
     try {
       const endpoint = isNewUser ? "/api/user/send-register-otp" : "/api/user/send-login-otp";
@@ -247,8 +247,7 @@ const Login = () => {
       console.error("Resend OTP error:", err);
       context.alertBox("error", "❌ Network error. Please try again.");
     } finally {
-      setIsLoading(false);
-      context.setGlobalLoading(false);
+      setIsResending(false);
     }
   };
 
@@ -353,7 +352,7 @@ const Login = () => {
             {/* OTP STEP */}
             {step === "otp" && (
               <form onSubmit={handleVerifyOtp} className="login-form" noValidate>
-                {/* <button
+                <button
                   type="button"
                   className="back-btn"
                   onClick={handleBack}
@@ -369,7 +368,7 @@ const Login = () => {
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                   Back
-                </button> */}
+                </button>
 
                 <FloatingInput
                   label="Enter 6-digit OTP"
@@ -412,9 +411,9 @@ const Login = () => {
                     type="button"
                     className="resend-link"
                     onClick={handleResendOtp}
-                    disabled={isLoading}
+                    disabled={isLoading || isResending}
                   >
-                    Resend
+                    {isResending ? "Sending..." : "Resend"}
                   </button>
                 </p>
               </form>

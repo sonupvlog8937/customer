@@ -36,7 +36,7 @@ export const STYLES = `
 .gmp-card-title { font-size: 15px; font-weight: 700; color: #0f172a; }
 .gmp-card-addr { font-size: 12px; color: #64748b; margin-top: 3px; }
 .gmp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 16px; }
-.gmp-product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
+.gmp-product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
 .gmp-product-tile { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; text-decoration: none; color: inherit; display: block; transition: box-shadow .15s; }
 .gmp-product-tile:hover { box-shadow: 0 8px 20px rgba(15,23,42,0.08); }
 .gmp-product-tile img { width: 100%; aspect-ratio: 1; object-fit: cover; background: #f1f5f9; }
