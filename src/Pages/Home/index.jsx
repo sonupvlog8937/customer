@@ -46,7 +46,7 @@ const REVIEWS = [
 ];
 
 // ─── All Products Section ─────────────────────────────────────────────────────
-const PRODUCTS_PER_PAGE = 10;
+const PRODUCTS_PER_PAGE = 25;
 
 const AllProductsSection = () => {
   const [allProducts, setAllProducts] = useState([]);
