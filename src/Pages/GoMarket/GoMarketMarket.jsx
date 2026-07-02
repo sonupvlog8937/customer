@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchDataFromApi } from "../../utils/api";
@@ -8,6 +8,21 @@ import {
   Breadcrumb, CatalogToolbar, ResultBar, SkeletonGrid, STYLES, img, useDebouncedValue,
 } from "./shared";
 import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
+import { getOutletBaseMinutes, getOutletDistanceEta } from "../../utils/geoCoords";
+
+const GM_LOC_KEY = "gm_user_location";
+
+const readSavedLocation = () => {
+  try {
+    const raw = sessionStorage.getItem(GM_LOC_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Number.isFinite(parsed?.lat) && Number.isFinite(parsed?.lng)) {
+      return { lat: parsed.lat, lng: parsed.lng };
+    }
+  } catch { /* ignore */ }
+  return null;
+};
 
 const SORT_OPTIONS = [
   { value: "rating", label: "Following + top rated" },
@@ -16,11 +31,27 @@ const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
 ];
 
+const SHOP_TYPE_LABELS = {
+  restaurant: "🍽️ Restaurant",
+  grocery: "🛒 Grocery",
+  fashion: "👕 Fashion",
+  electronics: "📱 Electronics",
+  medical: "💊 Medical",
+  beauty: "💄 Beauty",
+  home_kitchen: "🏠 Home & Kitchen",
+  gifts_toys: "🎁 Gifts & Toys",
+  books_stationery: "📚 Books",
+  jewellery: "💎 Jewellery",
+  hardware: "🔧 Hardware",
+  automobile: "🚗 Automobile",
+};
+
 const GoMarketMarket = () => {
   const { marketId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isLogin = useSelector((s) => s.app.isLogin);
+  const userData = useSelector((s) => s.app.userData);
   
   // Get URL search params to restore filters
   const [searchParams, setSearchParams] = React.useState(() => {
@@ -40,6 +71,7 @@ const GoMarketMarket = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.search);
   const debouncedSearch = useDebouncedValue(search, 350);
+  const [appliedSearch, setAppliedSearch] = useState(searchParams.search);
   const [sort, setSort] = useState(searchParams.sort);
   const [type, setType] = useState(searchParams.type);
   const [openOnly, setOpenOnly] = useState(searchParams.openOnly);
@@ -48,6 +80,63 @@ const GoMarketMarket = () => {
   const [pagination, setPagination] = useState({ totalPages: 1, total: 0 });
   const [loadingMore, setLoadingMore] = useState(false);
   const limit = 12;
+
+  // User geolocation — cache/address first, GPS upgrades without reloading shops
+  const [userLocation, setUserLocationState] = useState(readSavedLocation);
+  const locationSourceRef = useRef(readSavedLocation() ? "cache" : null);
+
+  const applyAddressFallback = useCallback(() => {
+    if (locationSourceRef.current === "gps") return;
+    const addresses = userData?.address_details || [];
+    const selected = addresses.find((a) => a.selected) || addresses[0];
+    if (selected?.latitude && selected?.longitude) {
+      locationSourceRef.current = "address";
+      const loc = { lat: Number(selected.latitude), lng: Number(selected.longitude) };
+      setUserLocationState(loc);
+      try {
+        sessionStorage.setItem(GM_LOC_KEY, JSON.stringify(loc));
+      } catch { /* ignore */ }
+    }
+  }, [userData]);
+
+  const setUserLocation = useCallback((loc, source = "cache") => {
+    if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
+    if (locationSourceRef.current === "gps" && source !== "gps") return;
+    locationSourceRef.current = source;
+    setUserLocationState(loc);
+    try {
+      sessionStorage.setItem(GM_LOC_KEY, JSON.stringify(loc));
+    } catch { /* ignore */ }
+  }, []);
+
+  // Use saved address while GPS loads (if no cache yet)
+  useEffect(() => {
+    if (locationSourceRef.current) return;
+    applyAddressFallback();
+  }, [userData, applyAddressFallback]);
+
+  // GPS — updates distance on cards without refetching outlets
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      applyAddressFallback();
+      return;
+    }
+    const setLoc = (pos) => setUserLocation(
+      { lat: pos.coords.latitude, lng: pos.coords.longitude },
+      "gps",
+    );
+    navigator.geolocation.getCurrentPosition(
+      setLoc,
+      () => {
+        navigator.geolocation.getCurrentPosition(
+          setLoc,
+          () => applyAddressFallback(),
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
+        );
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+    );
+  }, [setUserLocation, applyAddressFallback]);
 
   // Shop suggestions state
   const [suggestions, setSuggestions] = useState([]);
@@ -62,7 +151,7 @@ const GoMarketMarket = () => {
     if (sort !== "rating") params.set("sort", sort);
     if (openOnly) params.set("openOnly", "true");
     if (minRating > 0) params.set("minRating", String(minRating));
-    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (appliedSearch) params.set("search", appliedSearch);
     
     const newSearch = params.toString();
     const currentSearch = window.location.search.slice(1);
@@ -77,9 +166,9 @@ const GoMarketMarket = () => {
     if (type !== "all") count++;
     if (openOnly) count++;
     if (minRating > 0) count++;
-    if (debouncedSearch) count++;
+    if (appliedSearch) count++;
     return count;
-  }, [type, openOnly, minRating, debouncedSearch]);
+  }, [type, openOnly, minRating, appliedSearch]);
 
   // Clear all filters
   const clearFilters = () => {
@@ -87,6 +176,7 @@ const GoMarketMarket = () => {
     setOpenOnly(false);
     setMinRating(0);
     setSearch("");
+    setAppliedSearch("");
     setSort("rating");
   };
 
@@ -106,7 +196,7 @@ const GoMarketMarket = () => {
         sort,
         page: String(pageNum),
         limit: String(limit),
-        search: debouncedSearch,
+        search: appliedSearch,
         ...(openOnly ? { openOnly: "true" } : {}),
         ...(minRating > 0 ? { minRating: String(minRating) } : {}),
       });
@@ -127,7 +217,7 @@ const GoMarketMarket = () => {
           setLoadingMore(false);
         });
     },
-    [marketId, type, sort, debouncedSearch, openOnly, minRating],
+    [marketId, type, sort, appliedSearch, openOnly, minRating],
   );
 
   useEffect(() => {
@@ -183,12 +273,13 @@ const GoMarketMarket = () => {
 
   const onSearch = (e) => {
     e.preventDefault();
+    setAppliedSearch(search.trim());
     setShowSuggestions(false);
-    load(1, false);
   };
 
   const handleSuggestionClick = (suggestion) => {
     setSearch(suggestion.label);
+    setAppliedSearch(suggestion.label);
     setShowSuggestions(false);
     
     // Navigate to the shop
@@ -210,13 +301,39 @@ const GoMarketMarket = () => {
 
     try {
       const isRestaurant = outlet.outletType === "restaurant";
-      const action = outlet.isFollowing
+      const wasFollowing = outlet.isFollowing;
+      const action = wasFollowing
         ? (isRestaurant ? unfollowGoMarketRestaurant : unfollowGoMarketShop)
         : (isRestaurant ? followGoMarketRestaurant : followGoMarketShop);
+
+      // Optimistic update — no full reload
+      setOutlets((prev) =>
+        prev.map((o) =>
+          o._id === outlet._id
+            ? {
+                ...o,
+                isFollowing: !wasFollowing,
+                followerCount: Math.max(0, (o.followerCount || 0) + (wasFollowing ? -1 : 1)),
+              }
+            : o
+        )
+      );
+
       await dispatch(action(outlet._id)).unwrap();
-      toast.success(outlet.isFollowing ? "Unfollowed" : `Following ${outlet.displayName}`);
-      load(1, false);
+      toast.success(wasFollowing ? "Unfollowed" : `Following ${outlet.displayName}`);
     } catch {
+      // Revert optimistic update on failure
+      setOutlets((prev) =>
+        prev.map((o) =>
+          o._id === outlet._id
+            ? {
+                ...o,
+                isFollowing: outlet.isFollowing,
+                followerCount: outlet.followerCount,
+              }
+            : o
+        )
+      );
       toast.error("Failed to update follow");
     }
   };
@@ -278,9 +395,19 @@ const GoMarketMarket = () => {
 
         <div className="gmp-chip-row" style={{ marginTop: 16 }}>
           {[
-            { k: "all", l: `All (${(counts.grocery || 0) + (counts.restaurant || 0)})` },
-            { k: "grocery", l: `Grocery (${counts.grocery || 0})` },
-            { k: "restaurant", l: `Restaurants (${counts.restaurant || 0})` },
+            { k: "all", l: "🏪 All Shops", icon: "🏪" },
+            { k: "grocery", l: "🛒 Grocery", icon: "🛒" },
+            { k: "restaurant", l: "🍽 Restaurant", icon: "🍽" },
+            { k: "fashion", l: "👕 Fashion", icon: "👕" },
+            { k: "electronics", l: "📱 Electronics", icon: "📱" },
+            { k: "medical", l: "💊 Medical", icon: "💊" },
+            { k: "beauty", l: "💄 Beauty", icon: "💄" },
+            { k: "home_kitchen", l: "🏠 Home & Kitchen", icon: "🏠" },
+            { k: "gifts_toys", l: "🎁 Gifts & Toys", icon: "🎁" },
+            { k: "books_stationery", l: "📚 Books & Stationery", icon: "📚" },
+            { k: "jewellery", l: "💎 Jewellery", icon: "💎" },
+            { k: "hardware", l: "🔧 Hardware", icon: "🔧" },
+            { k: "automobile", l: "🚗 Automobile", icon: "🚗" },
           ].map((t) => (
             <button
               key={t.k}
@@ -325,10 +452,7 @@ const GoMarketMarket = () => {
           activeFiltersCount={activeFiltersCount}
           filters={(
             <>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600 }}>
-                <input type="checkbox" checked={openOnly} onChange={(e) => { setOpenOnly(e.target.checked); }} />
-                Open now
-              </label>
+              
               <select
                 className="gmp-select"
                 style={{ width: "auto", paddingLeft: 12, height: 38 }}
@@ -366,7 +490,7 @@ const GoMarketMarket = () => {
                     <div className="gmp-card-banner-container">
                       <img className="gmp-card-banner" src={img(o.banner)} alt={o.displayName} />
                       <div className="gmp-card-badge">
-                        {o.outletType === "restaurant" ? "🍽️ Restaurant" : "🛒 Grocery"}
+                        {SHOP_TYPE_LABELS[o.outletType] || SHOP_TYPE_LABELS[o.shopType] || "🛒 Grocery"}
                       </div>
                       {o.isOpen && <div className="gmp-card-open-badge">Open Now</div>}
                     </div>
@@ -402,6 +526,42 @@ const GoMarketMarket = () => {
                           <span className="gmp-card-stat-value">{o.totalProducts || 0}</span>
                         </div>
                       </div>
+
+                      {/* Distance & Delivery Time — computed client-side */}
+                      {(() => {
+                        const { distanceDisplay: distLabel, estimatedTime: eta } = getOutletDistanceEta({
+                          userLat: userLocation?.lat,
+                          userLng: userLocation?.lng,
+                          shopLat: o.latitude,
+                          shopLng: o.longitude,
+                          marketLat: market?.latitude,
+                          marketLng: market?.longitude,
+                          baseMinutes: getOutletBaseMinutes(o.outletType),
+                        });
+                        if (!distLabel) return null;
+                        return (
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+                            <span style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              background: "#EEF2FF", color: "#3730A3",
+                              border: "1px solid #C7D2FE",
+                              borderRadius: 999, padding: "3px 10px",
+                              fontSize: 12, fontWeight: 700,
+                            }}>
+                              📍 {distLabel}
+                            </span>
+                            <span style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              background: "#FEF3C7", color: "#92400E",
+                              border: "1px solid #FDE68A",
+                              borderRadius: 999, padding: "3px 10px",
+                              fontSize: 12, fontWeight: 700,
+                            }}>
+                              🕐 {eta} min
+                            </span>
+                          </div>
+                        );
+                      })()}
 
                       {/* Meta Info */}
                       <div className="gmp-card-meta">{o.meta}</div>

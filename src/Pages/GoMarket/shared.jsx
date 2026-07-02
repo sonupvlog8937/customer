@@ -46,8 +46,12 @@ export const STYLES = `
 .gmp-product-price del { font-size: 11px; color: #94a3b8; margin-left: 6px; }
 .gmp-toolbar { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin: 16px 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .gmp-toolbar .gmp-input { height: 38px; flex: 1; min-width: 180px; }
-.gmp-chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.gmp-chip { padding: 6px 12px; border-radius: 999px; border: 1px solid #e2e8f0; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: #475569; }
+.gmp-chip-row { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; padding-bottom: 4px; scrollbar-width: thin; }
+.gmp-chip-row::-webkit-scrollbar { height: 4px; }
+.gmp-chip-row::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 2px; }
+.gmp-chip-row::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+.gmp-chip-row::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.gmp-chip { padding: 6px 12px; border-radius: 999px; border: 1px solid #e2e8f0; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: #475569; white-space: nowrap; flex-shrink: 0; }
 .gmp-chip.active { background: #0f172a; color: #fff; border-color: #0f172a; }
 .gmp-pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 24px; flex-wrap: wrap; }
 .gmp-page-btn { min-width: 36px; height: 36px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; font-weight: 600; cursor: pointer; }
