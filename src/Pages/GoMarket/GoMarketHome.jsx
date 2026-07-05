@@ -127,17 +127,16 @@ const GoMarketHome = () => {
       .then((response) => {
         console.log("📍 Nearby markets response:", response);
         if (response?.data && response.data.length > 0) {
-          setSearch("");
-          setShowNearby(true);
-          setShowSuggestions(false);
-          console.log("🎯 Nearby markets loaded", response.data.length);
+          const nearestMarket = response.data[0];
+          console.log("🎯 Navigating to nearest market:", nearestMarket.name);
+          // Save preferred market and navigate
+          dispatch(savePreferredMarket(nearestMarket._id));
+          openMarket(nearestMarket._id);
         } else {
-          setShowNearby(false);
           console.log("⚠️ No nearby markets found");
         }
       })
       .catch((error) => {
-        setShowNearby(false);
         console.error("❌ Error fetching nearby markets:", error);
       });
   });
