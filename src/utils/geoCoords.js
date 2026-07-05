@@ -76,15 +76,15 @@ export const formatDistanceKm = (distanceKm) => {
 export const estimateDeliveryMinutes = (distanceKm, deliveryMinutes = 10) => {
   if (distanceKm == null) return null;
   if (distanceKm > 5) return null;
-  const base = deliveryMinutes || 10;
+  const base = deliveryMinutes ?? 10;
   if (distanceKm < 0.05) return base;
-  // travel time (~6 min/km) + base prep/delivery minutes (default 10)
+  // travel time (~6 min/km) + base prep/delivery minutes
   const travelMinutes = Math.round(distanceKm * 6);
   return travelMinutes + base;
 };
 
 export const getOutletBaseMinutes = (outletType) =>
-  outletType === "restaurant" ? 20 : 10;
+  outletType === "restaurant" ? 10 : 0;
 
 export const getOutletDistanceEta = ({
   userLat,
