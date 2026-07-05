@@ -16,6 +16,7 @@ const GoMarketHome = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [collections, setCollections] = useState([]);
+  const [showNearby, setShowNearby] = useState(false);
 
   // Redirect to login if not logged in
   useEffect(() => {
@@ -41,9 +42,10 @@ const GoMarketHome = () => {
   fetchDataFromApi("/api/settings/commerce").then((res) => setCollections((res?.data?.collections || []).filter((c) => c.isActive !== false)));
 
   const allMarkets = useMemo(() => {
+    if (showNearby) return nearbyMarkets;
     const map = new Map([...nearbyMarkets, ...markets].map((m) => [m._id, m]));
     return Array.from(map.values());
-  }, [markets, nearbyMarkets]);
+  }, [markets, nearbyMarkets, showNearby]);
 
   // Fuzzy search function - matches even with typos
   const fuzzyMatch = (text, query) => {
@@ -89,6 +91,7 @@ const GoMarketHome = () => {
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
     setShowSuggestions(true);
+    setShowNearby(false);
     setFocusedIndex(-1);
   };
 
@@ -123,18 +126,18 @@ const GoMarketHome = () => {
       .unwrap()
       .then((response) => {
         console.log("📍 Nearby markets response:", response);
-        // Get the nearest market (first one in the sorted list)
         if (response?.data && response.data.length > 0) {
-          const nearestMarket = response.data[0];
-          console.log("🎯 Navigating to nearest market:", nearestMarket.name);
-          // Save preferred market and navigate
-          dispatch(savePreferredMarket(nearestMarket._id));
-          openMarket(nearestMarket._id);
+          setSearch("");
+          setShowNearby(true);
+          setShowSuggestions(false);
+          console.log("🎯 Nearby markets loaded", response.data.length);
         } else {
+          setShowNearby(false);
           console.log("⚠️ No nearby markets found");
         }
       })
       .catch((error) => {
+        setShowNearby(false);
         console.error("❌ Error fetching nearby markets:", error);
       });
   });
