@@ -379,6 +379,8 @@ const Login = () => {
                   label="Enter 6-digit OTP"
                   type="text"
                   name="otp"
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   disabled={isLoading}
