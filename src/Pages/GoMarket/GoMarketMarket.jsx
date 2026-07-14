@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchDataFromApi } from "../../utils/api";
-import { followGoMarketShop, followGoMarketRestaurant, unfollowGoMarketShop, unfollowGoMarketRestaurant } from "../../store/goMarketSlice";
+import { followGoMarketShop, followGoMarketRestaurant, unfollowGoMarketShop, unfollowGoMarketRestaurant, savePreferredMarket } from "../../store/goMarketSlice";
 import toast from "react-hot-toast";
 import {
   Breadcrumb, CatalogToolbar, ResultBar, SkeletonGrid, STYLES, img, useDebouncedValue,
@@ -109,34 +109,52 @@ const GoMarketMarket = () => {
     } catch { /* ignore */ }
   }, []);
 
+  useEffect(() => {
+    if (!userData?.goMarketLocation?.coordinates?.length) return;
+    const [lng, lat] = userData.goMarketLocation.coordinates;
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      setUserLocation({ lat, lng }, "profile");
+    }
+  }, [userData?.goMarketLocation, setUserLocation]);
+
   // Use saved address while GPS loads (if no cache yet)
   useEffect(() => {
     if (locationSourceRef.current) return;
     applyAddressFallback();
   }, [userData, applyAddressFallback]);
 
-  // GPS — updates distance on cards without refetching outlets
+  // GPS — ONLY use cached location or fallback to address, do NOT auto-fetch GPS on page load
   useEffect(() => {
-    if (!navigator.geolocation) {
-      applyAddressFallback();
+    // Skip automatic GPS fetch - only use saved/cached location or address fallback
+    if (locationSourceRef.current) {
+      // Already have location from cache or profile
+      console.log("📍 Using existing location source:", locationSourceRef.current);
       return;
     }
-    const setLoc = (pos) => setUserLocation(
-      { lat: pos.coords.latitude, lng: pos.coords.longitude },
-      "gps",
-    );
-    navigator.geolocation.getCurrentPosition(
-      setLoc,
-      () => {
-        navigator.geolocation.getCurrentPosition(
-          setLoc,
-          () => applyAddressFallback(),
-          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
-        );
-      },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
-    );
-  }, [setUserLocation, applyAddressFallback]);
+    console.log("📍 No location found, using address fallback");
+    applyAddressFallback();
+  }, [applyAddressFallback]);
+
+  // Auto-save GPS location to database when GPS detects it (ONLY when manually updated)
+  useEffect(() => {
+    if (locationSourceRef.current !== "gps" || !userLocation || !isLogin || !marketId) return;
+    
+    const saveLocationToDB = async () => {
+      try {
+        console.log("💾 Saving GPS location to database:", userLocation);
+        await dispatch(savePreferredMarket({ 
+          marketId, 
+          location: userLocation,
+          address: `${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`
+        })).unwrap();
+        console.log("✅ Location saved successfully");
+      } catch (err) {
+        console.error("❌ Failed to save location:", err);
+      }
+    };
+    
+    saveLocationToDB();
+  }, [userLocation, isLogin, marketId, dispatch]);
 
   // Shop suggestions state
   const [suggestions, setSuggestions] = useState([]);
@@ -388,6 +406,17 @@ const GoMarketMarket = () => {
               >
                 <span>✏️</span>
                 Change Market
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/go-market?edit=true&updateLocation=true")}
+                style={{
+                  position: "absolute", top: 58, right: 16, background: "rgba(16,185,129,.95)",
+                  border: "1px solid rgba(255,255,255,.5)", color: "#fff", padding: "8px 14px",
+                  borderRadius: "6px", fontWeight: 700, fontSize: "13px", cursor: "pointer"
+                }}
+              >
+                📍 Update Location
               </button>
             </div>
           </div>

@@ -262,7 +262,7 @@ export const GoMarketShopCatalog = ({
       toast.error("Shop is currently closed. You cannot add items to cart.");
       return;
     }
-    const cartProduct = { _id: product._id, name: product.name, price: priceOverride ?? (product.discountPrice > 0 ? product.discountPrice : product.price), oldPrice: product.oldPrice || product.price, image: product.image, images: product.images || [product.image], countInStock: product.countInStock ?? product.stock ?? 99, rating: product.rating || product.averageRating || 0, brand: product.brand || "GoMarket", discount: product.discount, selectedOptions };
+    const cartProduct = { _id: product._id, name: product.name, price: priceOverride ?? (product.discountPrice > 0 ? product.discountPrice : product.price), oldPrice: product.oldPrice || product.price, image: product.image, images: product.images || [product.image], countInStock: product.countInStock ?? product.stock ?? 99, rating: product.rating || product.averageRating || 0, brand: product.brand || "GoMarket", source: "goMarket", discount: product.discount, selectedOptions };
     await dispatch(addToCart({ product: cartProduct, userId: userData?._id, quantity: 1 }));
   };
   const handleQuickAdd = (e, product) => {

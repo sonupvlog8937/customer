@@ -100,7 +100,7 @@ const GoMarketHome = () => {
     setSearch(market.name);
     setShowSuggestions(false);
     // Save preferred market and navigate
-    dispatch(savePreferredMarket(market._id));
+    dispatch(savePreferredMarket({ marketId: market._id }));
     openMarket(market._id);
   };
 
@@ -122,29 +122,39 @@ const GoMarketHome = () => {
   };
 
   const useLocation = useMyLocation((lat, lng) => {
+    console.log("📍 User coordinates detected:", { lat, lng });
     dispatch(fetchNearbyMarkets({ latitude: lat, longitude: lng }))
       .unwrap()
       .then((response) => {
-        console.log("📍 Nearby markets response:", response);
+        console.log("📍 API Response from nearby markets:", response);
+        console.log("📍 Full response.data:", response?.data);
         if (response?.data && response.data.length > 0) {
           const nearestMarket = response.data[0];
-          console.log("🎯 Navigating to nearest market:", nearestMarket.name);
-          // Save preferred market and navigate
-          dispatch(savePreferredMarket(nearestMarket._id));
+          console.log("🎯 Nearest market found:", nearestMarket.name, "at", nearestMarket.distanceKm, "km");
+          // Save preferred market WITH CURRENT LOCATION to user profile
+          const locationAddress = `Current Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          dispatch(savePreferredMarket({ 
+            marketId: nearestMarket._id, 
+            location: { lat, lng }, 
+            address: locationAddress 
+          }));
+          console.log("💾 Saved location to user profile:", locationAddress);
           openMarket(nearestMarket._id);
         } else {
-          console.log("⚠️ No nearby markets found");
+          console.warn("⚠️ No nearby markets found. Response:", response);
+          alert("❌ No markets found in your area. Please try searching or check back later.");
         }
       })
       .catch((error) => {
         console.error("❌ Error fetching nearby markets:", error);
+        alert("❌ Failed to find nearby markets. Error: " + (error?.message || "Unknown error"));
       });
   });
 
   const openMarket = (marketId) => {
     if (!marketId) return;
     // Save preferred market before navigating
-    dispatch(savePreferredMarket(marketId));
+    dispatch(savePreferredMarket({ marketId, location: userData?.goMarketLocation ? { lat: userData.goMarketLocation.coordinates?.[1], lng: userData.goMarketLocation.coordinates?.[0] } : undefined, address: userData?.goMarketLocation?.address || "" }));
     navigate(`/go-market/market/${marketId}`);
   };
 
