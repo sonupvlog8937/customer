@@ -455,145 +455,118 @@ const LocationPickerModal = ({ onClose, onSelect, initialLocation }) => {
     <div style={{
       position: "fixed",
       inset: 0,
-      background: "rgba(0,0,0,0.7)",
-      backdropFilter: "blur(8px)",
+      background: "rgba(0,0,0,0.6)",
+      backdropFilter: "blur(4px)",
       zIndex: 9999,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: "12px",
+      padding: 20,
       animation: "fadeIn 0.2s ease"
     }} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div style={{
         background: "#fff",
-        borderRadius: 24,
-        maxWidth: 900,
+        borderRadius: 20,
+        maxWidth: 600,
         width: "100%",
-        height: "90vh",
-        maxHeight: 750,
+        maxHeight: "90vh",
         overflow: "hidden",
-        boxShadow: "0 25px 80px rgba(0,0,0,0.35)",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
         display: "flex",
         flexDirection: "column",
-        animation: "slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
+        animation: "slideUp 0.3s ease"
       }}>
         {/* Header */}
         <div style={{
-          padding: "20px 28px",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          color: "#fff",
+          padding: "20px 24px",
+          borderBottom: "1px solid #e2e8f0",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          borderBottom: "3px solid rgba(255,255,255,0.2)"
+          justifyContent: "space-between"
         }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-              <span style={{ fontSize: 32 }}>🗺️</span>
-              <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>
-                Pick Your Location
-              </h2>
-            </div>
-            <p style={{ fontSize: 14, margin: 0, opacity: 0.9, fontWeight: 500 }}>
-              Search or tap on map to select your precise location
+          <div>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", margin: 0 }}>
+              🗺️ Pick Your Location
+            </h2>
+            <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0" }}>
+              Search or click on map to select your location
             </p>
           </div>
           <button
             onClick={onClose}
             style={{
-              width: 44,
-              height: 44,
+              width: 36,
+              height: 36,
               borderRadius: "50%",
-              border: "2px solid rgba(255,255,255,0.3)",
-              background: "rgba(255,255,255,0.15)",
-              backdropFilter: "blur(10px)",
-              color: "#fff",
-              fontSize: 20,
+              border: "none",
+              background: "#f1f5f9",
+              color: "#475569",
+              fontSize: 18,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              transition: "all 0.2s",
-              fontWeight: 300
+              transition: "all 0.2s"
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-              e.currentTarget.style.transform = "scale(1.05)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-              e.currentTarget.style.transform = "scale(1)";
-            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "#e2e8f0"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "#f1f5f9"}
           >
             ✕
           </button>
         </div>
 
         {/* Search Input */}
-        <div style={{ padding: "20px 28px", background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
+        <div style={{ padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
           <div style={{ position: "relative" }}>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search address, landmark, city, or place..."
+              placeholder="Search address, landmark, or place..."
               style={{
                 width: "100%",
-                padding: "16px 20px 16px 52px",
-                border: "2px solid #e2e8f0",
-                borderRadius: 14,
-                fontSize: 15,
-                fontWeight: 500,
+                padding: "12px 12px 12px 40px",
+                border: "1px solid #e2e8f0",
+                borderRadius: 10,
+                fontSize: 14,
                 outline: "none",
-                transition: "all 0.2s",
-                background: "#fff",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+                transition: "all 0.2s"
               }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#667eea";
-                e.target.style.boxShadow = "0 4px 20px rgba(102,126,234,0.15)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#e2e8f0";
-                e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-              }}
+              onFocus={(e) => e.target.style.borderColor = "#2563eb"}
+              onBlur={(e) => e.target.style.borderColor = "#e2e8f0"}
             />
             <span style={{
               position: "absolute",
-              left: 18,
+              left: 12,
               top: "50%",
               transform: "translateY(-50%)",
-              fontSize: 22,
-              opacity: 0.6
+              fontSize: 18
             }}>
               🔍
             </span>
             {isSearching && (
-              <div style={{
+              <span style={{
                 position: "absolute",
-                right: 18,
+                right: 12,
                 top: "50%",
                 transform: "translateY(-50%)",
-                width: 20,
-                height: 20,
-                border: "3px solid #e2e8f0",
-                borderTopColor: "#667eea",
-                borderRadius: "50%",
-                animation: "spin 0.8s linear infinite"
-              }} />
+                fontSize: 12,
+                color: "#64748b"
+              }}>
+                Searching...
+              </span>
             )}
           </div>
 
           {/* Search Results */}
           {searchResults.length > 0 && (
             <div style={{
-              marginTop: 12,
-              background: "#fff",
-              border: "2px solid #e2e8f0",
-              borderRadius: 14,
-              maxHeight: 280,
-              overflowY: "auto",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.1)"
+              marginTop: 8,
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: 10,
+              maxHeight: 300,
+              overflowY: "auto"
             }}>
               {searchResults.map((result, idx) => (
                 <button
@@ -601,51 +574,48 @@ const LocationPickerModal = ({ onClose, onSelect, initialLocation }) => {
                   onClick={() => handleSelectResult(result)}
                   style={{
                     width: "100%",
-                    padding: "14px 18px",
+                    padding: "10px 12px",
                     border: "none",
                     background: "transparent",
                     textAlign: "left",
                     cursor: "pointer",
-                    borderBottom: idx < searchResults.length - 1 ? "1px solid #f1f5f9" : "none",
-                    transition: "all 0.15s",
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 12
+                    borderBottom: idx < searchResults.length - 1 ? "1px solid #e2e8f0" : "none",
+                    transition: "background 0.15s",
+                    fontSize: 13,
+                    color: "#334155"
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "linear-gradient(90deg, #f8f9ff 0%, #faf5ff 100%)";
-                    e.currentTarget.style.paddingLeft = "22px";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.paddingLeft = "18px";
-                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#e2e8f0"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                 >
-                  <span style={{ fontSize: 20, flexShrink: 0, marginTop: 2 }}>📍</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>
-                      {result.display_name.split(',').slice(0, 2).join(',')}
-                    </div>
-                    <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>
-                      {result.display_name}
-                    </div>
-                  </div>
+                  📍 {result.display_name}
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        {/* Map Area - BIGGER */}
-        <div style={{ flex: 1, position: "relative", minHeight: 400, overflow: "hidden", background: "#e5e7eb" }}>
-          {/* Map Container */}
-          <div style={{ width: "100%", height: "100%", position: "relative" }}>
+        {/* Map Area */}
+        <div style={{ flex: 1, position: "relative", minHeight: 300, overflow: "hidden" }}>
+          {/* Simple Map Placeholder - Click to select location */}
+          <div
+            onClick={handleMapClick}
+            style={{
+              width: "100%",
+              height: "100%",
+              background: "linear-gradient(135deg, #e0f2fe 0%, #dbeafe 50%, #fef3c7 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "crosshair",
+              position: "relative"
+            }}
+          >
             <iframe
               title="Location Map"
               width="100%"
               height="100%"
               frameBorder="0"
-              style={{ border: 0, display: "block" }}
+              style={{ border: 0 }}
               src={`https://www.openstreetmap.org/export/embed.html?bbox=${selectedLng-0.01},${selectedLat-0.01},${selectedLng+0.01},${selectedLat+0.01}&layer=mapnik&marker=${selectedLat},${selectedLng}`}
             />
             
@@ -655,184 +625,56 @@ const LocationPickerModal = ({ onClose, onSelect, initialLocation }) => {
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -100%)",
-              fontSize: 48,
-              filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.4))",
+              fontSize: 40,
+              filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))",
               pointerEvents: "none",
-              animation: "bounce 1.5s ease-in-out infinite",
-              zIndex: 10
+              animation: "bounce 1s infinite"
             }}>
               📍
-            </div>
-
-            {/* Zoom Controls */}
-            <div style={{
-              position: "absolute",
-              top: 16,
-              right: 16,
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              zIndex: 5
-            }}>
-              <button style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                border: "none",
-                background: "#fff",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                fontSize: 20,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s"
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.1)"}
-              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-              >
-                ➕
-              </button>
-              <button style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                border: "none",
-                background: "#fff",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                fontSize: 20,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s"
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.1)"}
-              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-              >
-                ➖
-              </button>
-            </div>
-
-            {/* Instruction Overlay */}
-            <div style={{
-              position: "absolute",
-              bottom: 20,
-              left: "50%",
-              transform: "translateX(-50%)",
-              background: "rgba(0,0,0,0.75)",
-              backdropFilter: "blur(10px)",
-              color: "#fff",
-              padding: "12px 24px",
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 600,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              zIndex: 5
-            }}>
-              <span style={{ fontSize: 16 }}>👆</span>
-              Tap anywhere on map to set location
             </div>
           </div>
         </div>
 
-        {/* Selected Location Info - ENHANCED */}
+        {/* Selected Location Info */}
         <div style={{
-          padding: "20px 28px",
-          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-          borderTop: "2px solid #e2e8f0"
+          padding: "16px 24px",
+          background: "#f8fafc",
+          borderTop: "1px solid #e2e8f0"
         }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-            <div style={{
-              width: 48,
-              height: 48,
-              borderRadius: 12,
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 24,
-              flexShrink: 0,
-              boxShadow: "0 4px 12px rgba(102,126,234,0.3)"
-            }}>
-              📍
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ 
-                fontSize: 11, 
-                fontWeight: 800, 
-                color: "#64748b", 
-                margin: "0 0 8px",
-                textTransform: "uppercase", 
-                letterSpacing: "0.08em" 
-              }}>
-                Selected Location
-              </p>
-              <p style={{ 
-                fontSize: 15, 
-                color: "#0f172a", 
-                margin: "0 0 6px", 
-                fontWeight: 600,
-                lineHeight: 1.5
-              }}>
-                {selectedAddress || "Click on map to select your location"}
-              </p>
-              <p style={{ 
-                fontSize: 13, 
-                color: "#64748b", 
-                margin: 0, 
-                fontFamily: "monospace",
-                background: "#fff",
-                display: "inline-block",
-                padding: "4px 10px",
-                borderRadius: 6,
-                border: "1px solid #e2e8f0"
-              }}>
-                {selectedLat.toFixed(6)}, {selectedLng.toFixed(6)}
-              </p>
-            </div>
-          </div>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Selected Location
+          </p>
+          <p style={{ fontSize: 13, color: "#0f172a", margin: "0 0 4px", fontWeight: 500 }}>
+            {selectedAddress || "Click on map to select"}
+          </p>
+          <p style={{ fontSize: 12, color: "#64748b", margin: 0, fontFamily: "monospace" }}>
+            {selectedLat.toFixed(6)}, {selectedLng.toFixed(6)}
+          </p>
         </div>
 
-        {/* Footer Actions - ENHANCED */}
+        {/* Footer Actions */}
         <div style={{
-          padding: "20px 28px",
-          background: "#fff",
-          borderTop: "2px solid #e2e8f0",
+          padding: "16px 24px",
+          borderTop: "1px solid #e2e8f0",
           display: "flex",
-          gap: 14
+          gap: 12
         }}>
           <button
             onClick={onClose}
             style={{
               flex: 1,
-              padding: "16px 24px",
-              border: "2px solid #e2e8f0",
+              padding: "12px 20px",
+              border: "1px solid #e2e8f0",
               background: "#fff",
-              borderRadius: 12,
-              fontSize: 15,
-              fontWeight: 700,
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: 600,
               color: "#475569",
               cursor: "pointer",
-              transition: "all 0.2s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8
+              transition: "all 0.2s"
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#f8fafc";
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#fff";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "#f8fafc"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "#fff"}
           >
             Cancel
           </button>
@@ -841,38 +683,20 @@ const LocationPickerModal = ({ onClose, onSelect, initialLocation }) => {
             disabled={!selectedLat || !selectedLng}
             style={{
               flex: 2,
-              padding: "16px 24px",
+              padding: "12px 20px",
               border: "none",
-              background: selectedLat && selectedLng 
-                ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" 
-                : "#cbd5e1",
-              borderRadius: 12,
-              fontSize: 15,
-              fontWeight: 700,
+              background: selectedLat && selectedLng ? "#2563eb" : "#cbd5e1",
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: 600,
               color: "#fff",
               cursor: selectedLat && selectedLng ? "pointer" : "not-allowed",
-              transition: "all 0.2s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              boxShadow: selectedLat && selectedLng ? "0 6px 20px rgba(102,126,234,0.4)" : "none"
+              transition: "all 0.2s"
             }}
-            onMouseEnter={(e) => {
-              if (selectedLat && selectedLng) {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 28px rgba(102,126,234,0.5)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedLat && selectedLng) {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(102,126,234,0.4)";
-              }
-            }}
+            onMouseEnter={(e) => selectedLat && selectedLng && (e.currentTarget.style.background = "#1d4ed8")}
+            onMouseLeave={(e) => selectedLat && selectedLng && (e.currentTarget.style.background = "#2563eb")}
           >
-            <span style={{ fontSize: 18 }}>✓</span>
-            Confirm Location & Find Markets
+            ✓ Confirm Location & Find Markets
           </button>
         </div>
       </div>
@@ -883,16 +707,12 @@ const LocationPickerModal = ({ onClose, onSelect, initialLocation }) => {
           to { opacity: 1; }
         }
         @keyframes slideUp {
-          from { opacity: 0; transform: translateY(30px) scale(0.95); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes bounce {
           0%, 100% { transform: translate(-50%, -100%); }
           50% { transform: translate(-50%, -110%); }
-        }
-        @keyframes spin {
-          from { transform: translateY(-50%) rotate(0deg); }
-          to { transform: translateY(-50%) rotate(360deg); }
         }
       `}</style>
     </div>
