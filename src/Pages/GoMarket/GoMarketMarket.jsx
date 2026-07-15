@@ -375,7 +375,7 @@ const GoMarketMarket = () => {
                 <h2>{market.name}</h2>
                 <p>{market.city}, {market.state} · {market.pincode}</p>
               </div>
-              <button
+              {/* <button
                 type="button"
                 onClick={() => navigate("/go-market?edit=true")}
                 style={{
@@ -406,7 +406,7 @@ const GoMarketMarket = () => {
               >
                 <span>✏️</span>
                 Change Market
-              </button>
+              </button> */}
               <button
                 type="button"
                 onClick={() => navigate("/go-market?edit=true&updateLocation=true")}
