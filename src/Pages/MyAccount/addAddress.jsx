@@ -518,6 +518,21 @@ const AddAddress = () => {
 
 
             <div className='flex items-center gap-5'>
+                <Button 
+                    type="button" 
+                    onClick={() => context.setOpenAddressPanel(false)}
+                    className="btn-lg w-full"
+                    variant="outlined"
+                    style={{
+                        borderColor: '#e5e7eb',
+                        color: '#6b7280',
+                        textTransform: 'none',
+                        fontWeight: 600
+                    }}
+                >
+                    Cancel
+                </Button>
+                
                 <Button type="submit" className="btn-org btn-lg w-full flex gap-2 items-center">
                     {
                         isLoading === true ?
