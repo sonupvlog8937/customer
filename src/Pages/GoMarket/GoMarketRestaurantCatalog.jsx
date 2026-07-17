@@ -48,10 +48,10 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [suggestions, setSuggestions] = useState({
-    suggestions: [],
-    recentSearches: [],
-    trendingSearches: [],
+  const [suggestions, setSuggestions] = useState({ 
+    suggestions: [], 
+    recentSearches: [], 
+    trendingSearches: [], 
     popularProducts: [],
     topSearches: []
   });
@@ -115,7 +115,7 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
   // Enhanced suggestions with recent searches, trending, etc.
   useEffect(() => {
     if (!restaurantId) return;
-
+    
     if (!search.trim()) {
       // Show default content when not searching
       fetchDataFromApi(`/api/go-market/restaurants/${restaurantId}/search-defaults`).then((res) => {
@@ -130,7 +130,7 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
       });
       return;
     }
-
+    
     const t = setTimeout(() => {
       fetchDataFromApi(`/api/go-market/restaurants/${restaurantId}/search-suggestions?q=${encodeURIComponent(search.trim())}`)
         .then((res) => {
@@ -185,7 +185,7 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
         <form onSubmit={(e) => { e.preventDefault(); setAppliedSearch(search.trim()); setShowSuggestions(false); }} style={{ display: "flex", flex: 1, gap: 8, minWidth: 220 }}>
           <div className="gmp-input-wrap" style={{ flex: 1, position: "relative" }}>
             <span className="gmp-input-icon">🔍</span>
-            <input className="gmp-input" value={search} placeholder="Search dishes in this restaurant…"
+            <input className="gmp-input" value={search} placeholder="Search dishes in this restaurant…" 
               onFocus={() => {
                 setShowSuggestions(true);
                 // Load defaults if no search query
@@ -196,9 +196,9 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
                     }
                   });
                 }
-              }}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 180)}
-              onChange={(e) => { setSearch(e.target.value); setShowSuggestions(true); }}
+              }} 
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 180)} 
+              onChange={(e) => { setSearch(e.target.value); setShowSuggestions(true); }} 
             />
             {showSuggestions && (
               <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, marginTop: 4, boxShadow: "0 12px 28px rgba(15,23,42,.12)", overflow: "hidden", maxHeight: "400px", overflowY: "auto" }}>
@@ -207,7 +207,7 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
                     Searching...
                   </div>
                 )}
-
+                
                 {/* When searching - show suggestions */}
                 {search.trim() ? (
                   <>
@@ -247,7 +247,7 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
                         ))}
                       </>
                     )}
-
+                    
                     {suggestions.popularProducts?.length > 0 && (
                       <>
                         <div style={{ height: 1, background: "#f0f0f0", margin: "4px 0" }} />
@@ -331,7 +331,7 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
                         <div style={{ height: 1, background: "#f0f0f0", margin: "4px 0" }} />
                       </>
                     )}
-
+                    
                     {suggestions.trendingSearches?.length > 0 && (
                       <>
                         <div style={{ padding: "8px 14px", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -359,14 +359,14 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
                             onMouseEnter={(e) => e.currentTarget.style.background = "#f5f5f7"}
                             onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                           >
-                            <span style={{
-                              display: "flex",
-                              alignItems: "center",
+                            <span style={{ 
+                              display: "flex", 
+                              alignItems: "center", 
                               justifyContent: "center",
-                              width: 30,
-                              height: 30,
-                              borderRadius: 8,
-                              background: "#fff2f0",
+                              width: 30, 
+                              height: 30, 
+                              borderRadius: 8, 
+                              background: "#fff2f0", 
                               color: "#e74c3c",
                               fontSize: 13,
                               flexShrink: 0
@@ -379,7 +379,7 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
                         <div style={{ height: 1, background: "#f0f0f0", margin: "4px 0" }} />
                       </>
                     )}
-
+                    
                     {suggestions.topSearches?.length > 0 && (
                       <>
                         <div style={{ padding: "8px 14px", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -414,7 +414,7 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
                         </div>
                       </>
                     )}
-
+                    
                     {suggestions.popularProducts?.length > 0 && (
                       <>
                         <div style={{ height: 1, background: "#f0f0f0", margin: "4px 0" }} />
@@ -470,22 +470,11 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
           </div>
           <button className="gmp-btn gmp-btn-primary" type="submit">Search</button>
         </form>
+        <select className="gmp-select" style={{ width: "auto", minWidth: 160, paddingLeft: 12 }} value={sort} onChange={(e) => setSort(e.target.value)}>{SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select>
+        <button type="button" className="gmp-btn gmp-btn-outline" onClick={() => setFilterOpen((v) => !v)}>Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</button>
         <select
           className="gmp-select"
-          style={{ width: "auto", minWidth: 110, maxWidth: 130, paddingLeft: 10, fontSize: 13 }}
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-        >
-          {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-
-        <button type="button" className="gmp-btn gmp-btn-outline" onClick={() => setFilterOpen((v) => !v)}>
-          Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
-        </button>
-
-        <select
-          className="gmp-select"
-          style={{ width: "auto", minWidth: 110, maxWidth: 130, paddingLeft: 10, fontSize: 13 }}
+          style={{ width: "auto", minWidth: 160, paddingLeft: 12 }}
           value={menuId}
           onChange={(e) => setMenuId(e.target.value)}
         >
@@ -498,7 +487,7 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
       <div className="gmp-chip-row" style={{ marginTop: 12 }}>{(filterMeta?.menus || []).map((m) => <button key={m._id} type="button" className={`gmp-chip${menuId === m._id ? " active" : ""}`} onClick={() => setMenuId(menuId === m._id ? "" : m._id)}>{m.name}</button>)}{TABS.map((t) => <button key={t.key} type="button" className={`gmp-chip${tab === t.key ? " active" : ""}`} onClick={() => setTab(t.key)}>{t.label}</button>)}</div>
       {filterOpen && <div className="gmp-toolbar" style={{ marginTop: 10, alignItems: "stretch", flexDirection: "column" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
-          <select className="gmp-select" style={{ paddingLeft: 12 }} value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setSubCategoryId(""); setSubSubCategoryId(""); }}><option value="">All categories</option>{(filterMeta?.categories || []).map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}</select>
+         <select className="gmp-select" style={{ paddingLeft: 12 }} value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setSubCategoryId(""); setSubSubCategoryId(""); }}><option value="">All categories</option>{(filterMeta?.categories || []).map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}</select>
           <select className="gmp-select" style={{ paddingLeft: 12 }} value={subCategoryId} onChange={(e) => { setSubCategoryId(e.target.value); setSubSubCategoryId(""); }}><option value="">All sub categories</option>{subCats.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}</select>
           <select className="gmp-select" style={{ paddingLeft: 12 }} value={subSubCategoryId} onChange={(e) => setSubSubCategoryId(e.target.value)} disabled={!subCategoryId}><option value="">All sub sub categories</option>{subSubCats.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}</select>
           <select className="gmp-select" style={{ paddingLeft: 12 }} value={minRating} onChange={(e) => setMinRating(Number(e.target.value))}><option value={0}>Any rating</option><option value={4}>4★ & up</option><option value={3}>3★ & up</option><option value={2}>2★ & up</option></select>
@@ -532,11 +521,11 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
                   )}
                 </div>
                 <button className="gmp-card-icon gmp-card-heart" onClick={(e) => handleQuickWishlist(e, item)}>♡</button>
-                <button
-                  className="gmp-card-icon gmp-card-plus"
+                <button 
+                  className="gmp-card-icon gmp-card-plus" 
                   onClick={(e) => handleQuickAdd(e, item)}
                   disabled={restaurantData && restaurantData.isOpen === false}
-                  style={{
+                  style={{ 
                     opacity: restaurantData && restaurantData.isOpen === false ? 0.5 : 1,
                     cursor: restaurantData && restaurantData.isOpen === false ? 'not-allowed' : 'pointer'
                   }}
@@ -576,7 +565,7 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
       {optionProduct && (
         <div className="gmp-option-modal" onClick={() => setOptionProduct(null)}>
           <div className="gmp-option-sheet" onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
-            <button
+            <button 
               onClick={() => setOptionProduct(null)}
               style={{
                 position: 'absolute',
@@ -638,8 +627,8 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
                     <del className="gmp-tile-mrp">₹{quickOldPrice}</del>
                   )}
                   {(() => {
-                    const discountPct = quickOldPrice > quickPrice
-                      ? Math.round(((quickOldPrice - quickPrice) / quickOldPrice) * 100)
+                    const discountPct = quickOldPrice > quickPrice 
+                      ? Math.round(((quickOldPrice - quickPrice) / quickOldPrice) * 100) 
                       : optionProduct.discount || 0;
                     return discountPct > 0 ? (
                       <span className="gmp-tile-badge" style={{ position: "static", marginLeft: 6 }}>{discountPct}% OFF</span>
