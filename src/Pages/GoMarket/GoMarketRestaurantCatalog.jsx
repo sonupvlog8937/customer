@@ -473,17 +473,6 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
         <select
           className="gmp-select"
           style={{ width: "auto", minWidth: 110, maxWidth: 130, paddingLeft: 10, fontSize: 13 }}
-          value={menuId}
-          onChange={(e) => setMenuId(e.target.value)}
-        >
-          <option value="">All menus</option>
-          {(filterMeta?.menus || []).map((m) => (
-            <option key={m._id} value={m._id}>{m.name}</option>
-          ))}
-        </select>
-        <select
-          className="gmp-select"
-          style={{ width: "auto", minWidth: 110, maxWidth: 130, paddingLeft: 10, fontSize: 13 }}
           value={sort}
           onChange={(e) => setSort(e.target.value)}
         >
@@ -492,7 +481,19 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
 
         <button type="button" className="gmp-btn gmp-btn-outline" onClick={() => setFilterOpen((v) => !v)}>
           Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
-        </button>        
+        </button>
+
+        <select
+          className="gmp-select"
+          style={{ width: "auto", minWidth: 110, maxWidth: 130, paddingLeft: 10, fontSize: 13 }}
+          value={menuId}
+          onChange={(e) => setMenuId(e.target.value)}
+        >
+          <option value="">All menus</option>
+          {(filterMeta?.menus || []).map((m) => (
+            <option key={m._id} value={m._id}>{m.name}</option>
+          ))}
+        </select>
       </div>
       <div className="gmp-chip-row" style={{ marginTop: 12 }}>{(filterMeta?.menus || []).map((m) => <button key={m._id} type="button" className={`gmp-chip${menuId === m._id ? " active" : ""}`} onClick={() => setMenuId(menuId === m._id ? "" : m._id)}>{m.name}</button>)}{TABS.map((t) => <button key={t.key} type="button" className={`gmp-chip${tab === t.key ? " active" : ""}`} onClick={() => setTab(t.key)}>{t.label}</button>)}</div>
       {filterOpen && <div className="gmp-toolbar" style={{ marginTop: 10, alignItems: "stretch", flexDirection: "column" }}>
