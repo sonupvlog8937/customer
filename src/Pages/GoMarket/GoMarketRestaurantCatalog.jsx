@@ -496,12 +496,12 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
       <div className="gmp-chip-row" style={{ marginTop: 12 }}>{(filterMeta?.menus || []).map((m) => <button key={m._id} type="button" className={`gmp-chip${menuId === m._id ? " active" : ""}`} onClick={() => setMenuId(menuId === m._id ? "" : m._id)}>{m.name}</button>)}{TABS.map((t) => <button key={t.key} type="button" className={`gmp-chip${tab === t.key ? " active" : ""}`} onClick={() => setTab(t.key)}>{t.label}</button>)}</div>
       {filterOpen && <div className="gmp-toolbar" style={{ marginTop: 10, alignItems: "stretch", flexDirection: "column" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
-          <div className="gmp-food-type-filter">
-            <button type="button" className={`gmp-food-type-filter-chip${!foodType ? " active" : ""}`} onClick={() => setFoodType("")}>All food types</button>
+          <select className="gmp-select" style={{ paddingLeft: 12 }} value={foodType} onChange={(e) => setFoodType(e.target.value)}>
+            <option value="">All food types</option>
             {availableFoodTypes.map((type) => (
-              <button key={type._id || type.name} type="button" className={`gmp-food-type-filter-chip${foodType === (type._id || type.name) ? " active" : ""}`} onClick={() => setFoodType(type._id || type.name)}>{type.name}</button>
+              <option key={type._id || type.name} value={type._id || type.name}>{type.name}</option>
             ))}
-          </div>
+          </select>
          <select className="gmp-select" style={{ paddingLeft: 12 }} value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setSubCategoryId(""); setSubSubCategoryId(""); }}><option value="">All categories</option>{(filterMeta?.categories || []).map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}</select>
           <select className="gmp-select" style={{ paddingLeft: 12 }} value={subCategoryId} onChange={(e) => { setSubCategoryId(e.target.value); setSubSubCategoryId(""); }}><option value="">All sub categories</option>{subCats.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}</select>
           <select className="gmp-select" style={{ paddingLeft: 12 }} value={subSubCategoryId} onChange={(e) => setSubSubCategoryId(e.target.value)} disabled={!subCategoryId}><option value="">All sub sub categories</option>{subSubCats.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}</select>
