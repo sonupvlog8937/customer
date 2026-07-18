@@ -339,9 +339,9 @@ const GoMarketProduct = () => {
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <h1 style={{ fontSize: 22, fontWeight: 800, margin: "6px 0 10px", lineHeight: 1.3 }}>{product.name}</h1>
-              {product.productType && (
-                <span className={`gmp-food-type-badge gmp-food-type-${product.productType.toLowerCase()}`}>
-                  {product.productType}
+              {product.foodType && (
+                <span className={`gmp-food-type-badge gmp-food-type-${product.foodType.toLowerCase()}`}>
+                  {product.foodType}
                 </span>
               )}
             </div>
