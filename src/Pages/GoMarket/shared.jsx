@@ -112,6 +112,8 @@ export const STYLES = `
 .gmp-card-banner-container .gmp-card-banner { height: 100%; }
 .gmp-card-badge { position: absolute; top: 10px; left: 10px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); color: #fff; font-size: 10px; font-weight: 700; padding: 5px 10px; border-radius: 8px; }
 .gmp-card-open-badge { position: absolute; top: 10px; right: 10px; background: #16a34a; color: #fff; font-size: 10px; font-weight: 700; padding: 5px 10px; border-radius: 8px; animation: pulse 2s infinite; }
+.gmp-card-sponsored-badge { position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 10px; font-weight: 800; padding: 5px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(245,158,11,0.4); letter-spacing: 0.02em; }
+.gmp-card-open-badge.with-sponsored { top: 42px; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 .gmp-card-logo-wrapper { position: absolute; top: 120px; left: 50%; transform: translateX(-50%); z-index: 10; }
 .gmp-card-logo { width: 72px; height: 72px; border-radius: 16px; border: 4px solid #fff; object-fit: cover; box-shadow: 0 8px 24px rgba(0,0,0,0.15); background: #fff; }

@@ -549,7 +549,8 @@ const GoMarketMarket = () => {
                       <div className="gmp-card-badge">
                         {SHOP_TYPE_LABELS[o.outletType] || SHOP_TYPE_LABELS[o.shopType] || "🛒 Grocery"}
                       </div>
-                      {o.isOpen && <div className="gmp-card-open-badge">Open Now</div>}
+                      {o.isSponsored && <div className="gmp-card-sponsored-badge">⭐ Sponsored</div>}
+                      {o.isOpen && <div className={`gmp-card-open-badge${o.isSponsored ? " with-sponsored" : ""}`}>Open Now</div>}
                     </div>
 
                     {/* Logo Overlay */}
