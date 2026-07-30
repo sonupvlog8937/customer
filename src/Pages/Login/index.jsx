@@ -1,29 +1,36 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../hooks/useAppContext";
 import { postData } from "../../utils/api";
 import CircularProgress from "@mui/material/CircularProgress";
 
 // ─── Floating Label Input ─────────────────────────────────────────────────────
-const FloatingInput = ({ label, type, name, value, onChange, disabled }) => {
+const FloatingInput = ({ label, type, name, value, onChange, disabled, prefix }) => {
   const [focused, setFocused] = useState(false);
   const active = focused || value?.length > 0;
 
   return (
     <div className="login-input-wrap">
       <div className={`login-input-inner ${focused ? "focused" : ""} ${disabled ? "disabled" : ""}`}>
-        <label className={`login-float-label ${active ? "active" : ""}`}>{label}</label>
-        <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          className="login-input"
-          autoComplete={name === "email" ? "email" : "off"}
-        />
+        <label
+          className={`login-float-label ${active ? "active" : ""} ${prefix && !active ? "with-prefix" : ""}`}
+        >
+          {label}
+        </label>
+        <div className="login-input-row">
+          {prefix && <span className="login-prefix">{prefix}</span>}
+          <input
+            type={type}
+            name={name}
+            value={value}
+            onChange={onChange}
+            disabled={disabled}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            className="login-input"
+            autoComplete={name === "phone" ? "tel" : "off"}
+          />
+        </div>
       </div>
     </div>
   );
@@ -31,14 +38,14 @@ const FloatingInput = ({ label, type, name, value, onChange, disabled }) => {
 
 // ─── Main Login Component ─────────────────────────────────────────────────────
 const Login = () => {
-  // Step management: "email" | "otp" | "name"
-  const [step, setStep] = useState("email");
-  const [email, setEmail] = useState("");
+  // Step: "phone" | "otp" | "name"
+  const [step, setStep] = useState("phone");
+  const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [name, setName] = useState("");
-  const [isNewUser, setIsNewUser] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
   const [shake, setShake] = useState(false);
 
   const context = useAppContext();
@@ -50,61 +57,45 @@ const Login = () => {
     if (token) history("/");
   }, []);
 
+  // Resend countdown
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const id = setTimeout(() => setResendTimer((t) => t - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendTimer]);
+
   const triggerShake = () => {
     setShake(true);
     setTimeout(() => setShake(false), 500);
   };
 
-  // Step 1: Send OTP to email (works for both new and existing users)
-  const handleEmailSubmit = async (e) => {
+  // Step 1: Send OTP via our server (Fast2SMS)
+  const handlePhoneSubmit = async (e) => {
     e.preventDefault();
-    if (!email.trim() || !email.includes("@")) {
-      context.alertBox("error", "❌ Please enter a valid email address");
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length !== 10) {
+      context.alertBox("error", "❌ Please enter a valid 10-digit phone number");
       triggerShake();
       return;
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
     setIsLoading(true);
     context.setGlobalLoading(true);
 
     try {
-      // Try existing user login OTP first
-      const res = await postData("/api/user/send-login-otp", { email: normalizedEmail });
+      const res = await postData("/api/user/login-phone-otp/send", { mobile: digits });
 
       if (res?.error === false) {
-        // User exists and is active
-        setIsNewUser(false);
         setStep("otp");
-        context.alertBox("success", "✅ OTP sent to your email!");
-      } else if (
-        res?.registrationPending === true ||
-        res?.message?.toLowerCase().includes("not found") ||
-        res?.message?.toLowerCase().includes("not registered") ||
-        res?.message?.toLowerCase().includes("not verified") ||
-        res?.message?.toLowerCase().includes("registration otp")
-      ) {
-        // New user or pending verification user - send registration OTP with temporary name
-        const registerRes = await postData("/api/user/send-register-otp", {
-          email: normalizedEmail,
-          name: "User", // Temporary name, will be updated after OTP verification
-        });
-
-        if (registerRes?.error === false) {
-          setIsNewUser(true);
-          setStep("otp");
-          context.alertBox("success", "✅ OTP sent to your email!");
-        } else {
-          context.alertBox("error", `❌ ${registerRes?.message || "Failed to send OTP"}`);
-          triggerShake();
-        }
+        setResendTimer(60);
+        context.alertBox("success", `✅ OTP sent to +91 ${digits}`);
       } else {
         context.alertBox("error", `❌ ${res?.message || "Failed to send OTP"}`);
         triggerShake();
       }
     } catch (err) {
       console.error("Send OTP error:", err);
-      context.alertBox("error", "❌ Network error. Please check your connection.");
+      context.alertBox("error", "❌ Failed to send OTP. Please try again.");
       triggerShake();
     } finally {
       setIsLoading(false);
@@ -112,11 +103,11 @@ const Login = () => {
     }
   };
 
-  // Step 2: Verify OTP
+  // Step 2: Verify OTP via our server
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (!otp.trim() || otp.length < 4) {
-      context.alertBox("error", "❌ Please enter valid OTP");
+    if (!otp.trim() || otp.length < 6) {
+      context.alertBox("error", "❌ Please enter the 6-digit OTP");
       triggerShake();
       return;
     }
@@ -125,53 +116,41 @@ const Login = () => {
     context.setGlobalLoading(true);
 
     try {
-      if (isNewUser) {
-        // New user - just verify OTP is correct, then ask for name
-        setStep("name");
-        context.alertBox("success", "✅ OTP verified! Please enter your name");
-        setIsLoading(false);
-        context.setGlobalLoading(false);
-      } else {
-        // Existing user - login directly
-        const res = await postData("/api/user/verify-login-otp", {
-          email,
-          otp: otp.trim(),
-        }, { withCredentials: true });
+      const digits = phone.replace(/\D/g, "");
+      const res = await postData("/api/user/login-phone-otp/verify", {
+        mobile: digits,
+        otp: otp.trim(),
+      });
 
-        if (res?.error === false) {
+      if (res?.error === false) {
+        if (res?.needsName) {
+          // New user - need name
+          setStep("name");
+          context.alertBox("success", "✅ Phone verified! Please enter your name.");
+        } else {
+          // Existing user - logged in
           localStorage.setItem("accessToken", res?.data?.accesstoken);
           localStorage.setItem("refreshToken", res?.data?.refreshToken);
-          localStorage.setItem("userEmail", email);
           context.setIsLogin(true);
-
           context.alertBox("success", "✅ Welcome back!");
-
-          // Reset form
-          setEmail("");
-          setOtp("");
-          setName("");
-          setStep("email");
-
-          setTimeout(() => {
-            history("/");
-          }, 800);
-        } else {
-          context.alertBox("error", `❌ ${res?.message || "Invalid OTP"}`);
-          triggerShake();
+          setPhone(""); setOtp(""); setName(""); setStep("phone");
+          setTimeout(() => history("/"), 800);
         }
-        setIsLoading(false);
-        context.setGlobalLoading(false);
+      } else {
+        context.alertBox("error", `❌ ${res?.message || "Invalid OTP"}`);
+        triggerShake();
       }
     } catch (err) {
       console.error("Verify OTP error:", err);
-      context.alertBox("error", "❌ Network error. Please check your connection.");
+      context.alertBox("error", "❌ Network error. Please try again.");
       triggerShake();
+    } finally {
       setIsLoading(false);
       context.setGlobalLoading(false);
     }
   };
 
-  // Step 3: Complete registration with name (for new users)
+  // Step 3: Submit name for new user registration
   const handleNameSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim() || name.trim().length < 2) {
@@ -184,37 +163,26 @@ const Login = () => {
     context.setGlobalLoading(true);
 
     try {
-      // Re-verify with actual name to complete registration
-      const res = await postData("/api/user/verify-register-otp", {
-        email,
-        otp: otp.trim(),
+      const digits = phone.replace(/\D/g, "");
+      const res = await postData("/api/user/login-phone-otp/complete", {
+        mobile: digits,
         name: name.trim(),
-      }, { withCredentials: true });
+      });
 
       if (res?.error === false) {
         localStorage.setItem("accessToken", res?.data?.accesstoken);
         localStorage.setItem("refreshToken", res?.data?.refreshToken);
-        localStorage.setItem("userEmail", email);
         context.setIsLogin(true);
-
         context.alertBox("success", `🎉 Welcome ${name.trim()}!`);
-
-        // Reset form
-        setEmail("");
-        setOtp("");
-        setName("");
-        setStep("email");
-
-        setTimeout(() => {
-          history("/");
-        }, 800);
+        setPhone(""); setOtp(""); setName(""); setStep("phone");
+        setTimeout(() => history("/"), 800);
       } else {
-        context.alertBox("error", `❌ ${res?.message || "Failed to complete registration"}`);
+        context.alertBox("error", `❌ ${res?.message || "Registration failed"}`);
         triggerShake();
       }
     } catch (err) {
-      console.error("Complete registration error:", err);
-      context.alertBox("error", "❌ Network error. Please check your connection.");
+      console.error("Name submit error:", err);
+      context.alertBox("error", "❌ Network error. Please try again.");
       triggerShake();
     } finally {
       setIsLoading(false);
@@ -223,57 +191,34 @@ const Login = () => {
   };
 
   const handleBack = () => {
-    if (step === "otp") {
-      setStep("email");
-      setOtp("");
-    } else if (step === "name") {
-      setStep("otp");
-      setName("");
-    }
+    if (step === "otp") { setStep("phone"); setOtp(""); }
+    else if (step === "name") { setStep("otp"); setName(""); }
   };
 
   const handleResendOtp = async () => {
     setIsResending(true);
-    
     try {
-      const normalizedEmail = email.trim().toLowerCase();
-      const endpoint = isNewUser ? "/api/user/send-register-otp" : "/api/user/send-login-otp";
-      const payload = isNewUser
-        ? { email: normalizedEmail, name: "User" }
-        : { email: normalizedEmail };
-
-      const res = await postData(endpoint, payload);
+      const digits = phone.replace(/\D/g, "");
+      const res = await postData("/api/user/login-phone-otp/send", { mobile: digits });
       if (res?.error === false) {
-        context.alertBox("success", "✅ OTP resent to your email!");
+        setOtp("");
+        setResendTimer(60);
+        context.alertBox("success", "✅ New OTP sent!");
       } else {
         context.alertBox("error", `❌ ${res?.message || "Failed to resend OTP"}`);
       }
     } catch (err) {
-      console.error("Resend OTP error:", err);
-      context.alertBox("error", "❌ Network error. Please try again.");
+      context.alertBox("error", "❌ Failed to resend OTP. Please try again.");
     } finally {
       setIsResending(false);
     }
   };
 
-  // Heading based on step
   const getHeaderContent = () => {
     switch (step) {
-      case "email":
-        return {
-          title: "Welcome back",
-          subtitle: "Enter your email to get started",
-        };
-      case "otp":
-        return {
-          title: "Verify OTP 🔐",
-          subtitle: `We sent a code to ${email}`,
-        };
-      case "name":
-        return {
-          title: "Almost there! 👋",
-          subtitle: "Please tell us your name",
-        };
+      case "phone": return { title: "Welcome back", subtitle: "Enter your phone number to get started" };
+      case "otp":   return { title: "Verify OTP 🔐", subtitle: `We sent a code to +91 ${phone}` };
+      case "name":  return { title: "Almost there! 👋", subtitle: "Please tell us your name" };
     }
   };
 
@@ -282,8 +227,8 @@ const Login = () => {
   return (
     <>
       <style>{loginStyles}</style>
+
       <section className="login-section">
-        {/* Decorative blobs */}
         <div className="blob blob-1" />
         <div className="blob blob-2" />
 
@@ -307,38 +252,29 @@ const Login = () => {
               <p className="login-subtitle">{headerContent.subtitle}</p>
             </div>
 
-            {/* EMAIL STEP */}
-            {step === "email" && (
-              <form onSubmit={handleEmailSubmit} className="login-form" noValidate>
+            {/* PHONE STEP */}
+            {step === "phone" && (
+              <form onSubmit={handlePhoneSubmit} className="login-form" noValidate>
                 <FloatingInput
-                  label="Email address"
-                  type="email"
-                  name="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  label="Phone Number"
+                  type="tel"
+                  name="phone"
+                  prefix="+91"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                   disabled={isLoading}
                 />
 
-                <button
-                  type="submit"
-                  disabled={isLoading || !email.trim()}
-                  className="btn-primary"
-                >
+                <button type="submit" disabled={isLoading || phone.length < 10} className="btn-primary">
                   {isLoading ? (
                     <span className="flex items-center gap-2 justify-center">
                       <CircularProgress size={18} color="inherit" />
-                      <span>Checking...</span>
+                      <span>Sending OTP...</span>
                     </span>
                   ) : (
                     <span className="btn-content">
-                      <span>Continue</span>
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                        className="w-4 h-4"
-                      >
+                      <span>Send OTP</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
                         <path d="M5 12h14M12 5l7 7-7 7" />
                       </svg>
                     </span>
@@ -346,10 +282,7 @@ const Login = () => {
                 </button>
 
                 <p className="login-footer-text">
-                  Need help?{" "}
-                  <Link to="/contact" className="auth-link">
-                    Contact Support →
-                  </Link>
+                  We'll send a 6-digit verification code via SMS
                 </p>
               </form>
             )}
@@ -357,19 +290,8 @@ const Login = () => {
             {/* OTP STEP */}
             {step === "otp" && (
               <form onSubmit={handleVerifyOtp} className="login-form" noValidate>
-                <button
-                  type="button"
-                  className="back-btn"
-                  onClick={handleBack}
-                  disabled={isLoading}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                    className="w-5 h-5"
-                  >
+                <button type="button" className="back-btn" onClick={handleBack} disabled={isLoading}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                   Back
@@ -379,18 +301,12 @@ const Login = () => {
                   label="Enter 6-digit OTP"
                   type="text"
                   name="otp"
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   disabled={isLoading}
                 />
 
-                <button
-                  type="submit"
-                  disabled={isLoading || !otp.trim()}
-                  className="btn-primary"
-                >
+                <button type="submit" disabled={isLoading || otp.length < 6} className="btn-primary">
                   {isLoading ? (
                     <span className="flex items-center gap-2 justify-center">
                       <CircularProgress size={18} color="inherit" />
@@ -399,13 +315,7 @@ const Login = () => {
                   ) : (
                     <span className="btn-content">
                       <span>Verify OTP</span>
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                        className="w-4 h-4"
-                      >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
                         <path d="M5 12h14M12 5l7 7-7 7" />
                       </svg>
                     </span>
@@ -414,14 +324,18 @@ const Login = () => {
 
                 <p className="resend-text">
                   Didn't receive OTP?{" "}
-                  <button
-                    type="button"
-                    className="resend-link"
-                    onClick={handleResendOtp}
-                    disabled={isLoading || isResending}
-                  >
-                    {isResending ? "Sending..." : "Resend"}
-                  </button>
+                  {resendTimer > 0 ? (
+                    <span style={{ color: "#9ca3af", fontWeight: 600 }}>Resend in {resendTimer}s</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="resend-link"
+                      onClick={handleResendOtp}
+                      disabled={isLoading || isResending}
+                    >
+                      {isResending ? "Sending..." : "Resend"}
+                    </button>
+                  )}
                 </p>
               </form>
             )}
@@ -429,19 +343,8 @@ const Login = () => {
             {/* NAME STEP */}
             {step === "name" && (
               <form onSubmit={handleNameSubmit} className="login-form" noValidate>
-                <button
-                  type="button"
-                  className="back-btn"
-                  onClick={handleBack}
-                  disabled={isLoading}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                    className="w-5 h-5"
-                  >
+                <button type="button" className="back-btn" onClick={handleBack} disabled={isLoading}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                   Back
@@ -456,11 +359,7 @@ const Login = () => {
                   disabled={isLoading}
                 />
 
-                <button
-                  type="submit"
-                  disabled={isLoading || !name.trim()}
-                  className="btn-primary"
-                >
+                <button type="submit" disabled={isLoading || !name.trim()} className="btn-primary">
                   {isLoading ? (
                     <span className="flex items-center gap-2 justify-center">
                       <CircularProgress size={18} color="inherit" />
@@ -469,13 +368,7 @@ const Login = () => {
                   ) : (
                     <span className="btn-content">
                       <span>Complete Registration</span>
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                        className="w-4 h-4"
-                      >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
                         <path d="M5 12h14M12 5l7 7-7 7" />
                       </svg>
                     </span>
@@ -623,10 +516,7 @@ const loginStyles = `
     border-color: #d1d5db;
     color: #374151;
   }
-  .back-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  .back-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* Floating input */
   .login-input-wrap { position: relative; }
@@ -657,18 +547,38 @@ const loginStyles = `
     background: transparent;
     padding: 0 2px;
     font-family: inherit;
+    z-index: 1;
+  }
+  /* When there's a +91 prefix and label is inactive, push label right so it
+     doesn't sit on top of the prefix text */
+  .login-float-label.with-prefix {
+    left: 46px;
   }
   .login-float-label.active {
     top: 10px;
+    left: 14px;
     transform: translateY(0);
     font-size: 0.72rem;
     color: #FF6B00;
     font-weight: 600;
     letter-spacing: 0.02em;
   }
-  .login-input {
-    width: 100%;
+  .login-input-row {
+    display: flex;
+    align-items: center;
     padding: 24px 14px 8px;
+    gap: 6px;
+  }
+  .login-prefix {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .login-input {
+    flex: 1;
     border: none;
     outline: none;
     background: transparent;
@@ -676,6 +586,7 @@ const loginStyles = `
     color: #111827;
     font-family: inherit;
     font-weight: 500;
+    min-width: 0;
   }
 
   /* Resend OTP */
