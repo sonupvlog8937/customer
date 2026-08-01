@@ -184,6 +184,9 @@ const AccountSidebar = () => {
 
         <h3>{context?.userData?.name}</h3>
         <h6 className="text-[13px] font-[500]">{context?.userData?.email}</h6>
+        {context?.userData?.mobile && (
+          <p className="text-[12px] font-[400] text-gray-600 mt-1">+91 {context?.userData?.mobile}</p>
+        )}
       </div>
 
       <ul className="list-none pb-5 bg-[#f1f1f1] myAccountTabs">

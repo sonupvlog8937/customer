@@ -99,14 +99,28 @@ const Register = () => {
       if (res?.error === false) {
         setStep("otp");
         setResendTimer(60);
-        context.alertBox("success", `✅ OTP sent to +91 ${digits}`);
+        
+        // Show alert with attempts remaining info
+        if (res?.attemptsRemaining !== undefined) {
+          context.alertBox("success", `✅ OTP sent! ${res.attemptsRemaining} attempt(s) remaining`);
+        } else {
+          context.alertBox("success", `✅ OTP sent to +91 ${digits}`);
+        }
       } else {
-        context.alertBox("error", `❌ ${res?.message || "Failed to send OTP"}`);
+        // Handle rate limit or other errors
+        if (res?.suspendedUntil) {
+          const suspendedDate = new Date(res.suspendedUntil);
+          const hours = Math.ceil((suspendedDate.getTime() - Date.now()) / (60 * 60 * 1000));
+          context.alertBox("error", `🚫 Number suspended for ${hours} hours due to too many OTP requests`);
+        } else {
+          context.alertBox("error", `❌ ${res?.message || "Failed to send OTP"}`);
+        }
         triggerShake();
       }
     } catch (err) {
       console.error("Send OTP error:", err);
-      context.alertBox("error", "❌ Failed to send OTP. Please try again.");
+      const errorMsg = err?.response?.data?.message || err?.message || "Failed to send OTP. Please try again.";
+      context.alertBox("error", `❌ ${errorMsg}`);
       triggerShake();
     } finally {
       setIsLoading(false);
@@ -183,16 +197,31 @@ const Register = () => {
         mobile: digits,
         name: name.trim(),
       });
+      
       if (res?.error === false) {
         setOtp(["", "", "", "", "", ""]);
         setResendTimer(60);
         otpInputsRef.current[0]?.focus();
-        context.alertBox("success", "✅ New OTP sent!");
+        
+        // Show alert with attempts remaining info
+        if (res?.attemptsRemaining !== undefined) {
+          context.alertBox("success", `✅ New OTP sent! ${res.attemptsRemaining} attempt(s) remaining`);
+        } else {
+          context.alertBox("success", "✅ New OTP sent!");
+        }
       } else {
-        context.alertBox("error", `❌ ${res?.message || "Failed to resend OTP"}`);
+        // Handle rate limit or other errors
+        if (res?.suspendedUntil) {
+          const suspendedDate = new Date(res.suspendedUntil);
+          const hours = Math.ceil((suspendedDate.getTime() - Date.now()) / (60 * 60 * 1000));
+          context.alertBox("error", `🚫 Number suspended for ${hours} hours due to too many OTP requests`);
+        } else {
+          context.alertBox("error", `❌ ${res?.message || "Failed to resend OTP"}`);
+        }
       }
     } catch (err) {
-      context.alertBox("error", "❌ Failed to resend OTP.");
+      const errorMsg = err?.response?.data?.message || err?.message || "Failed to resend OTP.";
+      context.alertBox("error", `❌ ${errorMsg}`);
     } finally {
       setIsResending(false);
     }

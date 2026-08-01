@@ -231,6 +231,51 @@ const [deleteForm, setDeleteForm] = useState(initialDeleteForm);
         </div>
 
        <div className="col2 w-full lg:w-[50%] space-y-5">
+          {/* Profile Overview Card - Display User Info */}
+          <div className="card bg-white p-5 shadow-md rounded-md">
+            <h2 className="pb-3">Profile Overview</h2>
+            <hr />
+            <div className="mt-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500">Full Name</p>
+                  <p className="text-sm font-semibold text-gray-800">{context?.userData?.name || 'Not provided'}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500">Email Address</p>
+                  <p className="text-sm font-semibold text-gray-800">{context?.userData?.email || 'Not provided'}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500">Phone Number</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {context?.userData?.mobile ? `+91 ${context?.userData?.mobile}` : 'Not provided'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="card bg-white p-5 shadow-md rounded-md">
             <div className="flex items-center pb-3">
               <h2 className="pb-0">My Profile</h2>
