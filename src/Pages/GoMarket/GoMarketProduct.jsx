@@ -39,6 +39,9 @@ const GoMarketProduct = () => {
   const [related, setRelated] = useState([]);
   const [totalRelatedCount, setTotalRelatedCount] = useState(0);
   const [loadingRelated, setLoadingRelated] = useState(false);
+  
+  // Ref for product options section
+  const productOptionsRef = React.useRef(null);
 
   const loadProduct = useCallback(() => {
     const endpoint =
@@ -209,7 +212,11 @@ const GoMarketProduct = () => {
       return;
     }
     if (!optionsComplete) {
-      toast.error("Please select all product options");
+      toast.error("Please select product options");
+      // Scroll to product options section
+      if (productOptionsRef.current) {
+        productOptionsRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
     if (!cartProduct?.countInStock) {
@@ -233,7 +240,11 @@ const GoMarketProduct = () => {
       return;
     }
     if (!optionsComplete) {
-      toast.error("Please select all product options");
+      toast.error("Please select product options");
+      // Scroll to product options section
+      if (productOptionsRef.current) {
+        productOptionsRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
     if (!cartProduct?.countInStock) {
@@ -405,11 +416,13 @@ const GoMarketProduct = () => {
               </div>
             )} */}
 
-            <GoMarketProductOptions
-              options={productOptions}
-              selected={selectedOptions}
-              onSelect={(key, val) => setSelectedOptions((s) => ({ ...s, [key]: val }))}
-            />
+            <div ref={productOptionsRef}>
+              <GoMarketProductOptions
+                options={productOptions}
+                selected={selectedOptions}
+                onSelect={(key, val) => setSelectedOptions((s) => ({ ...s, [key]: val }))}
+              />
+            </div>
 
             {!optionsComplete && productOptions.length > 0 && (
               <p style={{ fontSize: 12, color: "#dc2626", fontWeight: 600, marginBottom: 10 }}>
