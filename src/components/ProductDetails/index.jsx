@@ -35,6 +35,9 @@ export const ProductDetailsComponent = (props) => {
   const [isCheckingPinCode, setIsCheckingPinCode] = useState(false);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+  
+  // Ref for product options section
+  const productOptionsRef = useRef(null);
 
   const context = useAppContext();
   const navigate = useNavigate();
@@ -155,7 +158,11 @@ export const ProductDetailsComponent = (props) => {
     if (props?.item?.size?.length !== 0 || props?.item?.productWeight?.length !== 0 || props?.item?.productRam?.length !== 0 || props?.item?.productAge?.length !== 0) {
       if (selectedTabName === null) {
         setTabError(true);
-        context?.alertBox("error", "Please select product options first");
+        context?.alertBox("error", "Please select product options");
+        // Scroll to product options section
+        if (productOptionsRef.current) {
+          productOptionsRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
         return false;
       }
     }
@@ -651,7 +658,7 @@ export const ProductDetailsComponent = (props) => {
         <div className="pdc-section" style={S.divider} />
 
         {/* ── 4. VARIANTS ── */}
-        <div className="pdc-section" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+        <div ref={productOptionsRef} className="pdc-section" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
 
           {/* RAM */}
           {props?.item?.productRam?.length !== 0 && (
