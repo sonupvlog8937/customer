@@ -149,10 +149,18 @@ export const GoMarketShopCatalog = ({
         setLoadingMore(false);
       }
     },
-    [shopId, apiPath, searchMode, appliedSearch, filterState],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [shopId, apiPath, searchMode, filterState],
   );
 
+  // Separate effect for appliedSearch to avoid re-triggering on every dependency change
   useEffect(() => {
+    loadPage(1, false);
+  }, [appliedSearch]);
+
+  useEffect(() => {
+    // Only reload if dependencies other than appliedSearch change
+    if (appliedSearch) return; // Skip if search is active
     loadPage(1, false);
   }, [loadPage]);
 

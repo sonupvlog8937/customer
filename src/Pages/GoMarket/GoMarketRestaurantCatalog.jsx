@@ -118,9 +118,19 @@ export default function GoMarketRestaurantCatalog({ restaurantId, searchMode = f
       setLoading(false);
       setLoadingMore(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId, apiPath, state, searchMode, onRestaurant]);
 
-  useEffect(() => { loadPage(1, false); }, [loadPage]);
+  // Separate effect for appliedSearch to avoid re-triggering on every dependency change
+  useEffect(() => { 
+    loadPage(1, false); 
+  }, [appliedSearch]);
+
+  useEffect(() => { 
+    // Only reload if dependencies other than appliedSearch change
+    if (appliedSearch) return; // Skip if search is active
+    loadPage(1, false); 
+  }, [loadPage]);
 
   // Enhanced suggestions with recent searches, trending, etc.
   useEffect(() => {
