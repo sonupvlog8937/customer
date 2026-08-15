@@ -379,6 +379,7 @@ const CartPage = () => {
     }
 
     let cancelled = false;
+    console.log("🛒 Client Cart: Fetching Go Market distance with ROAD FACTOR (1.35x)...");
     postData("/api/order/go-market-distance", {
       userId: context?.userData?._id,
       products: goMarketItems,
@@ -386,8 +387,12 @@ const CartPage = () => {
     }).then((res) => {
       if (cancelled) return;
       const nextDistance = Number(res?.data?.distanceKm || 0);
+      console.log("✅ Client Cart distance fetched:", nextDistance, "km");
+      console.log("   ℹ️ This distance INCLUDES 1.35x road factor for accurate routing");
+      console.log("   ℹ️ Server response:", res?.data);
       setGoMarketDistanceKm(Number.isFinite(nextDistance) ? nextDistance : 0);
-    }).catch(() => {
+    }).catch((err) => {
+      console.error("❌ Client Cart distance fetch failed:", err);
       if (!cancelled) setGoMarketDistanceKm(0);
     });
 
