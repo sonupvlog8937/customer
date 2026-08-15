@@ -6,12 +6,14 @@ import { followGoMarketShop, unfollowGoMarketShop } from "../../store/goMarketSl
 import toast from "react-hot-toast";
 import { Breadcrumb, STYLES, StarRating, img } from "./shared";
 import GoMarketShopCatalog from "./GoMarketShopCatalog";
+import { getOutletBaseMinutes, getOutletDistanceEta } from "../../utils/geoCoords";
 
 const GoMarketShop = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isLogin = useSelector((s) => s.app.isLogin);
+  const userData = useSelector((s) => s.app.userData);
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [followBusy, setFollowBusy] = useState(false);
@@ -74,6 +76,26 @@ const GoMarketShop = () => {
   const productRating = shop?.productAverageRating ?? shop?.rating ?? 0;
   const reviewTotal = shop?.productReviewCount ?? shop?.totalReviews ?? 0;
 
+  // Calculate distance with road factor (1.35x)
+  const userLocation = userData?.goMarketLocation?.coordinates;
+  const { distanceDisplay, estimatedTime } = getOutletDistanceEta({
+    userLat: userLocation?.[1] ?? null, // GeoJSON format: [lng, lat]
+    userLng: userLocation?.[0] ?? null,
+    shopLat: shop?.latitude,
+    shopLng: shop?.longitude,
+    marketLat: shop?.marketId?.latitude,
+    marketLng: shop?.marketId?.longitude,
+    baseMinutes: getOutletBaseMinutes("grocery"),
+  });
+
+  console.log('🔍 Shop Distance (Road-Based):', {
+    userLocation,
+    shopCoords: { lat: shop?.latitude, lng: shop?.longitude },
+    distanceDisplay,
+    estimatedTime,
+    note: 'Distance includes 1.35x road factor matching cart/checkout'
+  });
+
   return (
     <div className="gmp-root">
       <style>{STYLES}</style>
@@ -94,6 +116,12 @@ const GoMarketShop = () => {
             <h1>{shop?.shopName}</h1>
             <div className="gmp-meta-row">
               <span className="gmp-meta-chip">📍 {shop?.address}</span>
+              {distanceDisplay && (
+                <span className="gmp-meta-chip" style={{ backgroundColor: '#FEF3C7', color: '#92400E', fontWeight: 600 }}>
+                  📍 {distanceDisplay} away
+                  {estimatedTime && ` • 🕐 ${estimatedTime} min`}
+                </span>
+              )}
               <span className="gmp-meta-chip">
                 <StarRating value={productRating} /> {Number(productRating || 0).toFixed(1)} avg product rating
               </span>
