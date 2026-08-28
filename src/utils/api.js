@@ -123,6 +123,23 @@ export const editData = async (url, updatedData) => {
     return axios.put(apiUrl + url, updatedData, params);
    
 }
+
+export const putData = async (url, updatedData) => {
+    try {
+        const response = await fetch(apiUrl + url, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(updatedData)
+        });
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error:', error);
+        return { error: true, success: false, message: error.message };
+    }
+}
+
 export const deleteData = async (url, data = null) => {
     try {
         const config = {
