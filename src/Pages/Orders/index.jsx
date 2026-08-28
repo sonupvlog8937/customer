@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import AccountSidebar from "../../components/AccountSidebar";
-import { fetchDataFromApi, postData } from "../../utils/api";
+import { fetchDataFromApi, postData, putData } from "../../utils/api";
 import {
   MdOutlineShoppingBag, MdLocalShipping, MdCheckCircle,
   MdPending, MdCancel, MdKeyboardArrowDown, MdKeyboardArrowUp,
@@ -253,6 +253,7 @@ const Orders = () => {
   }, [loading, hasMore]);
 
   const [loadingReturnId, setLoadingReturnId] = useState("");
+  const [loadingCancelId, setLoadingCancelId] = useState("");
 
   const toggle  = (id) => setOpenOrder(p => p === id ? null : id);
   const fmt     = (n)  => Number(n||0).toLocaleString("en-IN", { style:"currency", currency:"INR", maximumFractionDigits:0 });
@@ -276,6 +277,27 @@ const Orders = () => {
       window.alert(res?.message || "Return request failed");
     }
     setLoadingReturnId("");
+  };
+
+  const cancelOrder = async (orderId) => {
+    const confirmed = window.confirm("Are you sure you want to cancel this order?");
+    if (!confirmed) return;
+    
+    setLoadingCancelId(orderId);
+    const res = await putData(`/api/order/user/cancel/${orderId}`, {});
+    if (res?.success) {
+      setOrders(prev => ({
+        ...prev,
+        data: prev.data.map(o => o._id === orderId ? {
+          ...o,
+          order_status: "cancelled"
+        } : o)
+      }));
+      window.alert("Order cancelled successfully");
+    } else {
+      window.alert(res?.message || "Failed to cancel order");
+    }
+    setLoadingCancelId("");
   };
 
   return (
@@ -445,6 +467,23 @@ const Orders = () => {
                         ))}
 
                          <div className="ord-actions">
+                          {/* Cancel Button - Only show for pending orders */}
+                          {status === "pending" && (
+                            <button
+                              className="ord-action-btn cancel"
+                              onClick={() => cancelOrder(order._id)}
+                              disabled={loadingCancelId === order._id}
+                              style={{ 
+                                background: "#ef4444",
+                                color: "#fff",
+                                marginBottom: "8px"
+                              }}
+                            >
+                              {loadingCancelId === order._id ? "Cancelling..." : "Cancel Order"}
+                            </button>
+                          )}
+                          
+                          {/* Return Button - Only show for delivered orders */}
                           {status === "delivered" && !order?.returnRequest?.requested ? (
                             <button
                               className="ord-action-btn return"
@@ -453,11 +492,11 @@ const Orders = () => {
                             >
                               {loadingReturnId === order._id ? "Requesting..." : "Request Return & Refund"}
                             </button>
-                          ) : (
+                          ) : status === "delivered" ? (
                             <button className="ord-action-btn disabled" disabled>
                               {order?.refund?.status === "processed" ? "Refund Processed" : order?.returnRequest?.requested ? `Return ${order?.returnRequest?.status || "requested"}` : "Return available after delivery"}
                             </button>
-                          )}
+                          ) : null}
                         </div>
                         {(order?.returnRequest?.requested || order?.refund?.status === "processed") && (
                           <div className="ord-return-note">

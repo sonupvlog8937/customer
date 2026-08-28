@@ -21,7 +21,7 @@ const Checkout = () => {
   const [isChecked, setIsChecked] = useState(0);
   const [selectedAddress, setSelectedAddress] = useState("");
   const [isLoading, setIsloading] = useState(false);
-  const [commerceSettings, setCommerceSettings] = useState({ shippingFee: 0, deliveryFee: 0, freeShippingAbove: 0, goMarketShippingFee: 0, goMarketDeliveryFeePerKm: 0 });
+  const [commerceSettings, setCommerceSettings] = useState({ shippingFee: 0, deliveryFee: 0, freeShippingAbove: 0, goMarketShippingFee: 0, goMarketDeliveryFeePerKm: 0, firstOrderFreeDelivery: true });
   const [isFirstOrder, setIsFirstOrder] = useState(false);
   const [distanceKm, setDistanceKm] = useState(0); // Will be updated with actual distance
   const [distanceCalculated, setDistanceCalculated] = useState(false); // Track if calculation happened
@@ -78,19 +78,23 @@ const Checkout = () => {
   
   const freeByRule = commerceSettings.freeShippingAbove > 0 && baseAfterDiscount >= commerceSettings.freeShippingAbove;
   
+  // Check if first order free delivery is enabled in admin settings
+  const firstOrderFreeDeliveryEnabled = commerceSettings.firstOrderFreeDelivery !== false;
+  const applyFirstOrderDiscount = isFirstOrder && firstOrderFreeDeliveryEnabled;
+  
   // Calculate Go Market fees (rounded). Shipping is a flat Go Market fee; delivery is per-km.
-  const goMarketShipping = (hasGoMarketItems && !isFirstOrder && !freeByRule) 
+  const goMarketShipping = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
     ? Math.round(Number(commerceSettings.goMarketShippingFee || 0))
     : 0;
-  const goMarketDelivery = (hasGoMarketItems && !isFirstOrder && !freeByRule) 
+  const goMarketDelivery = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
     ? Math.round(Number((commerceSettings.goMarketDeliveryFeePerKm || 0) * distanceKm))
     : 0;
   
   // Calculate normal fees (rounded)
-  const normalShipping = (hasNonGoMarketItems && !isFirstOrder && !freeByRule) 
+  const normalShipping = (hasNonGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
     ? Math.round(Number(commerceSettings.shippingFee || 0))
     : 0;
-  const normalDelivery = (hasNonGoMarketItems && !isFirstOrder && !freeByRule) 
+  const normalDelivery = (hasNonGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
     ? Math.round(Number(commerceSettings.deliveryFee || 0))
     : 0;
   
@@ -564,11 +568,21 @@ const Checkout = () => {
                 </div>
               )}
 
-              {isFirstOrder && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-md p-3 mb-3">
-                  <p className="text-[14px] font-semibold text-green-700 mb-0 flex items-center gap-2">
-                    🎉 First Order - FREE Shipping & Delivery!
-                  </p>
+              {applyFirstOrderDiscount && (
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-4 mb-3 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+                      <span className="text-2xl">🎁</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[15px] font-bold text-green-700 mb-1 flex items-center gap-2">
+                        First Order Special!
+                      </p>
+                      <p className="text-[13px] text-green-600 mb-0 leading-relaxed">
+                        Congratulations! You're getting <strong>FREE shipping & delivery</strong> on your first order 🎉
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -576,13 +590,18 @@ const Checkout = () => {
               {hasGoMarketItems && (
                 <div className="bg-[#f7f7f7] rounded-md p-3 mb-3">
                   <p className="text-[13px] mb-1 font-semibold text-blue-700">Go Market Fees</p>
-                 <p className="text-[13px] mb-1">Go Market Shipping: {goMarketShipping === 0 ? "FREE" : goMarketShipping.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
+                  <p className="text-[13px] mb-1">Go Market Shipping: {goMarketShipping === 0 ? "FREE" : goMarketShipping.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
                   <p className="text-[13px] mb-0">Go Market Delivery ({distanceKm.toFixed(1)} km): {goMarketDelivery === 0 ? "FREE" : goMarketDelivery.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
-                  {!isFirstOrder && !freeByRule && (goMarketShipping > 0 || goMarketDelivery > 0) && (
+                  {!applyFirstOrderDiscount && !freeByRule && (goMarketShipping > 0 || goMarketDelivery > 0) && (
                     <p className="text-[11px] text-blue-600 mt-2 bg-blue-50 p-2 rounded whitespace-pre-line">
                       ℹ️ Distance-based fees:{'\n'}
                       Shipping: ₹{goMarketShipping}{'\n'}
                       Delivery: ₹{commerceSettings.goMarketDeliveryFeePerKm}/km × {distanceKm.toFixed(1)} km = ₹{goMarketDelivery}
+                    </p>
+                  )}
+                  {applyFirstOrderDiscount && (
+                    <p className="text-[11px] text-green-600 mt-2 bg-green-50 p-2 rounded">
+                      🎁 First Order Special - Fees waived!
                     </p>
                   )}
                 </div>
@@ -598,7 +617,7 @@ const Checkout = () => {
               )}
 
               {/* Mixed Cart Badge */}
-              {isMixedCart && !isFirstOrder && !freeByRule && (
+              {isMixedCart && !applyFirstOrderDiscount && !freeByRule && (
                 <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-yellow-300 rounded-md p-3 mb-3">
                   <p className="text-[13px] font-semibold text-amber-800 mb-1">📦 Mixed Cart: Go Market + Regular items</p>
                   <p className="text-[11px] text-amber-700 mb-0">{goMarketItems.length} Go Market item(s) · {nonGoMarketItems.length} Regular item(s)</p>
