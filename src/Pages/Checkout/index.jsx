@@ -79,8 +79,16 @@ const Checkout = () => {
   const freeByRule = commerceSettings.freeShippingAbove > 0 && baseAfterDiscount >= commerceSettings.freeShippingAbove;
   
   // Check if first order free delivery is enabled in admin settings
-  const firstOrderFreeDeliveryEnabled = commerceSettings.firstOrderFreeDelivery !== false;
+  const firstOrderFreeDeliveryEnabled = commerceSettings.firstOrderFreeDelivery === true;
   const applyFirstOrderDiscount = isFirstOrder && firstOrderFreeDeliveryEnabled;
+  
+  // Debug log
+  console.log("🔍 Client - First Order Free Delivery Check:", {
+    isFirstOrder,
+    firstOrderFreeDeliveryEnabled,
+    settingValue: commerceSettings.firstOrderFreeDelivery,
+    applyFirstOrderDiscount
+  });
   
   // Calculate Go Market fees (rounded). Shipping is a flat Go Market fee; delivery is per-km.
   const goMarketShipping = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
@@ -104,7 +112,17 @@ const Checkout = () => {
   const totalAmount = Math.max(baseAfterDiscount + totalShipping + totalDelivery, 0);
 
   useEffect(() => {
-    fetchDataFromApi("/api/settings/commerce").then((res) => { if (res?.data) setCommerceSettings(res.data); });
+    fetchDataFromApi("/api/settings/commerce").then((res) => { 
+      console.log("💳 Client Checkout - Commerce Settings Response:", res);
+      if (res?.data) {
+        console.log("✅ Client Checkout - Settings Loaded:", res.data);
+        console.log("🎁 First Order Free Delivery:", res.data.firstOrderFreeDelivery);
+        setCommerceSettings({
+          ...res.data,
+          firstOrderFreeDelivery: res.data.firstOrderFreeDelivery === true
+        });
+      }
+    });
   }, []);
 
   // Calculate dynamic Go Market distance on the server so old cart items can
