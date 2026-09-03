@@ -94,9 +94,13 @@ const Checkout = () => {
   const goMarketShipping = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
     ? Math.round(Number(commerceSettings.goMarketShippingFee || 0))
     : 0;
-  const goMarketDelivery = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
+  const goMarketBaseDelivery = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
+    ? Math.round(Number(commerceSettings.goMarketBaseDeliveryFee || 0))
+    : 0;
+  const goMarketDistanceDelivery = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
     ? Math.round(Number((commerceSettings.goMarketDeliveryFeePerKm || 0) * distanceKm))
     : 0;
+  const goMarketDelivery = goMarketBaseDelivery + goMarketDistanceDelivery;
   
   // Calculate normal fees (rounded)
   const normalShipping = (hasNonGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 

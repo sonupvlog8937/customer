@@ -411,7 +411,13 @@ const CartPage = () => {
   const baseAfterDiscount = Math.max(cartSubTotal - (couponSummary?.discountAmount || 0), 0);
   const freeByRule = commerceSettings.freeShippingAbove > 0 && baseAfterDiscount >= commerceSettings.freeShippingAbove;
   const goMarketShippingFee = hasGoMarketItems ? Math.round(Number(commerceSettings.goMarketShippingFee || 0)) : 0;
-  const goMarketDeliveryFee = hasGoMarketItems ? Math.round(Number((commerceSettings.goMarketDeliveryFeePerKm || 0) * goMarketDistanceKm)) : 0;
+  const goMarketBaseDeliveryFee = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
+    ? Math.round(Number(commerceSettings.goMarketBaseDeliveryFee || 0)) 
+    : 0;
+  const goMarketDistanceDeliveryFee = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
+    ? Math.round(Number((commerceSettings.goMarketDeliveryFeePerKm || 0) * goMarketDistanceKm)) 
+    : 0;
+  const goMarketDeliveryFee = goMarketBaseDeliveryFee + goMarketDistanceDeliveryFee;
   const standardShippingFee = hasNonGoMarketItems ? Math.round(Number(commerceSettings.shippingFee || 0)) : 0;
   const standardDeliveryFee = hasNonGoMarketItems ? Math.round(Number(commerceSettings.deliveryFee || 0)) : 0;
   const shippingFee = freeByRule ? 0 : goMarketShippingFee + standardShippingFee;
