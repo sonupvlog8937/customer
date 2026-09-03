@@ -410,11 +410,14 @@ const CartPage = () => {
   // Calculate fees (rounded)
   const baseAfterDiscount = Math.max(cartSubTotal - (couponSummary?.discountAmount || 0), 0);
   const freeByRule = commerceSettings.freeShippingAbove > 0 && baseAfterDiscount >= commerceSettings.freeShippingAbove;
+  
+  // Cart page doesn't apply first order discount (only checkout does)
+  // So we always show fees here (unless free by rule)
   const goMarketShippingFee = hasGoMarketItems ? Math.round(Number(commerceSettings.goMarketShippingFee || 0)) : 0;
-  const goMarketBaseDeliveryFee = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
+  const goMarketBaseDeliveryFee = (hasGoMarketItems && !freeByRule) 
     ? Math.round(Number(commerceSettings.goMarketBaseDeliveryFee || 0)) 
     : 0;
-  const goMarketDistanceDeliveryFee = (hasGoMarketItems && !applyFirstOrderDiscount && !freeByRule) 
+  const goMarketDistanceDeliveryFee = (hasGoMarketItems && !freeByRule) 
     ? Math.round(Number((commerceSettings.goMarketDeliveryFeePerKm || 0) * goMarketDistanceKm)) 
     : 0;
   const goMarketDeliveryFee = goMarketBaseDeliveryFee + goMarketDistanceDeliveryFee;

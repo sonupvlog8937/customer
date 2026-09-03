@@ -614,13 +614,13 @@ const Checkout = () => {
                   <p className="text-[13px] mb-1 font-semibold text-blue-700">Go Market Fees</p>
                   <p className="text-[13px] mb-1">Go Market Shipping: {goMarketShipping === 0 ? "FREE" : goMarketShipping.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
                   <p className="text-[13px] mb-0">Go Market Delivery ({distanceKm.toFixed(1)} km): {goMarketDelivery === 0 ? "FREE" : goMarketDelivery.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
-                  {!applyFirstOrderDiscount && !freeByRule && (goMarketShipping > 0 || goMarketDelivery > 0) && (
+                  {/* {!applyFirstOrderDiscount && !freeByRule && (goMarketShipping > 0 || goMarketDelivery > 0) && (
                     <p className="text-[11px] text-blue-600 mt-2 bg-blue-50 p-2 rounded whitespace-pre-line">
                       ℹ️ Distance-based fees:{'\n'}
                       Shipping: ₹{goMarketShipping}{'\n'}
                       Delivery: ₹{commerceSettings.goMarketDeliveryFeePerKm}/km × {distanceKm.toFixed(1)} km = ₹{goMarketDelivery}
                     </p>
-                  )}
+                  )} */}
                   {applyFirstOrderDiscount && (
                     <p className="text-[11px] text-green-600 mt-2 bg-green-50 p-2 rounded">
                       🎁 First Order Special - Fees waived!
