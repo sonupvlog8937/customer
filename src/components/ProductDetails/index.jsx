@@ -155,8 +155,22 @@ export const ProductDetailsComponent = (props) => {
   }, [context?.myListData])
 
   const validateVariantSelection = () => {
-    if (props?.item?.size?.length !== 0 || props?.item?.productWeight?.length !== 0 || props?.item?.productRam?.length !== 0 || props?.item?.productAge?.length !== 0) {
-      if (selectedTabName === null) {
+    // Check if product has any options that require selection
+    const hasOptions = 
+      props?.item?.size?.length !== 0 || 
+      props?.item?.productWeight?.length !== 0 || 
+      props?.item?.productRam?.length !== 0 || 
+      props?.item?.productAge?.length !== 0 ||
+      props?.item?.colorOptions?.length !== 0;
+
+    // If product has options, user must select one
+    if (hasOptions) {
+      // Check if any option is selected
+      const hasSelection = 
+        selectedTabName !== null || 
+        (props?.item?.colorOptions?.length > 0 && selectedColorIndex !== null);
+
+      if (!hasSelection) {
         setTabError(true);
         context?.alertBox("error", "Please select product options");
         // Scroll to product options section
@@ -167,6 +181,7 @@ export const ProductDetailsComponent = (props) => {
       }
     }
 
+    // If no options or selection is made, validation passes
     return true;
   }
 
