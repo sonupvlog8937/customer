@@ -155,7 +155,7 @@
 //               </p>
 //             </div>
 
-          
+
 
 //              {context?.cartData?.length !== 0 ? (
 //               context?.cartData?.map((item, index) => {
@@ -273,6 +273,7 @@ import CartItems from "./cartItems";
 import { useAppContext } from "../../hooks/useAppContext";
 import { fetchDataFromApi, postData } from "../../utils/api";
 import { Link } from "react-router-dom";
+import { IoPricetagOutline, IoCloseCircle, IoCheckmarkCircle, IoAlertCircle, IoLockClosed } from "react-icons/io5";
 
 const CartPage = () => {
 
@@ -332,9 +333,9 @@ const CartPage = () => {
       .reduce((total, value) => total + value, 0);
   }, [context?.cartData]);
 
- const applyCoupon = async (code = null) => {
+  const applyCoupon = async (code = null) => {
     const couponCode = code || couponInput.trim();
-    
+
     if (!couponCode) {
       setCouponMessage("Please enter a coupon code");
       return;
@@ -353,7 +354,7 @@ const CartPage = () => {
     const data = await response.json();
     setCouponLoading(false);
 
-     if (response.ok && data?.success) {
+    if (response.ok && data?.success) {
       setAppliedCoupon(data.code);
       setCouponInput(data.code);
       setCouponSummary({ discountAmount: data.discountAmount, isValid: true, message: data.message });
@@ -426,15 +427,15 @@ const CartPage = () => {
   // Calculate fees (rounded)
   const baseAfterDiscount = Math.max(cartSubTotal - (couponSummary?.discountAmount || 0), 0);
   const freeByRule = commerceSettings.freeShippingAbove > 0 && baseAfterDiscount >= commerceSettings.freeShippingAbove;
-  
+
   // Cart page doesn't apply first order discount (only checkout does)
   // So we always show fees here (unless free by rule)
   const goMarketShippingFee = hasGoMarketItems ? Math.round(Number(commerceSettings.goMarketShippingFee || 0)) : 0;
-  const goMarketBaseDeliveryFee = (hasGoMarketItems && !freeByRule) 
-    ? Math.round(Number(commerceSettings.goMarketBaseDeliveryFee || 0)) 
+  const goMarketBaseDeliveryFee = (hasGoMarketItems && !freeByRule)
+    ? Math.round(Number(commerceSettings.goMarketBaseDeliveryFee || 0))
     : 0;
-  const goMarketDistanceDeliveryFee = (hasGoMarketItems && !freeByRule) 
-    ? Math.round(Number((commerceSettings.goMarketDeliveryFeePerKm || 0) * goMarketDistanceKm)) 
+  const goMarketDistanceDeliveryFee = (hasGoMarketItems && !freeByRule)
+    ? Math.round(Number((commerceSettings.goMarketDeliveryFeePerKm || 0) * goMarketDistanceKm))
     : 0;
   const goMarketDeliveryFee = goMarketBaseDeliveryFee + goMarketDistanceDeliveryFee;
   const standardShippingFee = hasNonGoMarketItems ? Math.round(Number(commerceSettings.shippingFee || 0)) : 0;
@@ -483,107 +484,141 @@ const CartPage = () => {
             <hr />
 
             <div className="mt-4">
-              {/* Available Coupons List - Show Above Input */}
-              {availableCoupons.length > 0 && (
-                <div className="mb-4">
-                  <p className="mb-2 font-[500] flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 12v10H4V12M2 7h20M12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-                    </svg>
-                    Available Coupons ({availableCoupons.length})
-                  </p>
-                  
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {availableCoupons.map((coupon) => {
-                      const isDisabled = coupon.minOrderAmount > cartSubTotal;
-                      const discountText = coupon.type === "percentage"
-                        ? `${coupon.value}% off${coupon.maxDiscountAmount ? ` (upto ₹${coupon.maxDiscountAmount})` : ""}`
-                        : `₹${coupon.value} off`;
-                      
-                      return (
-                        <div
-                          key={coupon._id || coupon.code}
-                          className={`border rounded-lg p-3 ${isDisabled ? 'opacity-50' : ''} transition-all bg-gradient-to-r from-blue-50 to-white`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 px-2 py-1 bg-blue-100 border-2 border-blue-300 border-dashed rounded text-[11px] font-bold text-blue-700">
-                              {coupon.code}
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-[13px] font-[600] mb-1 text-gray-800">
-                                {coupon.title || `Get ${discountText}`}
-                              </p>
-                              {coupon.description && (
-                                <p className="text-[11px] text-gray-600 mb-1">
-                                  {coupon.description}
-                                </p>
-                              )}
-                              <p className={`text-[10px] ${isDisabled ? 'text-red-500' : 'text-gray-500'}`}>
-                                {isDisabled 
-                                  ? `Min order ₹${coupon.minOrderAmount} required`
-                                  : `Valid on orders above ₹${coupon.minOrderAmount}`
-                                }
-                              </p>
-                            </div>
-                            <div className="flex flex-col items-end gap-1">
-                              <div className="px-2 py-1 bg-green-100 rounded text-green-700 text-[11px] font-bold whitespace-nowrap">
-                                {discountText}
-                              </div>
-                              <Button
-                                size="small"
-                                variant="contained"
-                                onClick={() => applyCoupon(coupon.code)}
-                                disabled={isDisabled || couponLoading}
-                                style={{ 
-                                  fontSize: '11px', 
-                                  padding: '4px 12px', 
-                                  minWidth: 'auto',
-                                  textTransform: 'none'
-                                }}
-                              >
-                                {couponLoading ? <CircularProgress size={12} color="inherit" /> : 'Apply'}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+
+              {/* Applied Coupon — shown as a clear success chip */}
+              {appliedCoupon && couponSummary.isValid ? (
+                <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <IoCheckmarkCircle className="text-green-600 text-[18px] flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-[600] text-green-800 truncate">
+                        {appliedCoupon} applied
+                      </p>
+                      <p className="text-[11px] text-green-700">
+                        You saved ₹{couponSummary.discountAmount}
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={removeCoupon}
+                    className="flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors"
+                    aria-label="Remove coupon"
+                  >
+                    <IoCloseCircle className="text-[20px]" />
+                  </button>
                 </div>
-              )}
+              ) : (
+                <>
+                  {/* Available Coupons List */}
+                  {availableCoupons.length > 0 && (
+                    <div className="mb-4">
+                      <p className="mb-2 text-[13px] font-[600] text-gray-700 flex items-center gap-1.5">
+                        <IoPricetagOutline className="text-[16px]" />
+                        Available offers ({availableCoupons.length})
+                      </p>
 
-              <p className="mb-2 font-[500]">Apply Coupon Code</p>
-              <div className="flex gap-2">
-                <TextField
-                  size="small"
-                  placeholder="Enter code"
-                  value={couponInput}
-                  onChange={(e) => setCouponInput(e.target.value)}
-                  className="w-full"
-                />
-                <Button
-                  variant="contained"
-                  onClick={() => applyCoupon()}
-                  disabled={couponLoading}
-                >
-                  {couponLoading ? (
-                    <CircularProgress size={18} color="inherit" />
-                  ) : (
-                    "Apply"
+                      <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                        {availableCoupons.map((coupon) => {
+                          const isDisabled = coupon.minOrderAmount > cartSubTotal;
+                          const discountText = coupon.type === "percentage"
+                            ? `${coupon.value}% off${coupon.maxDiscountAmount ? ` up to ₹${coupon.maxDiscountAmount}` : ""}`
+                            : `₹${coupon.value} off`;
+
+                          return (
+                            <div
+                              key={coupon._id || coupon.code}
+                              className={`rounded-lg border px-3 py-2.5 transition-colors ${isDisabled
+                                  ? "border-gray-200 bg-gray-50"
+                                  : "border-blue-100 bg-blue-50/40 hover:border-blue-300"
+                                }`}
+                            >
+                              <div className="flex items-start gap-2.5">
+                                <div
+                                  className={`flex-shrink-0 px-2 py-1 border border-dashed rounded text-[11px] font-bold ${isDisabled
+                                      ? "border-gray-300 text-gray-400"
+                                      : "border-blue-300 text-blue-700 bg-white"
+                                    }`}
+                                >
+                                  {coupon.code}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-[11px] font-[600] ${isDisabled ? "text-gray-400" : "text-green-700"}`}>
+                                    {discountText}
+                                  </p>
+                                  {coupon.description && (
+                                    <p className="text-[11px] text-gray-500 truncate">
+                                      {coupon.description}
+                                    </p>
+                                  )}
+                                  {isDisabled && (
+                                    <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
+                                      <IoLockClosed className="text-[11px]" />
+                                      Add ₹{coupon.minOrderAmount - cartSubTotal} more to unlock
+                                    </p>
+                                  )}
+                                </div>
+
+                                <Button
+                                  size="small"
+                                  variant={isDisabled ? "outlined" : "contained"}
+                                  onClick={() => applyCoupon(coupon.code)}
+                                  disabled={isDisabled || couponLoading}
+                                  style={{
+                                    fontSize: "11px",
+                                    padding: "3px 10px",
+                                    minWidth: "64px",
+                                    textTransform: "none",
+                                    boxShadow: "none",
+                                  }}
+                                >
+                                  {couponLoading ? <CircularProgress size={12} color="inherit" /> : "Apply"}
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
-                </Button>
-              </div>
 
-              {(couponSummary.message || couponMessage) && (
-                <p className={`text-[13px] mt-2 ${couponSummary.isValid ? "text-green-600" : "text-red-500"}`}>
-                  {couponSummary.message || couponMessage}
-                </p>
-              )}
+                  {/* Manual coupon input */}
+                  <p className="mb-2 text-[13px] font-[600] text-gray-700">Have a coupon code?</p>
+                  <div className="flex gap-2">
+                    <TextField
+                      size="small"
+                      placeholder="Enter code"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
+                      className="w-full"
+                      inputProps={{ style: { textTransform: "uppercase" } }}
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={() => applyCoupon()}
+                      disabled={couponLoading}
+                      style={{ textTransform: "none", whiteSpace: "nowrap" }}
+                    >
+                      {couponLoading ? <CircularProgress size={18} color="inherit" /> : "Apply"}
+                    </Button>
+                  </div>
 
-              {appliedCoupon && (
-                <Button size="small" onClick={removeCoupon}>
-                  Remove coupon
-                </Button>
+                  {(couponSummary.message || couponMessage) && (
+                    <p
+                      className={`flex items-center gap-1.5 text-[12px] mt-2 ${couponSummary.isValid ? "text-green-600" : "text-red-500"
+                        }`}
+                    >
+                      {couponSummary.isValid ? (
+                        <IoCheckmarkCircle className="text-[14px] flex-shrink-0" />
+                      ) : (
+                        <IoAlertCircle className="text-[14px] flex-shrink-0" />
+                      )}
+                      {couponSummary.message || couponMessage}
+                    </p>
+                  )}
+                </>
               )}
             </div>
 
@@ -611,7 +646,7 @@ const CartPage = () => {
             </p>
 
             <p className="flex justify-between">
-               <span>Delivery Fee{hasGoMarketItems && goMarketDistanceKm > 0 ? ` (${goMarketDistanceKm.toFixed(1)} km)` : ""}</span>
+              <span>Delivery Fee{hasGoMarketItems && goMarketDistanceKm > 0 ? ` (${goMarketDistanceKm.toFixed(1)} km)` : ""}</span>
               <span className={deliveryFee === 0 ? "text-green-600 font-[600]" : ""}>
                 {deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`}
               </span>
