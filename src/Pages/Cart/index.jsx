@@ -485,7 +485,7 @@ const CartPage = () => {
 
             <div className="mt-4">
 
-              {/* Applied Coupon — shown as a clear success chip */}
+              {/* Applied Coupon — clear success state */}
               {appliedCoupon && couponSummary.isValid ? (
                 <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
                   <div className="flex items-center gap-2 min-w-0">
@@ -544,7 +544,7 @@ const CartPage = () => {
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                  <p className={`text-[11px] font-[600] ${isDisabled ? "text-gray-400" : "text-green-700"}`}>
+                                  <p className={`text-[11px] font-[700] ${isDisabled ? "text-gray-400" : "text-green-700"}`}>
                                     {discountText}
                                   </p>
                                   {coupon.description && (
@@ -552,10 +552,14 @@ const CartPage = () => {
                                       {coupon.description}
                                     </p>
                                   )}
-                                  {isDisabled && (
+                                  {isDisabled ? (
                                     <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
                                       <IoLockClosed className="text-[11px]" />
                                       Add ₹{coupon.minOrderAmount - cartSubTotal} more to unlock
+                                    </p>
+                                  ) : (
+                                    <p className="text-[11px] text-gray-400 mt-0.5">
+                                      On orders above ₹{coupon.minOrderAmount}
                                     </p>
                                   )}
                                 </div>
