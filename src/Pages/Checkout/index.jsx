@@ -29,6 +29,7 @@ const Checkout = () => {
   // Coupon states
   const [couponInput, setCouponInput] = useState(localStorage.getItem("couponCode") || "");
   const [couponLoading, setCouponLoading] = useState(false);
+  const [applyingCouponCode, setApplyingCouponCode] = useState(""); // Track which coupon is being applied
   const [couponSummary, setCouponSummary] = useState({ discountAmount: Number(localStorage.getItem("couponDiscount") || 0), isValid: false, message: "" });
   const [availableCoupons, setAvailableCoupons] = useState([]);
   
@@ -251,6 +252,7 @@ const Checkout = () => {
     }
 
     setCouponLoading(true);
+    setApplyingCouponCode(couponCode.toUpperCase()); // Track which coupon is being applied
     try {
       const res = await postData("/api/coupon/validate", {
         code: couponCode.toUpperCase(),
@@ -271,6 +273,7 @@ const Checkout = () => {
       setCouponSummary({ discountAmount: 0, isValid: false, message: "Failed to apply coupon" });
     } finally {
       setCouponLoading(false);
+      setApplyingCouponCode(""); // Reset
     }
   };
 
@@ -702,7 +705,7 @@ const Checkout = () => {
                                   size="small"
                                   variant="contained"
                                   onClick={() => applyCoupon(coupon.code)}
-                                  disabled={isDisabled || couponLoading}
+                                  disabled={isDisabled || applyingCouponCode === coupon.code}
                                   style={{ 
                                     fontSize: '11px', 
                                     padding: '4px 12px', 
@@ -710,7 +713,7 @@ const Checkout = () => {
                                     textTransform: 'none'
                                   }}
                                 >
-                                  {couponLoading ? <CircularProgress size={12} color="inherit" /> : 'Apply'}
+                                  {applyingCouponCode === coupon.code ? <CircularProgress size={12} color="inherit" /> : 'Apply'}
                                 </Button>
                               </div>
                             </div>

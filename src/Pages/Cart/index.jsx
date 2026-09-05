@@ -285,6 +285,7 @@ const CartPage = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(localStorage.getItem("couponCode") || "");
   const [couponMessage, setCouponMessage] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
+  const [applyingCouponCode, setApplyingCouponCode] = useState(""); // Track which coupon is being applied
   const [couponSummary, setCouponSummary] = useState({ discountAmount: Number(localStorage.getItem("couponDiscount") || 0), isValid: false, message: "" });
   const [availableCoupons, setAvailableCoupons] = useState([]);
   const [commerceSettings, setCommerceSettings] = useState({ shippingFee: 0, deliveryFee: 0, freeShippingAbove: 0, goMarketShippingFee: 0, goMarketDeliveryFeePerKm: 0 });
@@ -342,6 +343,7 @@ const CartPage = () => {
     }
 
     setCouponLoading(true);
+    setApplyingCouponCode(couponCode.toUpperCase()); // Track which coupon is being applied
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/coupon/validate`, {
       method: "POST",
       headers: {
@@ -353,6 +355,7 @@ const CartPage = () => {
 
     const data = await response.json();
     setCouponLoading(false);
+    setApplyingCouponCode(""); // Reset
 
      if (response.ok && data?.success) {
       setAppliedCoupon(data.code);
@@ -534,7 +537,7 @@ const CartPage = () => {
                                 size="small"
                                 variant="contained"
                                 onClick={() => applyCoupon(coupon.code)}
-                                disabled={isDisabled || couponLoading}
+                                disabled={isDisabled || applyingCouponCode === coupon.code}
                                 style={{ 
                                   fontSize: '11px', 
                                   padding: '4px 12px', 
@@ -542,7 +545,7 @@ const CartPage = () => {
                                   textTransform: 'none'
                                 }}
                               >
-                                {couponLoading ? <CircularProgress size={12} color="inherit" /> : 'Apply'}
+                                {applyingCouponCode === coupon.code ? <CircularProgress size={12} color="inherit" /> : 'Apply'}
                               </Button>
                             </div>
                           </div>
