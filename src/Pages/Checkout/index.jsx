@@ -28,6 +28,7 @@ const Checkout = () => {
   
   // Coupon states
   const [couponInput, setCouponInput] = useState(localStorage.getItem("couponCode") || "");
+  const [couponCode, setCouponCode] = useState(localStorage.getItem("couponCode") || ""); // Track applied coupon code
   const [couponLoading, setCouponLoading] = useState(false);
   const [applyingCouponCode, setApplyingCouponCode] = useState(""); // Track which coupon is being applied
   const [couponSummary, setCouponSummary] = useState({ discountAmount: Number(localStorage.getItem("couponDiscount") || 0), isValid: false, message: "" });
@@ -49,7 +50,6 @@ const Checkout = () => {
     [checkoutItems]
   );
 
-  const couponCode = !isBuyNowCheckout ? (localStorage.getItem("couponCode") || "") : "";
   const couponDiscount = !isBuyNowCheckout ? couponSummary.discountAmount : 0;
   const discountAmount = Math.min(couponDiscount, cartSubTotal);
   const baseAfterDiscount = Math.max(cartSubTotal - discountAmount, 0);
@@ -245,28 +245,30 @@ const Checkout = () => {
 
   // Apply coupon function
   const applyCoupon = async (code) => {
-    const couponCode = code || couponInput;
-    if (!couponCode.trim()) {
+    const couponCodeToApply = code || couponInput;
+    if (!couponCodeToApply.trim()) {
       setCouponSummary({ discountAmount: 0, isValid: false, message: "Please enter a coupon code" });
       return;
     }
 
     setCouponLoading(true);
-    setApplyingCouponCode(couponCode.toUpperCase()); // Track which coupon is being applied
+    setApplyingCouponCode(couponCodeToApply.toUpperCase()); // Track which coupon is being applied
     try {
       const res = await postData("/api/coupon/validate", {
-        code: couponCode.toUpperCase(),
+        code: couponCodeToApply.toUpperCase(),
         orderTotal: cartSubTotal,
       });
 
       if (res?.error) {
         setCouponSummary({ discountAmount: 0, isValid: false, message: res.message || "Invalid coupon code" });
+        setCouponCode(""); // Clear coupon code state
         localStorage.removeItem("couponCode");
         localStorage.removeItem("couponDiscount");
       } else if (res?.coupon) {
         const discountAmount = res.discountAmount || 0;
         setCouponSummary({ discountAmount, isValid: true, message: `Coupon applied! You saved ₹${Math.round(discountAmount)}` });
-        localStorage.setItem("couponCode", couponCode.toUpperCase());
+        setCouponCode(couponCodeToApply.toUpperCase()); // Update coupon code state
+        localStorage.setItem("couponCode", couponCodeToApply.toUpperCase());
         localStorage.setItem("couponDiscount", discountAmount);
       }
     } catch (error) {
@@ -280,6 +282,7 @@ const Checkout = () => {
   // Remove coupon function
   const removeCoupon = () => {
     setCouponInput("");
+    setCouponCode(""); // Clear coupon code state
     setCouponSummary({ discountAmount: 0, isValid: false, message: "" });
     localStorage.removeItem("couponCode");
     localStorage.removeItem("couponDiscount");
@@ -736,9 +739,9 @@ const Checkout = () => {
                   <Button
                     variant="contained"
                     onClick={() => applyCoupon()}
-                    disabled={couponLoading}
+                    disabled={!!applyingCouponCode}
                   >
-                    {couponLoading ? (
+                    {applyingCouponCode === couponInput.trim().toUpperCase() ? (
                       <CircularProgress size={18} color="inherit" />
                     ) : (
                       "Apply"
@@ -821,6 +824,60 @@ const Checkout = () => {
                   <p className="text-[11px] text-amber-700 mb-0">{goMarketItems.length} Go Market item(s) · {nonGoMarketItems.length} Regular item(s)</p>
                 </div>
               )}
+
+              {/* Price Breakdown */}
+              <div className="bg-white rounded-md p-3 mb-3 border">
+                <p className="text-[14px] font-semibold mb-3 text-gray-800">Price Details</p>
+                
+                {/* Subtotal */}
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[13px] text-gray-600">Subtotal</span>
+                  <span className="text-[13px] font-[500]">
+                    {cartSubTotal.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}
+                  </span>
+                </div>
+
+                {/* Discount */}
+                {discountAmount > 0 && (
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[13px] text-green-600">Discount ({couponCode})</span>
+                    <span className="text-[13px] font-[500] text-green-600">
+                      -{discountAmount.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Shipping & Delivery Fees */}
+                {(totalShipping > 0 || totalDelivery > 0) && (
+                  <>
+                    {totalShipping > 0 && (
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[13px] text-gray-600">Shipping Fee</span>
+                        <span className="text-[13px] font-[500]">
+                          {totalShipping.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}
+                        </span>
+                      </div>
+                    )}
+                    {totalDelivery > 0 && (
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[13px] text-gray-600">Delivery Fee</span>
+                        <span className="text-[13px] font-[500]">
+                          {totalDelivery.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Free Shipping/Delivery Messages */}
+                {(applyFirstOrderDiscount || freeByRule) && (
+                  <div className="flex items-center gap-2 mb-2 px-2 py-1 bg-green-50 rounded">
+                    <span className="text-[11px] text-green-600">
+                      🎉 {applyFirstOrderDiscount ? 'First Order - Free Shipping & Delivery!' : 'Free Shipping & Delivery Applied!'}
+                    </span>
+                  </div>
+                )}
+              </div>
 
               <div className="flex items-center justify-between border-t pt-3 mb-3">
                 <span className="text-[14px] font-[600]">Payable Total</span>

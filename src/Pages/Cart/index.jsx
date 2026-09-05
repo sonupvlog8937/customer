@@ -358,15 +358,18 @@ const CartPage = () => {
     setApplyingCouponCode(""); // Reset
 
      if (response.ok && data?.success) {
-      setAppliedCoupon(data.code);
-      setCouponInput(data.code);
+      const appliedCode = data.code || data.coupon?.code || couponCode.toUpperCase();
+      setAppliedCoupon(appliedCode);
+      setCouponInput(appliedCode);
       setCouponSummary({ discountAmount: data.discountAmount, isValid: true, message: data.message });
       setCouponMessage("");
-      localStorage.setItem("couponCode", data.code);
+      localStorage.setItem("couponCode", appliedCode);
       localStorage.setItem("couponDiscount", String(data.discountAmount));
     } else {
+      setAppliedCoupon(""); // Clear on error
       setCouponSummary({ discountAmount: 0, isValid: false, message: data?.message || "Invalid coupon code" });
       setCouponMessage(data?.message || "Invalid coupon code");
+      localStorage.removeItem("couponCode");
       localStorage.removeItem("couponDiscount");
     }
   };
@@ -568,9 +571,9 @@ const CartPage = () => {
                 <Button
                   variant="contained"
                   onClick={() => applyCoupon()}
-                  disabled={couponLoading}
+                  disabled={!!applyingCouponCode}
                 >
-                  {couponLoading ? (
+                  {applyingCouponCode === couponInput.trim().toUpperCase() ? (
                     <CircularProgress size={18} color="inherit" />
                   ) : (
                     "Apply"
