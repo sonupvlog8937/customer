@@ -762,14 +762,14 @@ const Checkout = () => {
                 )}
               </div>
 
-              {!!couponCode && (
+              {/* {!!couponCode && (
                 <div className="bg-[#f7f7f7] rounded-md p-3 mb-3 mt-3">
                   <p className="text-[13px] mb-1">Coupon: <strong>{couponCode}</strong></p>
                   <p className="text-[13px] mb-0">Discount: -{discountAmount.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
                 </div>
-              )}
+              )} */}
 
-              {applyFirstOrderDiscount && (
+              {/* {applyFirstOrderDiscount && (
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-4 mb-3 shadow-sm">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
@@ -785,7 +785,7 @@ const Checkout = () => {
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Go Market Fees */}
               {/* {hasGoMarketItems && (
