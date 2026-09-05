@@ -286,7 +286,6 @@ const CartPage = () => {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponSummary, setCouponSummary] = useState({ discountAmount: Number(localStorage.getItem("couponDiscount") || 0), isValid: false, message: "" });
   const [availableCoupons, setAvailableCoupons] = useState([]);
-  const [showCoupons, setShowCoupons] = useState(false);
   const [commerceSettings, setCommerceSettings] = useState({ shippingFee: 0, deliveryFee: 0, freeShippingAbove: 0, goMarketShippingFee: 0, goMarketDeliveryFeePerKm: 0 });
   const [goMarketDistanceKm, setGoMarketDistanceKm] = useState(0);
 
@@ -484,7 +483,76 @@ const CartPage = () => {
             <hr />
 
             <div className="mt-4">
-              <p className="mb-2 font-[500]">Apply Coupon</p>
+              {/* Available Coupons List - Show Above Input */}
+              {availableCoupons.length > 0 && (
+                <div className="mb-4">
+                  <p className="mb-2 font-[500] flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 12v10H4V12M2 7h20M12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                    </svg>
+                    Available Coupons ({availableCoupons.length})
+                  </p>
+                  
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {availableCoupons.map((coupon) => {
+                      const isDisabled = coupon.minOrderAmount > cartSubTotal;
+                      const discountText = coupon.type === "percentage"
+                        ? `${coupon.value}% off${coupon.maxDiscountAmount ? ` (upto ₹${coupon.maxDiscountAmount})` : ""}`
+                        : `₹${coupon.value} off`;
+                      
+                      return (
+                        <div
+                          key={coupon._id || coupon.code}
+                          className={`border rounded-lg p-3 ${isDisabled ? 'opacity-50' : ''} transition-all bg-gradient-to-r from-blue-50 to-white`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 px-2 py-1 bg-blue-100 border-2 border-blue-300 border-dashed rounded text-[11px] font-bold text-blue-700">
+                              {coupon.code}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-[13px] font-[600] mb-1 text-gray-800">
+                                {coupon.title || `Get ${discountText}`}
+                              </p>
+                              {coupon.description && (
+                                <p className="text-[11px] text-gray-600 mb-1">
+                                  {coupon.description}
+                                </p>
+                              )}
+                              <p className={`text-[10px] ${isDisabled ? 'text-red-500' : 'text-gray-500'}`}>
+                                {isDisabled 
+                                  ? `Min order ₹${coupon.minOrderAmount} required`
+                                  : `Valid on orders above ₹${coupon.minOrderAmount}`
+                                }
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <div className="px-2 py-1 bg-green-100 rounded text-green-700 text-[11px] font-bold whitespace-nowrap">
+                                {discountText}
+                              </div>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                onClick={() => applyCoupon(coupon.code)}
+                                disabled={isDisabled || couponLoading}
+                                style={{ 
+                                  fontSize: '11px', 
+                                  padding: '4px 12px', 
+                                  minWidth: 'auto',
+                                  textTransform: 'none'
+                                }}
+                              >
+                                {couponLoading ? <CircularProgress size={12} color="inherit" /> : 'Apply'}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <p className="mb-2 font-[500]">Apply Coupon Code</p>
               <div className="flex gap-2">
                 <TextField
                   size="small"
@@ -495,7 +563,7 @@ const CartPage = () => {
                 />
                 <Button
                   variant="contained"
-                  onClick={applyCoupon}
+                  onClick={() => applyCoupon()}
                   disabled={couponLoading}
                 >
                   {couponLoading ? (
@@ -516,76 +584,6 @@ const CartPage = () => {
                 <Button size="small" onClick={removeCoupon}>
                   Remove coupon
                 </Button>
-              )}
-
-              {/* Available Coupons */}
-              {availableCoupons.length > 0 && (
-                <div className="mt-3">
-                  <button
-                    onClick={() => setShowCoupons(!showCoupons)}
-                    className="text-[13px] text-blue-600 font-[500] flex items-center gap-1"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 12v10H4V12M2 7h20M12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-                    </svg>
-                    {availableCoupons.length} coupon{availableCoupons.length > 1 ? 's' : ''} available
-                    <svg 
-                      width="12" 
-                      height="12" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2"
-                      style={{ transform: showCoupons ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
-                    >
-                      <path d="M6 9l6 6 6-6"/>
-                    </svg>
-                  </button>
-
-                  {showCoupons && (
-                    <div className="mt-2 space-y-2 max-h-[300px] overflow-y-auto">
-                      {availableCoupons.map((coupon) => {
-                        const isDisabled = coupon.minOrderAmount > cartSubTotal;
-                        const discountText = coupon.type === "percentage"
-                          ? `${coupon.value}% off${coupon.maxDiscountAmount ? ` (upto ₹${coupon.maxDiscountAmount})` : ""}`
-                          : `₹${coupon.value} off`;
-                        
-                        return (
-                          <div
-                            key={coupon._id || coupon.code}
-                            className={`border rounded-lg p-3 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-blue-500'} transition-all`}
-                            onClick={() => !isDisabled && !couponLoading && applyCoupon(coupon.code)}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0 px-2 py-1 bg-blue-50 border border-blue-200 rounded text-[11px] font-bold text-blue-600">
-                                {coupon.code}
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-[13px] font-[600] mb-1">
-                                  {coupon.title || `Get ${discountText}`}
-                                </p>
-                                {coupon.description && (
-                                  <p className="text-[11px] text-gray-600 mb-1">
-                                    {coupon.description}
-                                  </p>
-                                )}
-                                <p className={`text-[10px] ${isDisabled ? 'text-red-500' : 'text-gray-500'}`}>
-                                  {isDisabled 
-                                    ? `Min order ₹${coupon.minOrderAmount} required`
-                                    : `Valid on orders above ₹${coupon.minOrderAmount}`
-                                  }
-                                </p>
-                              </div>
-                              <div className="flex-shrink-0 px-2 py-1 bg-blue-600 rounded text-white text-[11px] font-bold">
-                                {discountText}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
               )}
             </div>
 
