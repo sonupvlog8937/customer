@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button } from "@mui/material";
+import { Button, TextField } from "@mui/material";
 import { BsFillBagCheckFill } from "react-icons/bs";
 import { useAppContext } from "../../hooks/useAppContext";
 import { FaPlus } from "react-icons/fa6";
@@ -25,6 +25,13 @@ const Checkout = () => {
   const [isFirstOrder, setIsFirstOrder] = useState(false);
   const [distanceKm, setDistanceKm] = useState(0); // Will be updated with actual distance
   const [distanceCalculated, setDistanceCalculated] = useState(false); // Track if calculation happened
+  
+  // Coupon states
+  const [couponInput, setCouponInput] = useState(localStorage.getItem("couponCode") || "");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponSummary, setCouponSummary] = useState({ discountAmount: Number(localStorage.getItem("couponDiscount") || 0), isValid: false, message: "" });
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  
   const context = useAppContext();
 
   const history = useNavigate();
@@ -42,7 +49,7 @@ const Checkout = () => {
   );
 
   const couponCode = !isBuyNowCheckout ? (localStorage.getItem("couponCode") || "") : "";
-  const couponDiscount = !isBuyNowCheckout ? Number(localStorage.getItem("couponDiscount") || 0) : 0;
+  const couponDiscount = !isBuyNowCheckout ? couponSummary.discountAmount : 0;
   const discountAmount = Math.min(couponDiscount, cartSubTotal);
   const baseAfterDiscount = Math.max(cartSubTotal - discountAmount, 0);
   
@@ -214,6 +221,66 @@ const Checkout = () => {
     setUserData(context?.userData);
     setSelectedAddress(context?.userData?.address_details[0]?._id);
   }, [context?.userData]);
+
+  // Fetch available coupons
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const res = await fetchDataFromApi("/api/coupon/active");
+        if (res && Array.isArray(res)) {
+          const activeCoupons = res.filter((c) => {
+            const isActive = c.isActive !== false;
+            const notExpired = !c.expiryDate || new Date(c.expiryDate) > new Date();
+            return isActive && notExpired;
+          });
+          setAvailableCoupons(activeCoupons);
+        }
+      } catch (error) {
+        console.error("Failed to fetch coupons:", error);
+      }
+    };
+    fetchCoupons();
+  }, []);
+
+  // Apply coupon function
+  const applyCoupon = async (code) => {
+    const couponCode = code || couponInput;
+    if (!couponCode.trim()) {
+      setCouponSummary({ discountAmount: 0, isValid: false, message: "Please enter a coupon code" });
+      return;
+    }
+
+    setCouponLoading(true);
+    try {
+      const res = await postData("/api/coupon/validate", {
+        code: couponCode.toUpperCase(),
+        orderTotal: cartSubTotal,
+      });
+
+      if (res?.error) {
+        setCouponSummary({ discountAmount: 0, isValid: false, message: res.message || "Invalid coupon code" });
+        localStorage.removeItem("couponCode");
+        localStorage.removeItem("couponDiscount");
+      } else if (res?.coupon) {
+        const discountAmount = res.discountAmount || 0;
+        setCouponSummary({ discountAmount, isValid: true, message: `Coupon applied! You saved ₹${Math.round(discountAmount)}` });
+        localStorage.setItem("couponCode", couponCode.toUpperCase());
+        localStorage.setItem("couponDiscount", discountAmount);
+      }
+    } catch (error) {
+      setCouponSummary({ discountAmount: 0, isValid: false, message: "Failed to apply coupon" });
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  // Remove coupon function
+  const removeCoupon = () => {
+    setCouponInput("");
+    setCouponSummary({ discountAmount: 0, isValid: false, message: "" });
+    localStorage.removeItem("couponCode");
+    localStorage.removeItem("couponDiscount");
+  };
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -583,8 +650,114 @@ const Checkout = () => {
                   })}
               </div>
 
+              {/* Coupon Section - Same as Cart */}
+              <div className="mt-4">
+                {/* Available Coupons List - Show Above Input */}
+                {availableCoupons.length > 0 && (
+                  <div className="mb-4">
+                    <p className="mb-2 font-[500] flex items-center gap-2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20 12v10H4V12M2 7h20M12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                      </svg>
+                      Available Coupons ({availableCoupons.length})
+                    </p>
+                    
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {availableCoupons.map((coupon) => {
+                        const isDisabled = coupon.minOrderAmount > cartSubTotal;
+                        const discountText = coupon.type === "percentage"
+                          ? `${coupon.value}% off${coupon.maxDiscountAmount ? ` (upto ₹${coupon.maxDiscountAmount})` : ""}`
+                          : `₹${coupon.value} off`;
+                        
+                        return (
+                          <div
+                            key={coupon._id || coupon.code}
+                            className={`border rounded-lg p-3 ${isDisabled ? 'opacity-50' : ''} transition-all bg-gradient-to-r from-blue-50 to-white`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0 px-2 py-1 bg-blue-100 border-2 border-blue-300 border-dashed rounded text-[11px] font-bold text-blue-700">
+                                {coupon.code}
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-[13px] font-[600] mb-1 text-gray-800">
+                                  {coupon.title || `Get ${discountText}`}
+                                </p>
+                                {coupon.description && (
+                                  <p className="text-[11px] text-gray-600 mb-1">
+                                    {coupon.description}
+                                  </p>
+                                )}
+                                <p className={`text-[10px] ${isDisabled ? 'text-red-500' : 'text-gray-500'}`}>
+                                  {isDisabled 
+                                    ? `Min order ₹${coupon.minOrderAmount} required`
+                                    : `Valid on orders above ₹${coupon.minOrderAmount}`
+                                  }
+                                </p>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="px-2 py-1 bg-green-100 rounded text-green-700 text-[11px] font-bold whitespace-nowrap">
+                                  {discountText}
+                                </div>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  onClick={() => applyCoupon(coupon.code)}
+                                  disabled={isDisabled || couponLoading}
+                                  style={{ 
+                                    fontSize: '11px', 
+                                    padding: '4px 12px', 
+                                    minWidth: 'auto',
+                                    textTransform: 'none'
+                                  }}
+                                >
+                                  {couponLoading ? <CircularProgress size={12} color="inherit" /> : 'Apply'}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <p className="mb-2 font-[500]">Apply Coupon Code</p>
+                <div className="flex gap-2">
+                  <TextField
+                    size="small"
+                    placeholder="Enter code"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    className="w-full"
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={() => applyCoupon()}
+                    disabled={couponLoading}
+                  >
+                    {couponLoading ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : (
+                      "Apply"
+                    )}
+                  </Button>
+                </div>
+
+                {(couponSummary.message) && (
+                  <p className={`text-[13px] mt-2 ${couponSummary.isValid ? "text-green-600" : "text-red-500"}`}>
+                    {couponSummary.message}
+                  </p>
+                )}
+
+                {!!couponCode && (
+                  <Button size="small" onClick={removeCoupon}>
+                    Remove coupon
+                  </Button>
+                )}
+              </div>
+
               {!!couponCode && (
-                <div className="bg-[#f7f7f7] rounded-md p-3 mb-3">
+                <div className="bg-[#f7f7f7] rounded-md p-3 mb-3 mt-3">
                   <p className="text-[13px] mb-1">Coupon: <strong>{couponCode}</strong></p>
                   <p className="text-[13px] mb-0">Discount: -{discountAmount.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
                 </div>
