@@ -666,8 +666,8 @@ const Checkout = () => {
                       {availableCoupons.map((coupon) => {
                         const isDisabled = coupon.minOrderAmount > cartSubTotal;
                         const discountText = coupon.type === "percentage"
-                          ? `${coupon.value}% off${coupon.maxDiscountAmount ? ` (upto ₹${coupon.maxDiscountAmount})` : ""}`
-                          : `₹${coupon.value} off`;
+                          ? `${coupon.value || 0}% off${coupon.maxDiscountAmount ? ` (upto ₹${coupon.maxDiscountAmount})` : ""}`
+                          : `₹${coupon.value || 0} off`;
                         
                         return (
                           <div
