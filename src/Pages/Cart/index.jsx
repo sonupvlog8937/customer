@@ -573,7 +573,7 @@ const CartPage = () => {
                   onClick={() => applyCoupon()}
                   disabled={!!applyingCouponCode}
                 >
-                  {applyingCouponCode === couponInput.trim().toUpperCase() ? (
+                  {applyingCouponCode && applyingCouponCode === couponInput.trim().toUpperCase() ? (
                     <CircularProgress size={18} color="inherit" />
                   ) : (
                     "Apply"

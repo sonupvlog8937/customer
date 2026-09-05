@@ -788,42 +788,42 @@ const Checkout = () => {
               )}
 
               {/* Go Market Fees */}
-              {hasGoMarketItems && (
+              {/* {hasGoMarketItems && (
                 <div className="bg-[#f7f7f7] rounded-md p-3 mb-3">
                   <p className="text-[13px] mb-1 font-semibold text-blue-700">Go Market Fees</p>
                   <p className="text-[13px] mb-1">Go Market Shipping: {goMarketShipping === 0 ? "FREE" : goMarketShipping.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
                   <p className="text-[13px] mb-0">Go Market Delivery ({distanceKm.toFixed(1)} km): {goMarketDelivery === 0 ? "FREE" : goMarketDelivery.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
-                  {/* {!applyFirstOrderDiscount && !freeByRule && (goMarketShipping > 0 || goMarketDelivery > 0) && (
+                  {!applyFirstOrderDiscount && !freeByRule && (goMarketShipping > 0 || goMarketDelivery > 0) && (
                     <p className="text-[11px] text-blue-600 mt-2 bg-blue-50 p-2 rounded whitespace-pre-line">
                       ℹ️ Distance-based fees:{'\n'}
                       Shipping: ₹{goMarketShipping}{'\n'}
                       Delivery: ₹{commerceSettings.goMarketDeliveryFeePerKm}/km × {distanceKm.toFixed(1)} km = ₹{goMarketDelivery}
                     </p>
-                  )} */}
+                  )}
                   {applyFirstOrderDiscount && (
                     <p className="text-[11px] text-green-600 mt-2 bg-green-50 p-2 rounded">
                       🎁 First Order Special - Fees waived!
                     </p>
                   )}
                 </div>
-              )}
+              )} */}
 
               {/* Normal E-commerce Fees */}
-              {hasNonGoMarketItems && (
+              {/* {hasNonGoMarketItems && (
                 <div className="bg-[#f7f7f7] rounded-md p-3 mb-3">
                   <p className="text-[13px] mb-1 font-semibold text-gray-700">Standard Fees</p>
                   <p className="text-[13px] mb-1">Shipping: {normalShipping === 0 ? "FREE" : normalShipping.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
                   <p className="text-[13px] mb-0">Delivery fee: {normalDelivery === 0 ? "FREE" : normalDelivery.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}</p>
                 </div>
-              )}
+              )} */}
 
               {/* Mixed Cart Badge */}
-              {isMixedCart && !applyFirstOrderDiscount && !freeByRule && (
+              {/* {isMixedCart && !applyFirstOrderDiscount && !freeByRule && (
                 <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-yellow-300 rounded-md p-3 mb-3">
                   <p className="text-[13px] font-semibold text-amber-800 mb-1">📦 Mixed Cart: Go Market + Regular items</p>
                   <p className="text-[11px] text-amber-700 mb-0">{goMarketItems.length} Go Market item(s) · {nonGoMarketItems.length} Regular item(s)</p>
                 </div>
-              )}
+              )} */}
 
               {/* Price Breakdown */}
               <div className="bg-white rounded-md p-3 mb-3 border">
