@@ -687,17 +687,17 @@ const Checkout = () => {
                                     {coupon.description}
                                   </p>
                                 )}
-                                <p className={`text-[10px] ${isDisabled ? 'text-red-500' : 'text-gray-500'}`}>
+                                {/* <p className={`text-[10px] ${isDisabled ? 'text-red-500' : 'text-gray-500'}`}>
                                   {isDisabled 
                                     ? `Min order ₹${coupon.minOrderAmount} required`
                                     : `Valid on orders above ₹${coupon.minOrderAmount}`
                                   }
-                                </p>
+                                </p> */}
                               </div>
                               <div className="flex flex-col items-end gap-1">
-                                <div className="px-2 py-1 bg-green-100 rounded text-green-700 text-[11px] font-bold whitespace-nowrap">
+                                {/* <div className="px-2 py-1 bg-green-100 rounded text-green-700 text-[11px] font-bold whitespace-nowrap">
                                   {discountText}
-                                </div>
+                                </div> */}
                                 <Button
                                   size="small"
                                   variant="contained"
