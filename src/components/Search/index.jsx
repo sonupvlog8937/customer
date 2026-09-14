@@ -300,6 +300,7 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
     onKeyDown,
     clearSearch,
     openDropdown,
+    onClose,
   } = useSearch();
 
   useEffect(() => {
@@ -326,6 +327,9 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
     // ✅ Clear search input
     clearSearch();
     
+    // ✅ Close dropdown
+    onClose();
+    
     // ✅ Close modal/dropdown
     context?.setOpenSearchPanel?.(false);
     if (onSearchComplete) {
@@ -345,6 +349,9 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
     
     // Clear search input immediately
     clearSearch();
+    
+    // ✅ Close dropdown immediately
+    onClose();
     
     // Close modal/dropdown immediately
     context?.setOpenSearchPanel?.(false);
@@ -367,6 +374,9 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
         
         // ✅ Clear search input
         clearSearch();
+        
+        // ✅ Close dropdown
+        onClose();
         
         // ✅ Close modal/dropdown
         context?.setOpenSearchPanel?.(false);
