@@ -599,6 +599,12 @@ const Header = () => {
     }
   }, [showSearchBar]);
 
+  // ✅ Close search modal on route change
+  useEffect(() => {
+    setShowSearchModal(false);
+    setShowSearchBar(false);
+  }, [location.pathname]);
+
   useEffect(() => {
     fetchDataFromApi("/api/logo")
       .then((res) => {
@@ -636,7 +642,11 @@ const Header = () => {
       {/* Search Modal */}
       <SearchModal
         isOpen={showSearchModal}
-        onClose={() => setShowSearchModal(false)}
+        onClose={() => {
+          setShowSearchModal(false);
+          // Also ensure search panel state is reset
+          context?.setOpenSearchPanel?.(false);
+        }}
         logoUrl={logoUrl}
       />
 
