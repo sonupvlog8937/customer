@@ -20,7 +20,7 @@ const getProductTag = (product) => {
   if (stockCount <= 5) return { label: `Only ${stockCount} Left`, color: "#b45309", bg: "#fef3c7" };
   if (stockCount <= 10) return { label: `${stockCount} Available`, color: "#0369a1", bg: "#e0f2fe" };
   if (soldCount >= 10) return { label: "Best Seller", color: "#7c3aed", bg: "#ede9fe" };
-  if (Number(product?.rating || 0) >= 4.2) return { label: "Top Rated", color: "#065f46", bg: "#d1fae5" };
+  if (Number(product?.numReviews || 0) > 0 && Number(product?.rating || 0) >= 4.2) return { label: "Top Rated", color: "#065f46", bg: "#d1fae5" };
   if (Number(product?.discount || 0) >= 25) return { label: "Trending", color: "#be123c", bg: "#ffe4e6" };
   return { label: "Featured", color: "#1d4ed8", bg: "#dbeafe" };
 };
@@ -183,11 +183,51 @@ const S = {
     gap: "5px",
     marginTop: "1px",
   },
+  ratingBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "3px",
+    background: "#388e3c",
+    color: "#fff",
+    fontSize: "11px",
+    fontWeight: 700,
+    borderRadius: "4px",
+    padding: "2px 6px",
+    lineHeight: 1.2,
+  },
   ratingCount: {
     fontSize: "11px",
     color: "#9ca3af",
     fontWeight: 500,
   },
+};
+
+const formatRatingNumber = (value) => {
+  const n = Number(value) || 0;
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+};
+
+const UserProductRating = ({ item, starSize = "13px" }) => {
+  const reviews = Number(item?.numReviews || 0);
+  const value = Number(item?.rating || 0);
+  if (reviews <= 0 || value <= 0) {
+    return <span style={S.ratingCount}>No ratings yet</span>;
+  }
+  return (
+    <div style={S.ratingRow}>
+      <span style={S.ratingBadge}>
+        {formatRatingNumber(value)} ★
+      </span>
+      <Rating
+        value={value}
+        size="small"
+        precision={0.1}
+        readOnly
+        sx={{ fontSize: starSize }}
+      />
+      <span style={S.ratingCount}>({reviews})</span>
+    </div>
+  );
 };
 
 /* ─────────────────────────────────────────────────────
@@ -380,18 +420,7 @@ const ProductItem = (props) => {
           </Link>
 
           {/* Rating */}
-          <div style={S.ratingRow}>
-            <Rating
-              value={Number(props?.item?.rating || 0)}
-              size="small"
-              precision={0.5}
-              readOnly
-              sx={{ fontSize: "13px" }}
-            />
-            {props?.item?.numReviews > 0 && (
-              <span style={S.ratingCount}>({props?.item?.numReviews})</span>
-            )}
-          </div>
+          <UserProductRating item={props?.item} />
 
           <div style={S.divider} />
 

@@ -69,6 +69,10 @@ export const Reviews = (props) => {
                     setHasMore(res.hasMore);
                     setTotalReviews(res.total);
                     props.setReviewsCount(res.total);
+                    props.onRatingStatsChange?.(
+                      Number(res.avgRating || 0),
+                      Number(res.total || 0)
+                    );
                 }
             })
             .finally(() => {

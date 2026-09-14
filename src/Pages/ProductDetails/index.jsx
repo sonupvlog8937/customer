@@ -57,11 +57,23 @@ export const ProductDetails = () => {
     setActiveImages((prev) => (prev?.length ? prev : seededProduct?.images || []));
   }, [id, location?.state]);
 
-  // Reviews count
+  // Reviews count + user-calculated rating
   useEffect(() => {
     if (!id) return;
     fetchDataFromApi(`/api/user/getReviews?productId=${id}`).then((res) => {
-      if (res?.error === false) setReviewsCount(res.reviews?.length || 0);
+      if (res?.error === false) {
+        const total = Number(res.total ?? res.reviews?.length ?? 0);
+        setReviewsCount(total);
+        setProductData((prev) =>
+          prev
+            ? {
+                ...prev,
+                rating: total > 0 ? Number(res.avgRating || 0) : 0,
+                numReviews: total,
+              }
+            : prev
+        );
+      }
     });
   }, [id]);
 
@@ -439,7 +451,16 @@ export const ProductDetails = () => {
                 <h2 className="pd-section-title">Customer Reviews</h2>
                 <div className="pd-reviews-wrapper">
                   {productData && (
-                    <Reviews productId={productData?._id} setReviewsCount={setReviewsCount} />
+                    <Reviews
+                      productId={productData?._id}
+                      setReviewsCount={setReviewsCount}
+                      onRatingStatsChange={(rating, numReviews) => {
+                        setReviewsCount(numReviews);
+                        setProductData((prev) =>
+                          prev ? { ...prev, rating, numReviews } : prev
+                        );
+                      }}
+                    />
                   )}
                 </div>
               </div>
