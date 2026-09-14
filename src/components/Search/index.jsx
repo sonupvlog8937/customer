@@ -365,6 +365,10 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
     const url = `/search?query=${encodeURIComponent(query)}&page=1`;
     console.log("🚀 Navigating to:", url);
     navigate(url);
+    // Defensive: ensure modal stays closed after navigation
+    if (onSearchComplete) {
+      onSearchComplete();
+    }
   };
 
   const handleKeyDown = (e) => {
