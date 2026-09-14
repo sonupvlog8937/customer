@@ -601,6 +601,8 @@ const Header = () => {
 
   // ✅ Close search modal when route changes (after navigation)
   useEffect(() => {
+    console.log("🛣️ Route changed to:", location.pathname);
+    console.log("🔴 Force closing modal - showSearchModal:", showSearchModal);
     setShowSearchModal(false);
     setShowSearchBar(false);
   }, [location.pathname]);
@@ -642,7 +644,11 @@ const Header = () => {
       {/* Search Modal */}
       <SearchModal
         isOpen={showSearchModal}
-        onClose={() => setShowSearchModal(false)}
+        onClose={() => {
+          console.log("🔴 SearchModal onClose called");
+          setShowSearchModal(false);
+          setShowSearchBar(false);
+        }}
         logoUrl={logoUrl}
       />
 

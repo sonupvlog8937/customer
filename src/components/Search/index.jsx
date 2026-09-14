@@ -324,17 +324,18 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
       return;
     }
 
-    // ✅ Clear search input
-    clearSearch();
-    
-    // ✅ Close dropdown
-    onClose();
-    
-    // ✅ Close modal/dropdown
-    context?.setOpenSearchPanel?.(false);
+    // ✅ FIRST: Close modal/dropdown IMMEDIATELY before anything else
     if (onSearchComplete) {
+      console.log("🔴 Calling onSearchComplete to close modal");
       onSearchComplete();
     }
+    context?.setOpenSearchPanel?.(false);
+    
+    // Clear search input
+    clearSearch();
+    
+    // Close dropdown
+    onClose();
     
     // Then navigate
     console.log("🚀 Executing navigation for:", trimmed);
@@ -347,17 +348,18 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
     e.preventDefault();
     console.log("👆 Suggestion clicked:", query);
     
-    // Clear search input immediately
-    clearSearch();
-    
-    // ✅ Close dropdown immediately
-    onClose();
-    
-    // Close modal/dropdown immediately
-    context?.setOpenSearchPanel?.(false);
+    // ✅ FIRST: Close modal/dropdown IMMEDIATELY before anything else
     if (onSearchComplete) {
+      console.log("🔴 Calling onSearchComplete to close modal");
       onSearchComplete();
     }
+    context?.setOpenSearchPanel?.(false);
+    
+    // Clear search input
+    clearSearch();
+    
+    // Close dropdown
+    onClose();
     
     // Navigate to search results
     const url = `/search?query=${encodeURIComponent(query)}&page=1`;
@@ -372,17 +374,18 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
       if (trimmed) {
         console.log("⌨️ Enter pressed with query:", trimmed);
         
-        // ✅ Clear search input
-        clearSearch();
-        
-        // ✅ Close dropdown
-        onClose();
-        
-        // ✅ Close modal/dropdown
-        context?.setOpenSearchPanel?.(false);
+        // ✅ FIRST: Close modal/dropdown IMMEDIATELY before anything else
         if (onSearchComplete) {
+          console.log("🔴 Calling onSearchComplete to close modal");
           onSearchComplete();
         }
+        context?.setOpenSearchPanel?.(false);
+        
+        // Clear search input
+        clearSearch();
+        
+        // Close dropdown
+        onClose();
         
         // Then navigate
         const url = `/search?query=${encodeURIComponent(trimmed)}&page=1`;
