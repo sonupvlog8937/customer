@@ -323,7 +323,10 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
       return;
     }
 
-    // ✅ Close modal/dropdown FIRST (synchronously)
+    // ✅ Clear search input
+    clearSearch();
+    
+    // ✅ Close modal/dropdown
     context?.setOpenSearchPanel?.(false);
     if (onSearchComplete) {
       onSearchComplete();
@@ -334,11 +337,14 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
     navigate(`/search?query=${encodeURIComponent(trimmed)}&page=1`);
   };
 
-  // ✅ Helper function to handle suggestion clicks - ensures modal closes
+  // ✅ Helper function to handle suggestion clicks - ensures modal closes and input clears
   const handleSuggestionClick = (e, query) => {
     e.stopPropagation();
     e.preventDefault();
     console.log("👆 Suggestion clicked:", query);
+    
+    // Clear search input immediately
+    clearSearch();
     
     // Close modal/dropdown immediately
     context?.setOpenSearchPanel?.(false);
@@ -359,7 +365,10 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
       if (trimmed) {
         console.log("⌨️ Enter pressed with query:", trimmed);
         
-        // ✅ Close modal/dropdown FIRST (synchronously)
+        // ✅ Clear search input
+        clearSearch();
+        
+        // ✅ Close modal/dropdown
         context?.setOpenSearchPanel?.(false);
         if (onSearchComplete) {
           onSearchComplete();
