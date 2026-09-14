@@ -337,9 +337,15 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
     // Close dropdown
     onClose();
     
-    // Then navigate
+    // Then navigate after allowing modal close to take effect
     console.log("🚀 Executing navigation for:", trimmed);
-    navigate(`/search?query=${encodeURIComponent(trimmed)}&page=1`);
+    setTimeout(() => {
+      navigate(`/search?query=${encodeURIComponent(trimmed)}&page=1`);
+      // Ensure modal stays closed after navigation
+      if (onSearchComplete) {
+        onSearchComplete();
+      }
+    }, 0);
   };
 
   // ✅ Helper function to handle suggestion clicks - ensures modal closes and input clears
@@ -391,10 +397,15 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
         // Close dropdown
         onClose();
         
-        // Then navigate
+        // Then navigate after allowing modal close to take effect
         const url = `/search?query=${encodeURIComponent(trimmed)}&page=1`;
         console.log("🚀 Navigating to:", url);
-        navigate(url);
+        setTimeout(() => {
+          navigate(url);
+          if (onSearchComplete) {
+            onSearchComplete();
+          }
+        }, 0);
       }
       return;
     }
