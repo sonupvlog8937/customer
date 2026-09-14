@@ -599,7 +599,7 @@ const Header = () => {
     }
   }, [showSearchBar]);
 
-  // ✅ Close search modal on route change
+  // ✅ Close search modal when route changes (after navigation)
   useEffect(() => {
     setShowSearchModal(false);
     setShowSearchBar(false);
@@ -642,11 +642,7 @@ const Header = () => {
       {/* Search Modal */}
       <SearchModal
         isOpen={showSearchModal}
-        onClose={() => {
-          setShowSearchModal(false);
-          // Also ensure search panel state is reset
-          context?.setOpenSearchPanel?.(false);
-        }}
+        onClose={() => setShowSearchModal(false)}
         logoUrl={logoUrl}
       />
 
