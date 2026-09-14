@@ -323,29 +323,33 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
       return;
     }
 
-    try {
-      console.log("🚀 Executing search for:", trimmed);
-      const payload = await executeSearch(trimmed);
-      console.log("✅ Search payload received:", payload);
-      
-      if (!payload) {
-        console.warn("⚠️ Search returned no results");
-        return;
-      }
-      
-      // Close dropdown
-      context?.setOpenSearchPanel?.(false);
-      onSearchComplete?.();
-      
-      // Navigate to search results page
-      console.log("🧭 Navigating to search results page");
-      navigate(`/search?query=${encodeURIComponent(trimmed)}&page=1`);
-    } catch (error) {
-      console.error("❌ Search error:", error);
-      if (error?.message && error.message !== "null") {
-        context?.alertBox?.("error", error.message || "Search failed");
-      }
+    // ✅ Close modal/dropdown FIRST (synchronously)
+    context?.setOpenSearchPanel?.(false);
+    if (onSearchComplete) {
+      onSearchComplete();
     }
+    
+    // Then navigate
+    console.log("🚀 Executing navigation for:", trimmed);
+    navigate(`/search?query=${encodeURIComponent(trimmed)}&page=1`);
+  };
+
+  // ✅ Helper function to handle suggestion clicks - ensures modal closes
+  const handleSuggestionClick = (e, query) => {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log("👆 Suggestion clicked:", query);
+    
+    // Close modal/dropdown immediately
+    context?.setOpenSearchPanel?.(false);
+    if (onSearchComplete) {
+      onSearchComplete();
+    }
+    
+    // Navigate to search results
+    const url = `/search?query=${encodeURIComponent(query)}&page=1`;
+    console.log("🚀 Navigating to:", url);
+    navigate(url);
   };
 
   const handleKeyDown = (e) => {
@@ -354,15 +358,16 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
       const trimmed = search.trim();
       if (trimmed) {
         console.log("⌨️ Enter pressed with query:", trimmed);
-        // Use navigate for smooth transition with loading skeleton
+        
+        // ✅ Close modal/dropdown FIRST (synchronously)
+        context?.setOpenSearchPanel?.(false);
+        if (onSearchComplete) {
+          onSearchComplete();
+        }
+        
+        // Then navigate
         const url = `/search?query=${encodeURIComponent(trimmed)}&page=1`;
         console.log("🚀 Navigating to:", url);
-        
-        // Close dropdown/modal before navigation
-        context?.setOpenSearchPanel?.(false);
-        onSearchComplete?.();
-        
-        // Navigate using React Router for smooth transition
         navigate(url);
       }
       return;
@@ -374,12 +379,16 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
   const onSelectSuggestion = async (value) => {
     console.log("👆 Suggestion clicked:", value);
     
-    // First execute search, then close dropdown
-    try {
-      await handleSearch(value);
-    } catch (error) {
-      console.error("Error in onSelectSuggestion:", error);
+    // ✅ Close modal/dropdown IMMEDIATELY before any async operations
+    context?.setOpenSearchPanel?.(false);
+    if (onSearchComplete) {
+      onSearchComplete();
     }
+    
+    // Then navigate
+    const url = `/search?query=${encodeURIComponent(value)}&page=1`;
+    console.log("🚀 Navigating to:", url);
+    navigate(url);
   };
 
   const isSearching = search.trim().length > 0;
@@ -436,20 +445,7 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
                 {didYouMean && didYouMean !== search.trim().toLowerCase() && (
                   <button 
                     className="did-you-mean-btn" 
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      console.log("👆 Clicked did-you-mean:", didYouMean);
-                      
-                      // Close dropdown/modal first
-                      context?.setOpenSearchPanel?.(false);
-                      onSearchComplete?.();
-                      
-                      // Navigate using React Router
-                      const url = `/search?query=${encodeURIComponent(didYouMean)}&page=1`;
-                      console.log("🚀 Navigating to:", url);
-                      navigate(url);
-                    }}
+                    onMouseDown={(e) => handleSuggestionClick(e, didYouMean)}
                   >
                     <IoSparklesOutline />
                     <span className="did-you-mean-label">Did you mean</span>
@@ -465,20 +461,7 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
                         <li key={item}>
                           <button
                             className={activeIndex === idx ? "active" : ""}
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              console.log("👆 Clicked suggestion:", item);
-                              
-                              // Close dropdown/modal first
-                              context?.setOpenSearchPanel?.(false);
-                              onSearchComplete?.();
-                              
-                              // Navigate using React Router for smooth transition
-                              const url = `/search?query=${encodeURIComponent(item)}&page=1`;
-                              console.log("🚀 Navigating to:", url);
-                              navigate(url);
-                            }}
+                            onMouseDown={(e) => handleSuggestionClick(e, item)}
                           >
                             <span className="sugg-icon"><IoSearch style={{ fontSize: 13 }} /></span>
                             <span>{item}</span>
@@ -496,20 +479,7 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
                     <ul className="suggestion-list">
                       {brands.slice(0, 5).map((brand) => (
                         <li key={brand.name}>
-                          <button 
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              console.log("👆 Clicked brand:", brand.name);
-                              
-                              context?.setOpenSearchPanel?.(false);
-                              onSearchComplete?.();
-                              
-                              const url = `/search?query=${encodeURIComponent(brand.name)}&page=1`;
-                              console.log("🚀 Navigating to:", url);
-                              navigate(url);
-                            }}
-                          >
+                          <button onMouseDown={(e) => handleSuggestionClick(e, brand.name)}>
                             <span className="sugg-icon brand-icon"><IoPricetagOutline style={{ fontSize: 13 }} /></span>
                             <span dangerouslySetInnerHTML={{ __html: brand.highlightedName || brand.name }} />
                           </button>
@@ -526,20 +496,7 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
                     <ul className="suggestion-list">
                       {categories.slice(0, 5).map((cat) => (
                         <li key={cat._id || cat.name}>
-                          <button 
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              console.log("👆 Clicked category:", cat.name);
-                              
-                              context?.setOpenSearchPanel?.(false);
-                              onSearchComplete?.();
-                              
-                              const url = `/search?query=${encodeURIComponent(cat.name)}&page=1`;
-                              console.log("🚀 Navigating to:", url);
-                              navigate(url);
-                            }}
-                          >
+                          <button onMouseDown={(e) => handleSuggestionClick(e, cat.name)}>
                             <span className="sugg-icon category-icon"><IoStorefrontOutline style={{ fontSize: 13 }} /></span>
                             <span dangerouslySetInnerHTML={{ __html: cat.highlightedName || cat.name }} />
                           </button>
@@ -558,18 +515,7 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
                         <button
                           key={product?._id || product?.name}
                           className="product-card"
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            console.log("👆 Clicked product:", product?.name);
-                            
-                            context?.setOpenSearchPanel?.(false);
-                            onSearchComplete?.();
-                            
-                            const url = `/search?query=${encodeURIComponent(product?.name || "")}&page=1`;
-                            console.log("🚀 Navigating to:", url);
-                            navigate(url);
-                          }}
+                          onMouseDown={(e) => handleSuggestionClick(e, product?.name || "")}
                         >
                           <div className="product-thumb">
                             {product?.image ? (
@@ -601,18 +547,7 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
                         <button 
                           key={item} 
                           className="chip recent-chip" 
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            console.log("👆 Clicked recent:", item);
-                            
-                            context?.setOpenSearchPanel?.(false);
-                            onSearchComplete?.();
-                            
-                            const url = `/search?query=${encodeURIComponent(item)}&page=1`;
-                            console.log("🚀 Navigating to:", url);
-                            navigate(url);
-                          }}
+                          onMouseDown={(e) => handleSuggestionClick(e, item)}
                         >
                           <IoTimeOutline style={{ fontSize: 11 }} />
                           {item}
@@ -629,20 +564,7 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
                     <ul className="suggestion-list">
                       {displayTrending.map((item) => (
                         <li key={item}>
-                          <button 
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              console.log("👆 Clicked trending:", item);
-                              
-                              context?.setOpenSearchPanel?.(false);
-                              onSearchComplete?.();
-                              
-                              const url = `/search?query=${encodeURIComponent(item)}&page=1`;
-                              console.log("🚀 Navigating to:", url);
-                              navigate(url);
-                            }}
-                          >
+                          <button onMouseDown={(e) => handleSuggestionClick(e, item)}>
                             <span className="sugg-icon trending-icon">
                               <IoFlameOutline style={{ fontSize: 13 }} />
                             </span>
@@ -663,18 +585,7 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
                         <button 
                           key={cat._id || cat.name} 
                           className="chip" 
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            console.log("👆 Clicked popular category:", cat.name);
-                            
-                            context?.setOpenSearchPanel?.(false);
-                            onSearchComplete?.();
-                            
-                            const url = `/search?query=${encodeURIComponent(cat.name)}&page=1`;
-                            console.log("🚀 Navigating to:", url);
-                            navigate(url);
-                          }}
+                          onMouseDown={(e) => handleSuggestionClick(e, cat.name)}
                         >
                           {cat.name}
                         </button>
@@ -692,18 +603,7 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
                         <button 
                           key={item} 
                           className="chip popular-chip" 
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            console.log("👆 Clicked popular brand:", item);
-                            
-                            context?.setOpenSearchPanel?.(false);
-                            onSearchComplete?.();
-                            
-                            const url = `/search?query=${encodeURIComponent(item)}&page=1`;
-                            console.log("🚀 Navigating to:", url);
-                            navigate(url);
-                          }}
+                          onMouseDown={(e) => handleSuggestionClick(e, item)}
                         >
                           {item}
                         </button>
