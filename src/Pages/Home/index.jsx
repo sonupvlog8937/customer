@@ -4,6 +4,7 @@ import { fetchDataFromApi } from "../../utils/api";
 import { useAppContext } from "../../hooks/useAppContext";
 import ProductLoading from "../../components/ProductLoading";
 import BannerLoading from "../../components/LoadingSkeleton/bannerLoading";
+import HomePageSkeleton from "../../components/LoadingSkeleton/HomePageSkeleton";
 import { MdArrowRightAlt } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
 import { FaBolt, FaRegCopy, FaStar } from "react-icons/fa";
@@ -259,6 +260,7 @@ const Home = () => {
   const [activeFaq, setActiveFaq]               = useState(0);
   const [timeLeft, setTimeLeft]                 = useState({ hours: 0, minutes: 0, seconds: 0 });
   const [activeSlide, setActiveSlide]           = useState(0);
+  const [initialLoading, setInitialLoading]     = useState(true);
 
   const context  = useAppContext();
   const navigate = useNavigate();
@@ -313,6 +315,9 @@ const Home = () => {
       setBannerV1Data(bannerV1?.data || []);
       setBannerList2Data(bannerList2?.data || []);
       setBlogData(blogs?.blogs || []);
+      setInitialLoading(false); // ✅ Loading complete
+    }).catch(() => {
+      if (isMounted) setInitialLoading(false);
     });
     return () => { isMounted = false; };
   }, []);
@@ -382,8 +387,14 @@ const Home = () => {
   return (
     <div className="home-root" style={{ background: "#ffffff" }}>
 
-      {/* ─── Login Popup ─────────────────────────────────────────────────── */}
-      {showLoginPopup && (
+      {/* ✅ Initial Page Loading Skeleton */}
+      {initialLoading && <HomePageSkeleton />}
+
+      {/* ✅ Actual Content - Only show when loading is complete */}
+      {!initialLoading && (
+        <>
+          {/* ─── Login Popup ─────────────────────────────────────────────────── */}
+          {showLoginPopup && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}>
           <div className="popup-card w-full max-w-[420px] rounded-2xl overflow-hidden shadow-2xl">
             <div className="relative overflow-hidden p-7" style={{ background: "linear-gradient(135deg, #FF6B2B 0%, #FF9A5C 100%)" }}>
@@ -806,6 +817,8 @@ const Home = () => {
             </Swiper>
           </div>
         </section>
+      )}
+        </>
       )}
     </div>
   );
