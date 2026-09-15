@@ -765,12 +765,7 @@ const Header = () => {
 
             {/* Desktop: Search Bar */}
             <div className="col2 hidden lg:block flex-1 lg:w-[36%]">
-              <Search 
-                onSearchComplete={() => {
-                  // Desktop inline search - just close dropdown, no modal
-                  console.log("🔴 Desktop inline search completed");
-                }}
-              />
+              <Search />
             </div>
 
             {/* Right Side Actions */}
