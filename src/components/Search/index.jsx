@@ -317,64 +317,68 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
 
   const handleSearch = async (query = search) => {
     const trimmed = String(query || "").trim();
-    console.log("🔍 handleSearch called with:", trimmed);
+    console.log("🔍 [SEARCH] handleSearch called with:", trimmed);
     
     if (!trimmed) {
       context?.alertBox?.("error", "Please type something to search");
       return;
     }
 
-    // ✅ FIRST: Close modal/dropdown IMMEDIATELY before anything else
-    if (onSearchComplete) {
-      console.log("🔴 Calling onSearchComplete to close modal");
-      onSearchComplete();
-    }
-    context?.setOpenSearchPanel?.(false);
-    
-    // Clear search input
-    clearSearch();
-    
-    // Close dropdown
+    // ✅ Step 1: Close dropdown first
+    console.log("🔴 [SEARCH] Step 1: Closing dropdown");
     onClose();
     
-    // Then navigate after allowing modal close to take effect
-    console.log("🚀 Executing navigation for:", trimmed);
-    setTimeout(() => {
-      navigate(`/search?query=${encodeURIComponent(trimmed)}&page=1`);
-      // Ensure modal stays closed after navigation
-      if (onSearchComplete) {
-        onSearchComplete();
-      }
-    }, 0);
+    // ✅ Step 2: Close modal if callback provided
+    if (onSearchComplete) {
+      console.log("🔴 [SEARCH] Step 2: Calling onSearchComplete to close modal");
+      onSearchComplete();
+    }
+    
+    // ✅ Step 3: Close search panel context
+    if (context?.setOpenSearchPanel) {
+      console.log("🔴 [SEARCH] Step 3: Closing search panel");
+      context.setOpenSearchPanel(false);
+    }
+    
+    // ✅ Step 4: Clear search input
+    console.log("🔴 [SEARCH] Step 4: Clearing search");
+    clearSearch();
+    
+    // ✅ Step 5: Navigate
+    console.log("🚀 [SEARCH] Step 5: Navigating to search results");
+    navigate(`/search?query=${encodeURIComponent(trimmed)}&page=1`);
   };
 
-  // ✅ Helper function to handle suggestion clicks - ensures modal closes and input clears
+  // ✅ Helper function to handle suggestion clicks
   const handleSuggestionClick = (e, query) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log("👆 Suggestion clicked:", query);
+    console.log("👆 [SEARCH] Suggestion clicked:", query);
     
-    // ✅ FIRST: Close modal/dropdown IMMEDIATELY before anything else
-    if (onSearchComplete) {
-      console.log("🔴 Calling onSearchComplete to close modal");
-      onSearchComplete();
-    }
-    context?.setOpenSearchPanel?.(false);
-    
-    // Clear search input
-    clearSearch();
-    
-    // Close dropdown
+    // ✅ Step 1: Close dropdown
+    console.log("🔴 [SEARCH] Step 1: Closing dropdown");
     onClose();
     
-    // Navigate to search results
-    const url = `/search?query=${encodeURIComponent(query)}&page=1`;
-    console.log("🚀 Navigating to:", url);
-    navigate(url);
-    // Defensive: ensure modal stays closed after navigation
+    // ✅ Step 2: Close modal
     if (onSearchComplete) {
+      console.log("🔴 [SEARCH] Step 2: Calling onSearchComplete");
       onSearchComplete();
     }
+    
+    // ✅ Step 3: Close search panel
+    if (context?.setOpenSearchPanel) {
+      console.log("🔴 [SEARCH] Step 3: Closing search panel");
+      context.setOpenSearchPanel(false);
+    }
+    
+    // ✅ Step 4: Clear search
+    console.log("🔴 [SEARCH] Step 4: Clearing search");
+    clearSearch();
+    
+    // ✅ Step 5: Navigate
+    const url = `/search?query=${encodeURIComponent(query)}&page=1`;
+    console.log("🚀 [SEARCH] Step 5: Navigating to:", url);
+    navigate(url);
   };
 
   const handleKeyDown = (e) => {
@@ -382,30 +386,32 @@ const Search = ({ onSearchComplete, inputRef: externalInputRef }) => {
       e.preventDefault();
       const trimmed = search.trim();
       if (trimmed) {
-        console.log("⌨️ Enter pressed with query:", trimmed);
+        console.log("⌨️ [SEARCH] Enter pressed with query:", trimmed);
         
-        // ✅ FIRST: Close modal/dropdown IMMEDIATELY before anything else
-        if (onSearchComplete) {
-          console.log("🔴 Calling onSearchComplete to close modal");
-          onSearchComplete();
-        }
-        context?.setOpenSearchPanel?.(false);
-        
-        // Clear search input
-        clearSearch();
-        
-        // Close dropdown
+        // ✅ Step 1: Close dropdown
+        console.log("🔴 [SEARCH] Step 1: Closing dropdown");
         onClose();
         
-        // Then navigate after allowing modal close to take effect
+        // ✅ Step 2: Close modal
+        if (onSearchComplete) {
+          console.log("🔴 [SEARCH] Step 2: Calling onSearchComplete");
+          onSearchComplete();
+        }
+        
+        // ✅ Step 3: Close search panel
+        if (context?.setOpenSearchPanel) {
+          console.log("🔴 [SEARCH] Step 3: Closing search panel");
+          context.setOpenSearchPanel(false);
+        }
+        
+        // ✅ Step 4: Clear search
+        console.log("🔴 [SEARCH] Step 4: Clearing search");
+        clearSearch();
+        
+        // ✅ Step 5: Navigate
         const url = `/search?query=${encodeURIComponent(trimmed)}&page=1`;
-        console.log("🚀 Navigating to:", url);
-        setTimeout(() => {
-          navigate(url);
-          if (onSearchComplete) {
-            onSearchComplete();
-          }
-        }, 0);
+        console.log("🚀 [SEARCH] Step 5: Navigating to:", url);
+        navigate(url);
       }
       return;
     }
