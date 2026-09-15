@@ -764,9 +764,9 @@ const Header = () => {
             </div> */}
 
             {/* Desktop: Search Bar */}
-            <div className="col2 hidden lg:block flex-1 lg:w-[36%]">
+            {/* <div className="col2 hidden lg:block flex-1 lg:w-[36%]">
               <Search />
-            </div>
+            </div> */}
 
             {/* Right Side Actions */}
             <div className={`col3 lg:w-[42%] flex items-center justify-end gap-2 lg:gap-0 pl-2 lg:pl-7 ${showSearchBar && !isDesktop ? 'hidden' : ''}`}>

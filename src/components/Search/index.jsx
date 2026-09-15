@@ -99,22 +99,6 @@ const styles = `
     animation: dropIn 0.18s ease;
   }
 
-  /* Desktop: Positioned dropdown instead of full-screen overlay */
-  @media (min-width: 1024px) {
-    .search-dropdown {
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      right: 0;
-      bottom: auto;
-      max-height: 600px;
-      width: 100%;
-      border-radius: 16px;
-      border: 1.5px solid #e0e0e0;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-    }
-  }
-
   @keyframes dropIn {
     from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
