@@ -475,6 +475,8 @@ const ProductItem = (props) => {
                     discount: props?.item?.discount,
                     countInStock: props?.item?.countInStock,
                     source: "normal",
+                    quantity: 1,
+                    subTotal: props?.item?.price,
                   };
                   postData("/api/cart/add", obj).then((res) => {
                     setIsAddingToCart(false);
@@ -872,6 +874,8 @@ export const ProductItemList = (props) => {
                         discount: props?.item?.discount,
                         countInStock: props?.item?.countInStock,
                         source: "normal",
+                        quantity: 1,
+                        subTotal: props?.item?.price,
                       };
                       postData("/api/cart/add", obj).then((res) => {
                         setIsAddingToCart(false);
