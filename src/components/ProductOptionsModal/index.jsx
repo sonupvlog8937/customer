@@ -104,8 +104,6 @@ const ProductOptionsModal = ({ isOpen, onClose, product, source = 'normal' }) =>
       source: source,
       discount: discountPercent,
       selectedOptions,
-      quantity,
-      subTotal: activePrice * quantity,
     };
 
     setBusy(true);

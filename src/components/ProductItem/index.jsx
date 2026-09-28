@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Rating from "@mui/material/Rating";
-import { FaRegHeart, FaPlus } from "react-icons/fa";
+import { FaRegHeart } from "react-icons/fa";
 import { IoGitCompareOutline } from "react-icons/io5";
 import { MdZoomOutMap } from "react-icons/md";
 import { useAppContext } from "../../hooks/useAppContext";
 import { postData } from "../../utils/api";
 import { IoMdHeart } from "react-icons/io";
-import ProductOptionsModal from "../ProductOptionsModal";
 
 /* ─────────────────────────────────────────────────────
    Tag logic
@@ -24,34 +23,6 @@ const getProductTag = (product) => {
   if (Number(product?.numReviews || 0) > 0 && Number(product?.rating || 0) >= 4.2) return { label: "Top Rated", color: "#065f46", bg: "#d1fae5" };
   if (Number(product?.discount || 0) >= 25) return { label: "Trending", color: "#be123c", bg: "#ffe4e6" };
   return { label: "Featured", color: "#1d4ed8", bg: "#dbeafe" };
-};
-
-const normalizeProductOptions = (options = []) => {
-  return (Array.isArray(options) ? options : []).map((opt) => {
-    const key = String(opt?.name || opt?.label || '').trim();
-    const values = (opt?.values || []).map((v) => {
-      if (v && typeof v === 'object') {
-        const label = String(v.label || v.value || v.name || '').trim();
-        return {
-          label,
-          value: String(v.value || label).trim(),
-          price: Math.max(0, Number(v.price) || 0),
-          oldPrice: Math.max(0, Number(v.oldPrice) || 0),
-          isDefault: Boolean(v.isDefault),
-        };
-      }
-      const label = String(v || '').trim();
-      return { label, value: label, price: 0, oldPrice: 0, isDefault: false };
-    }).filter((v) => v.label);
-    
-    if (!key || values.length === 0) return null;
-    return { ...opt, name: key, label: key, values };
-  }).filter(Boolean);
-};
-
-const hasValidProductOptions = (item) => {
-  const options = normalizeProductOptions(item?.productOptions || []);
-  return options.length > 0;
 };
 
 /* ─────────────────────────────────────────────────────
@@ -140,10 +111,10 @@ const S = {
 
   // Info section below image
   info: {
-    padding: "10px 12px 12px",
+    padding: "12px 14px 16px",
     display: "flex",
     flexDirection: "column",
-    gap: "4px",
+    gap: "5px",
     flex: 1,
   },
 
@@ -166,17 +137,17 @@ const S = {
   },
 
   brand: {
-    fontSize: "9px",
+    fontSize: "10.5px",
     color: "#9ca3af",
     fontWeight: 600,
     textTransform: "uppercase",
     letterSpacing: "0.07em",
   },
   title: {
-    fontSize: "12px",
+    fontSize: "13.5px",
     fontWeight: 600,
     color: "#111827",
-    lineHeight: "1.4",
+    lineHeight: "1.45",
     textDecoration: "none",
     display: "-webkit-box",
     WebkitLineClamp: 2,
@@ -190,13 +161,13 @@ const S = {
     marginTop: "4px",
   },
   price: {
-    fontSize: "13px",
+    fontSize: "15px",
     fontWeight: 700,
     color: "#e84040",
     fontFamily: font,
   },
   oldPrice: {
-    fontSize: "11px",
+    fontSize: "12px",
     color: "#d1d5db",
     textDecoration: "line-through",
     fontWeight: 500,
@@ -265,13 +236,9 @@ const UserProductRating = ({ item, starSize = "13px" }) => {
 const ProductItem = (props) => {
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [showOptionsModal, setShowOptionsModal] = useState(false);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const context = useAppContext();
   const location = useLocation();
-
-  const hasProductOptions = hasValidProductOptions(props?.item);
 
   const productDetailsUrl = `/product/${props?.item?._id}${
     location.pathname === "/search" ? location.search : ""
@@ -322,7 +289,6 @@ const ProductItem = (props) => {
         .prod-action-btn:hover { background: #f3f4f6 !important; transform: scale(1.1); }
         .prod-action-btn.wishlist-active:hover { background: #fff0f0 !important; }
         .prod-title-link:hover { color: #e84040 !important; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
 
       <div
@@ -477,96 +443,8 @@ const ProductItem = (props) => {
               </span>
             )}
           </div>
-
-          {/* Add Button with Plus Icon */}
-          {!isOutOfStock && (
-            <button
-              onClick={() => {
-                if (hasProductOptions) {
-                  setShowOptionsModal(true);
-                } else {
-                  // Direct add to cart logic for products without options
-                  if (context?.userData === null) {
-                    context?.alertBox("error", "Please login to add items to cart");
-                    return;
-                  }
-                  setIsAddingToCart(true);
-                  const obj = {
-                    productId: props?.item?._id,
-                    userId: context?.userData?._id,
-                    productTitle: props?.item?.name,
-                    image: props?.item?.images[0],
-                    rating: props?.item?.rating,
-                    price: props?.item?.price,
-                    oldPrice: props?.item?.oldPrice,
-                    brand: props?.item?.brand,
-                    discount: props?.item?.discount,
-                    countInStock: props?.item?.countInStock,
-                    source: "normal",
-                    quantity: 1,
-                    subTotal: props?.item?.price,
-                  };
-                  postData("/api/cart/add", obj).then((res) => {
-                    setIsAddingToCart(false);
-                    if (res?.error === false) {
-                      context?.alertBox("success", "Added to cart");
-                      context?.getCartData();
-                    } else {
-                      context?.alertBox("error", res?.message);
-                    }
-                  });
-                }
-              }}
-              disabled={isAddingToCart}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 4,
-                width: '100%',
-                padding: '6px 10px',
-                marginTop: 6,
-                borderRadius: 6,
-                border: '1px solid #e5e7eb',
-                background: isAddingToCart ? '#f3f4f6' : '#fff',
-                color: '#111827',
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: isAddingToCart ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
-                opacity: isAddingToCart ? 0.7 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!isAddingToCart) {
-                  e.target.style.background = '#f8f8fa';
-                  e.target.style.borderColor = '#111827';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isAddingToCart) {
-                  e.target.style.background = '#fff';
-                  e.target.style.borderColor = '#e5e7eb';
-                }
-              }}
-            >
-              {isAddingToCart ? (
-                <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
-              ) : (
-                <FaPlus size={12} />
-              )}
-              {isAddingToCart ? 'Adding...' : 'Add'}
-            </button>
-          )}
         </div>
       </div>
-
-      {/* Product Options Modal */}
-      <ProductOptionsModal
-        isOpen={showOptionsModal}
-        onClose={() => setShowOptionsModal(false)}
-        product={props?.item}
-        source="normal"
-      />
     </>
   );
 };
@@ -580,13 +458,9 @@ export default ProductItem;
 export const ProductItemList = (props) => {
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [showOptionsModal, setShowOptionsModal] = useState(false);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const context = useAppContext();
   const location = useLocation();
-
-  const hasProductOptions = hasValidProductOptions(props?.item);
 
   const productDetailsUrl = `/product/${props?.item?._id}${
     location.pathname === "/search" ? location.search : ""
@@ -739,11 +613,11 @@ export const ProductItemList = (props) => {
         <div
           style={{
             flex: 1,
-            padding: "14px 16px",
+            padding: "18px 20px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            gap: "4px",
+            gap: "6px",
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
@@ -768,11 +642,11 @@ export const ProductItemList = (props) => {
               state={linkState}
               className="prod-title-link"
               style={{
-                fontSize: "13px",
+                fontSize: "15px",
                 fontWeight: 600,
                 color: "#111827",
                 textDecoration: "none",
-                lineHeight: "1.4",
+                lineHeight: "1.45",
                 display: "block",
                 transition: "color 0.18s",
                 fontFamily: font,
@@ -785,9 +659,9 @@ export const ProductItemList = (props) => {
             {props?.item?.description && (
               <p
                 style={{
-                  fontSize: "11px",
+                  fontSize: "13px",
                   color: "#6b7280",
-                  lineHeight: "1.5",
+                  lineHeight: "1.55",
                   display: "-webkit-box",
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: "vertical",
@@ -879,73 +753,10 @@ export const ProductItemList = (props) => {
                   : <FaRegHeart size={13} />
                 }
               </button>
-              {!isOutOfStock && (
-                <button
-                  onClick={() => {
-                    if (hasProductOptions) {
-                      setShowOptionsModal(true);
-                    } else {
-                      if (context?.userData === null) {
-                        context?.alertBox("error", "Please login to add items to cart");
-                        return;
-                      }
-                      setIsAddingToCart(true);
-                      const obj = {
-                        productId: props?.item?._id,
-                        userId: context?.userData?._id,
-                        productTitle: props?.item?.name,
-                        image: props?.item?.images[0],
-                        rating: props?.item?.rating,
-                        price: props?.item?.price,
-                        oldPrice: props?.item?.oldPrice,
-                        brand: props?.item?.brand,
-                        discount: props?.item?.discount,
-                        countInStock: props?.item?.countInStock,
-                        source: "normal",
-                        quantity: 1,
-                        subTotal: props?.item?.price,
-                      };
-                      postData("/api/cart/add", obj).then((res) => {
-                        setIsAddingToCart(false);
-                        if (res?.error === false) {
-                          context?.alertBox("success", "Added to cart");
-                          context?.getCartData();
-                        } else {
-                          context?.alertBox("error", res?.message);
-                        }
-                      });
-                    }
-                  }}
-                  disabled={isAddingToCart}
-                  style={{
-                    ...S.actionBtn,
-                    background: isAddingToCart ? "#6b7280" : "#111827",
-                    color: "#fff",
-                    boxShadow: "none",
-                    opacity: isAddingToCart ? 0.7 : 1,
-                    cursor: isAddingToCart ? "not-allowed" : "pointer",
-                  }}
-                  title="Add to Cart"
-                >
-                  {isAddingToCart ? (
-                    <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
-                  ) : (
-                    <FaPlus size={13} />
-                  )}
-                </button>
-              )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Product Options Modal */}
-      <ProductOptionsModal
-        isOpen={showOptionsModal}
-        onClose={() => setShowOptionsModal(false)}
-        product={props?.item}
-        source="normal"
-      />
     </>
   );
 };
