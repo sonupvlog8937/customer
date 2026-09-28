@@ -26,6 +26,34 @@ const getProductTag = (product) => {
   return { label: "Featured", color: "#1d4ed8", bg: "#dbeafe" };
 };
 
+const normalizeProductOptions = (options = []) => {
+  return (Array.isArray(options) ? options : []).map((opt) => {
+    const key = String(opt?.name || opt?.label || '').trim();
+    const values = (opt?.values || []).map((v) => {
+      if (v && typeof v === 'object') {
+        const label = String(v.label || v.value || v.name || '').trim();
+        return {
+          label,
+          value: String(v.value || label).trim(),
+          price: Math.max(0, Number(v.price) || 0),
+          oldPrice: Math.max(0, Number(v.oldPrice) || 0),
+          isDefault: Boolean(v.isDefault),
+        };
+      }
+      const label = String(v || '').trim();
+      return { label, value: label, price: 0, oldPrice: 0, isDefault: false };
+    }).filter((v) => v.label);
+    
+    if (!key || values.length === 0) return null;
+    return { ...opt, name: key, label: key, values };
+  }).filter(Boolean);
+};
+
+const hasValidProductOptions = (item) => {
+  const options = normalizeProductOptions(item?.productOptions || []);
+  return options.length > 0;
+};
+
 /* ─────────────────────────────────────────────────────
    Shared styles
 ───────────────────────────────────────────────────── */
@@ -243,7 +271,7 @@ const ProductItem = (props) => {
   const context = useAppContext();
   const location = useLocation();
 
-  const hasProductOptions = props?.item?.productOptions && props?.item?.productOptions.length > 0;
+  const hasProductOptions = hasValidProductOptions(props?.item);
 
   const productDetailsUrl = `/product/${props?.item?._id}${
     location.pathname === "/search" ? location.search : ""
@@ -558,7 +586,7 @@ export const ProductItemList = (props) => {
   const context = useAppContext();
   const location = useLocation();
 
-  const hasProductOptions = props?.item?.productOptions && props?.item?.productOptions.length > 0;
+  const hasProductOptions = hasValidProductOptions(props?.item);
 
   const productDetailsUrl = `/product/${props?.item?._id}${
     location.pathname === "/search" ? location.search : ""
