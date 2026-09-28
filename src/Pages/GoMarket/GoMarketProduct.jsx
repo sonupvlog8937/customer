@@ -558,6 +558,7 @@ const GoMarketProduct = () => {
             <div className="gmp-product-grid">
               {related.map((r) => {
                 const rRating = Number(r.rating || r.averageRating || 0);
+                const rReviewCount = r.reviewCount || r.totalReviews || 0;
                 const rPrice = r.discountPrice > 0 ? r.discountPrice : r.price;
                 const rOldPrice = r.oldPrice || r.price;
                 const hasDiscount = rOldPrice > rPrice;
@@ -584,6 +585,7 @@ const GoMarketProduct = () => {
                         <div className="gmp-tile-rating">
                           <span className="gmp-tile-stars">{"★".repeat(Math.round(rRating))}{"☆".repeat(5 - Math.round(rRating))}</span>
                           <span className="gmp-tile-rating-val">{rRating.toFixed(1)}</span>
+                          {rReviewCount > 0 && <span className="gmp-tile-review-count">({rReviewCount})</span>}
                         </div>
                       )}
                       <div className="gmp-tile-price-row">

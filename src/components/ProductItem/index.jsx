@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Rating from "@mui/material/Rating";
-import { FaRegHeart } from "react-icons/fa";
+import { FaRegHeart, FaPlus } from "react-icons/fa";
 import { IoGitCompareOutline } from "react-icons/io5";
 import { MdZoomOutMap } from "react-icons/md";
 import { useAppContext } from "../../hooks/useAppContext";
 import { postData } from "../../utils/api";
 import { IoMdHeart } from "react-icons/io";
+import ProductOptionsModal from "../ProductOptionsModal";
 
 /* ─────────────────────────────────────────────────────
    Tag logic
@@ -236,9 +237,12 @@ const UserProductRating = ({ item, starSize = "13px" }) => {
 const ProductItem = (props) => {
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
 
   const context = useAppContext();
   const location = useLocation();
+
+  const hasProductOptions = props?.item?.productOptions && props?.item?.productOptions.length > 0;
 
   const productDetailsUrl = `/product/${props?.item?._id}${
     location.pathname === "/search" ? location.search : ""
@@ -443,8 +447,82 @@ const ProductItem = (props) => {
               </span>
             )}
           </div>
+
+          {/* Add Button with Plus Icon */}
+          {!isOutOfStock && (
+            <button
+              onClick={() => {
+                if (hasProductOptions) {
+                  setShowOptionsModal(true);
+                } else {
+                  // Direct add to cart logic for products without options
+                  if (context?.userData === null) {
+                    context?.alertBox("error", "Please login to add items to cart");
+                    return;
+                  }
+                  const obj = {
+                    productId: props?.item?._id,
+                    userId: context?.userData?._id,
+                    productTitle: props?.item?.name,
+                    image: props?.item?.images[0],
+                    rating: props?.item?.rating,
+                    price: props?.item?.price,
+                    oldPrice: props?.item?.oldPrice,
+                    brand: props?.item?.brand,
+                    discount: props?.item?.discount,
+                    countInStock: props?.item?.countInStock,
+                    source: "normal",
+                  };
+                  postData("/api/cart/add", obj).then((res) => {
+                    if (res?.error === false) {
+                      context?.alertBox("success", "Added to cart");
+                      context?.getCartData();
+                    } else {
+                      context?.alertBox("error", res?.message);
+                    }
+                  });
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                width: '100%',
+                padding: '8px 12px',
+                marginTop: 8,
+                borderRadius: 8,
+                border: '1px solid #e5e7eb',
+                background: '#fff',
+                color: '#111827',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#f8f8fa';
+                e.target.style.borderColor = '#111827';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = '#fff';
+                e.target.style.borderColor = '#e5e7eb';
+              }}
+            >
+              <FaPlus size={12} />
+              Add
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Product Options Modal */}
+      <ProductOptionsModal
+        isOpen={showOptionsModal}
+        onClose={() => setShowOptionsModal(false)}
+        product={props?.item}
+        source="normal"
+      />
     </>
   );
 };
@@ -458,9 +536,12 @@ export default ProductItem;
 export const ProductItemList = (props) => {
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
 
   const context = useAppContext();
   const location = useLocation();
+
+  const hasProductOptions = props?.item?.productOptions && props?.item?.productOptions.length > 0;
 
   const productDetailsUrl = `/product/${props?.item?._id}${
     location.pathname === "/search" ? location.search : ""
@@ -753,10 +834,62 @@ export const ProductItemList = (props) => {
                   : <FaRegHeart size={13} />
                 }
               </button>
+              {!isOutOfStock && (
+                <button
+                  onClick={() => {
+                    if (hasProductOptions) {
+                      setShowOptionsModal(true);
+                    } else {
+                      if (context?.userData === null) {
+                        context?.alertBox("error", "Please login to add items to cart");
+                        return;
+                      }
+                      const obj = {
+                        productId: props?.item?._id,
+                        userId: context?.userData?._id,
+                        productTitle: props?.item?.name,
+                        image: props?.item?.images[0],
+                        rating: props?.item?.rating,
+                        price: props?.item?.price,
+                        oldPrice: props?.item?.oldPrice,
+                        brand: props?.item?.brand,
+                        discount: props?.item?.discount,
+                        countInStock: props?.item?.countInStock,
+                        source: "normal",
+                      };
+                      postData("/api/cart/add", obj).then((res) => {
+                        if (res?.error === false) {
+                          context?.alertBox("success", "Added to cart");
+                          context?.getCartData();
+                        } else {
+                          context?.alertBox("error", res?.message);
+                        }
+                      });
+                    }
+                  }}
+                  style={{
+                    ...S.actionBtn,
+                    background: "#111827",
+                    color: "#fff",
+                    boxShadow: "none",
+                  }}
+                  title="Add to Cart"
+                >
+                  <FaPlus size={13} />
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Product Options Modal */}
+      <ProductOptionsModal
+        isOpen={showOptionsModal}
+        onClose={() => setShowOptionsModal(false)}
+        product={props?.item}
+        source="normal"
+      />
     </>
   );
 };
