@@ -112,10 +112,10 @@ const S = {
 
   // Info section below image
   info: {
-    padding: "12px 14px 16px",
+    padding: "10px 12px 12px",
     display: "flex",
     flexDirection: "column",
-    gap: "5px",
+    gap: "4px",
     flex: 1,
   },
 
@@ -138,17 +138,17 @@ const S = {
   },
 
   brand: {
-    fontSize: "10.5px",
+    fontSize: "9px",
     color: "#9ca3af",
     fontWeight: 600,
     textTransform: "uppercase",
     letterSpacing: "0.07em",
   },
   title: {
-    fontSize: "13.5px",
+    fontSize: "12px",
     fontWeight: 600,
     color: "#111827",
-    lineHeight: "1.45",
+    lineHeight: "1.4",
     textDecoration: "none",
     display: "-webkit-box",
     WebkitLineClamp: 2,
@@ -162,13 +162,13 @@ const S = {
     marginTop: "4px",
   },
   price: {
-    fontSize: "15px",
+    fontSize: "13px",
     fontWeight: 700,
     color: "#e84040",
     fontFamily: font,
   },
   oldPrice: {
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#d1d5db",
     textDecoration: "line-through",
     fontWeight: 500,
@@ -238,6 +238,7 @@ const ProductItem = (props) => {
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const context = useAppContext();
   const location = useLocation();
@@ -293,6 +294,7 @@ const ProductItem = (props) => {
         .prod-action-btn:hover { background: #f3f4f6 !important; transform: scale(1.1); }
         .prod-action-btn.wishlist-active:hover { background: #fff0f0 !important; }
         .prod-title-link:hover { color: #e84040 !important; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
 
       <div
@@ -460,6 +462,7 @@ const ProductItem = (props) => {
                     context?.alertBox("error", "Please login to add items to cart");
                     return;
                   }
+                  setIsAddingToCart(true);
                   const obj = {
                     productId: props?.item?._id,
                     userId: context?.userData?._id,
@@ -474,6 +477,7 @@ const ProductItem = (props) => {
                     source: "normal",
                   };
                   postData("/api/cart/add", obj).then((res) => {
+                    setIsAddingToCart(false);
                     if (res?.error === false) {
                       context?.alertBox("success", "Added to cart");
                       context?.getCartData();
@@ -483,34 +487,44 @@ const ProductItem = (props) => {
                   });
                 }
               }}
+              disabled={isAddingToCart}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6,
+                gap: 4,
                 width: '100%',
-                padding: '8px 12px',
-                marginTop: 8,
-                borderRadius: 8,
+                padding: '6px 10px',
+                marginTop: 6,
+                borderRadius: 6,
                 border: '1px solid #e5e7eb',
-                background: '#fff',
+                background: isAddingToCart ? '#f3f4f6' : '#fff',
                 color: '#111827',
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: 600,
-                cursor: 'pointer',
+                cursor: isAddingToCart ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s',
+                opacity: isAddingToCart ? 0.7 : 1,
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = '#f8f8fa';
-                e.target.style.borderColor = '#111827';
+                if (!isAddingToCart) {
+                  e.target.style.background = '#f8f8fa';
+                  e.target.style.borderColor = '#111827';
+                }
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = '#fff';
-                e.target.style.borderColor = '#e5e7eb';
+                if (!isAddingToCart) {
+                  e.target.style.background = '#fff';
+                  e.target.style.borderColor = '#e5e7eb';
+                }
               }}
             >
-              <FaPlus size={12} />
-              Add
+              {isAddingToCart ? (
+                <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
+              ) : (
+                <FaPlus size={12} />
+              )}
+              {isAddingToCart ? 'Adding...' : 'Add'}
             </button>
           )}
         </div>
@@ -537,6 +551,7 @@ export const ProductItemList = (props) => {
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const context = useAppContext();
   const location = useLocation();
@@ -694,11 +709,11 @@ export const ProductItemList = (props) => {
         <div
           style={{
             flex: 1,
-            padding: "18px 20px",
+            padding: "14px 16px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            gap: "6px",
+            gap: "4px",
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
@@ -723,11 +738,11 @@ export const ProductItemList = (props) => {
               state={linkState}
               className="prod-title-link"
               style={{
-                fontSize: "15px",
+                fontSize: "13px",
                 fontWeight: 600,
                 color: "#111827",
                 textDecoration: "none",
-                lineHeight: "1.45",
+                lineHeight: "1.4",
                 display: "block",
                 transition: "color 0.18s",
                 fontFamily: font,
@@ -740,9 +755,9 @@ export const ProductItemList = (props) => {
             {props?.item?.description && (
               <p
                 style={{
-                  fontSize: "13px",
+                  fontSize: "11px",
                   color: "#6b7280",
-                  lineHeight: "1.55",
+                  lineHeight: "1.5",
                   display: "-webkit-box",
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: "vertical",
@@ -844,6 +859,7 @@ export const ProductItemList = (props) => {
                         context?.alertBox("error", "Please login to add items to cart");
                         return;
                       }
+                      setIsAddingToCart(true);
                       const obj = {
                         productId: props?.item?._id,
                         userId: context?.userData?._id,
@@ -858,6 +874,7 @@ export const ProductItemList = (props) => {
                         source: "normal",
                       };
                       postData("/api/cart/add", obj).then((res) => {
+                        setIsAddingToCart(false);
                         if (res?.error === false) {
                           context?.alertBox("success", "Added to cart");
                           context?.getCartData();
@@ -867,15 +884,22 @@ export const ProductItemList = (props) => {
                       });
                     }
                   }}
+                  disabled={isAddingToCart}
                   style={{
                     ...S.actionBtn,
-                    background: "#111827",
+                    background: isAddingToCart ? "#6b7280" : "#111827",
                     color: "#fff",
                     boxShadow: "none",
+                    opacity: isAddingToCart ? 0.7 : 1,
+                    cursor: isAddingToCart ? "not-allowed" : "pointer",
                   }}
                   title="Add to Cart"
                 >
-                  <FaPlus size={13} />
+                  {isAddingToCart ? (
+                    <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
+                  ) : (
+                    <FaPlus size={13} />
+                  )}
                 </button>
               )}
             </div>
