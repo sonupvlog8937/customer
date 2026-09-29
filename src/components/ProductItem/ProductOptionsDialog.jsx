@@ -63,24 +63,36 @@ const ProductOptionsDialog = ({ open, onClose, product, onConfirm, loading }) =>
     <Dialog
       open={open}
       onClose={loading ? undefined : onClose}
-      fullWidth
-      maxWidth="xs"
       scroll="paper"
+      maxWidth={false}
       PaperProps={{
         sx: {
           fontFamily: font,
-          borderRadius: isMobile ? "20px 20px 0 0" : "18px",
+          boxSizing: "border-box",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          // mobile: poori width ki bottom sheet | desktop: 440px center dialog
+          width: isMobile ? "100%" : 440,
+          maxWidth: "100%",
           m: isMobile ? 0 : 2,
-          width: "100%",
           maxHeight: isMobile ? "85vh" : "80vh",
-          ...(isMobile && { position: "fixed", bottom: 0, left: 0, right: 0 }),
+          borderRadius: isMobile ? "20px 20px 0 0" : "18px",
         },
       }}
-      sx={{ "& .MuiDialog-container": { alignItems: isMobile ? "flex-end" : "center" } }}
+      sx={{
+        "& .MuiDialog-container": {
+          alignItems: isMobile ? "flex-end" : "center",
+          justifyContent: "center",
+        },
+      }}
     >
+      {/* Mobile drag handle */}
+      {isMobile && <div style={styles.handle} />}
+
       {/* Header */}
       <div style={styles.header}>
-        <div style={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div style={styles.title}>Select Options</div>
           <div style={styles.subtitle}>{product?.name}</div>
         </div>
@@ -138,10 +150,13 @@ const ProductOptionsDialog = ({ open, onClose, product, onConfirm, loading }) =>
           type="button"
           onClick={handleAdd}
           disabled={loading}
-          style={{ ...styles.cartBtn, ...(loading ? { opacity: 0.6, cursor: "not-allowed" } : {}) }}
+          style={{
+            ...styles.cartBtn,
+            ...(loading ? { opacity: 0.6, cursor: "not-allowed" } : {}),
+          }}
         >
-          <FiShoppingCart size={16} />
-          {loading ? "Adding..." : "Add to Cart"}
+          <FiShoppingCart size={17} />
+          <span>{loading ? "Adding..." : "Add to Cart"}</span>
         </button>
       </div>
     </Dialog>
@@ -149,14 +164,25 @@ const ProductOptionsDialog = ({ open, onClose, product, onConfirm, loading }) =>
 };
 
 const styles = {
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    background: "#d1d5db",
+    margin: "8px auto 0",
+    flexShrink: 0,
+  },
   header: {
+    boxSizing: "border-box",
+    width: "100%",
     display: "flex",
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
-    padding: "16px 18px 12px",
+    padding: "14px 18px 12px",
     borderBottom: "1px solid #f3f4f6",
     fontFamily: font,
+    flexShrink: 0,
   },
   title: { fontSize: 16, fontWeight: 700, color: "#111827" },
   subtitle: {
@@ -166,12 +192,12 @@ const styles = {
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
-    maxWidth: "240px",
   },
   closeBtn: {
     width: 32,
     height: 32,
     minWidth: 32,
+    flexShrink: 0,
     borderRadius: "50%",
     border: "none",
     background: "#f3f4f6",
@@ -180,17 +206,26 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
   },
-  body: { padding: "16px 18px 4px", overflowY: "auto", flex: 1, fontFamily: font },
+  body: {
+    boxSizing: "border-box",
+    width: "100%",
+    padding: "16px 18px 4px",
+    overflowY: "auto",
+    overflowX: "hidden",
+    flex: 1,
+    fontFamily: font,
+  },
   groupTitle: { fontSize: 13, fontWeight: 600, color: "#111827", marginBottom: 8 },
   selectedText: { color: "#6b7280", fontWeight: 500 },
   errorText: { color: "#e84040", fontWeight: 500, fontSize: 12 },
   chipWrap: { display: "flex", flexWrap: "wrap", gap: 8 },
   chip: {
+    boxSizing: "border-box",
     display: "inline-flex",
     alignItems: "center",
     gap: 6,
     padding: "8px 14px",
-    minHeight: 38,
+    minHeight: 40,
     borderRadius: 10,
     border: "1.5px solid #e5e7eb",
     background: "#fff",
@@ -211,25 +246,31 @@ const styles = {
     display: "inline-block",
   },
   footer: {
+    boxSizing: "border-box",
+    width: "100%",
     padding: "12px 18px calc(14px + env(safe-area-inset-bottom, 0px))",
     borderTop: "1px solid #f3f4f6",
     background: "#fff",
+    flexShrink: 0,
   },
   cartBtn: {
+    boxSizing: "border-box", // ← ye missing tha, isi se button bahar nikal raha tha
     width: "100%",
+    height: 50,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    padding: "13px 16px",
+    padding: "0 16px",
     border: "none",
     borderRadius: 12,
     background: "#e84040",
     color: "#fff",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 700,
     cursor: "pointer",
     fontFamily: font,
+    whiteSpace: "nowrap",
   },
 };
 
