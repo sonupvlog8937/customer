@@ -159,6 +159,7 @@ const ProductOptionsDialog = ({ open, onClose, product, onConfirm, loading }) =>
 
       {/* Options (scrollable) */}
       <div style={styles.body}>
+        {console.log("[ProductOptionsDialog] Product:", product?.name, "ProductOptions:", product?.productOptions)}
         {/* Product Options with Price */}
         {product?.productOptions?.length > 0 && (
           <>

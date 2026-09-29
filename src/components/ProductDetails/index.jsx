@@ -185,31 +185,28 @@ export const ProductDetailsComponent = (props) => {
 
   const validateVariantSelection = () => {
     // Check if product has any options that require selection
-    const hasOptions = 
-      props?.item?.size?.length !== 0 || 
-      props?.item?.productWeight?.length !== 0 || 
-      props?.item?.productRam?.length !== 0 || 
-      props?.item?.productAge?.length !== 0 ||
-      props?.item?.colorOptions?.length !== 0 ||
-      props?.item?.productOptions?.length !== 0;
+    const hasSize = props?.item?.size?.length > 0;
+    const hasWeight = props?.item?.productWeight?.length > 0;
+    const hasRam = props?.item?.productRam?.length > 0;
+    const hasAge = props?.item?.productAge?.length > 0;
+    const hasProductOptions = props?.item?.productOptions?.length > 0;
+    
+    // Check if any option requires selection but is not selected
+    const needsSizeSelection = hasSize && selectedTabName === null;
+    const needsWeightSelection = hasWeight && selectedTabName === null;
+    const needsRamSelection = hasRam && selectedTabName === null;
+    const needsAgeSelection = hasAge && selectedTabName === null;
+    const needsProductOptionSelection = hasProductOptions && Object.keys(selectedProductOption).length === 0;
 
-    // If product has options, user must select one
-    if (hasOptions) {
-      // Check if any option is selected
-      const hasSelection = 
-        selectedTabName !== null || 
-        (props?.item?.colorOptions?.length > 0 && selectedColorIndex !== null) ||
-        Object.keys(selectedProductOption).length > 0;
-
-      if (!hasSelection) {
-        setTabError(true);
-        context?.alertBox("error", "Please select product options");
-        // Scroll to product options section
-        if (productOptionsRef.current) {
-          productOptionsRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-        return false;
+    // If any required option is not selected, show error
+    if (needsSizeSelection || needsWeightSelection || needsRamSelection || needsAgeSelection || needsProductOptionSelection) {
+      setTabError(true);
+      context?.alertBox("error", "Please select product options before adding to cart");
+      // Scroll to product options section
+      if (productOptionsRef.current) {
+        productOptionsRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
       }
+      return false;
     }
 
     // If no options or selection is made, validation passes
@@ -801,6 +798,7 @@ export const ProductDetailsComponent = (props) => {
           )}
 
           {/* PRODUCT OPTIONS WITH PRICE */}
+          {console.log("[ProductDetails] Product data:", props?.item?.name, "ProductOptions:", props?.item?.productOptions)}
           {props?.item?.productOptions?.length > 0 && (
             <div>
               {props.item.productOptions.map((option, optionIndex) => (
