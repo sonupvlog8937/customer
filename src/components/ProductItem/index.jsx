@@ -1,564 +1,367 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Rating from "@mui/material/Rating";
 import { FaRegHeart } from "react-icons/fa";
 import { IoGitCompareOutline } from "react-icons/io5";
 import { MdZoomOutMap } from "react-icons/md";
 import { FiPlus } from "react-icons/fi";
+import { IoMdHeart } from "react-icons/io";
 import { useAppContext } from "../../hooks/useAppContext";
 import { postData } from "../../utils/api";
-import { IoMdHeart } from "react-icons/io";
 import ProductOptionsDialog from "./ProductOptionsDialog";
 
-/* ─────────────────────────────────────────────────────
-   Tag logic
-───────────────────────────────────────────────────── */
+/* Image ratio ek jagah se change karo (RN card jaisa chahiye to yahi badlo) */
+const IMAGE_RATIO = "1 / 1";
+
+/* ─────────────────────────────────────────────
+   Tag / badge logic — image ke niche-left me dikhta hai
+───────────────────────────────────────────── */
 const getProductTag = (product) => {
-  const stockCount = Number(product?.countInStock || 0);
-  const soldCount = Number(
+  const stock = Number(product?.countInStock || 0);
+  const sold = Number(
     product?.soldCount || product?.totalSales || product?.sales || product?.sold || 0,
   );
-  if (stockCount <= 0) return { label: "Out of Stock", color: "#6b7280", bg: "#f3f4f6" };
-  if (stockCount <= 5) return { label: `Only ${stockCount} Left`, color: "#b45309", bg: "#fef3c7" };
-  if (stockCount <= 10) return { label: `${stockCount} Available`, color: "#0369a1", bg: "#e0f2fe" };
-  if (soldCount >= 10) return { label: "Best Seller", color: "#7c3aed", bg: "#ede9fe" };
-  if (Number(product?.numReviews || 0) > 0 && Number(product?.rating || 0) >= 4.2) return { label: "Top Rated", color: "#065f46", bg: "#d1fae5" };
-  if (Number(product?.discount || 0) >= 25) return { label: "Trending", color: "#be123c", bg: "#ffe4e6" };
-  return { label: "Featured", color: "#1d4ed8", bg: "#dbeafe" };
+  const reviews = Number(product?.numReviews || 0);
+  const rating = Number(product?.rating || 0);
+  const discount = Number(product?.discount || 0);
+
+  if (stock <= 0) return { label: "Out of Stock", key: "oos" };
+  if (stock <= 5) return { label: `Only ${stock} Left`, key: "low" };
+  if (stock <= 10) return { label: `${stock} Available`, key: "avail" };
+  if (sold >= 10) return { label: "Best Seller", key: "best" };
+  if (reviews > 0 && rating >= 4.2) return { label: "Top Rated", key: "top" };
+  if (discount >= 25) return { label: "Trending", key: "trend" };
+  return { label: "Featured", key: "feat" };
 };
 
-/* ─────────────────────────────────────────────────────
-   Shared styles
-───────────────────────────────────────────────────── */
-const font = "'Sora', sans-serif";
+const inr = (n) =>
+  Number(n || 0).toLocaleString("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  });
 
-const S = {
-  card: {
-    position: "relative",
-    background: "#fff",
-    borderRadius: "18px",
-    overflow: "hidden",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06)",
-    transition: "box-shadow 0.28s ease, transform 0.28s ease",
-    fontFamily: font,
-    display: "flex",
-    flexDirection: "column",
-    border: "1px solid #f0f0f2",
-  },
-  cardHover: {
-    boxShadow: "0 8px 40px rgba(0,0,0,0.13)",
-    transform: "translateY(-4px)",
-  },
-  imgWrapper: {
-    position: "relative",
-    width: "100%",
-    aspectRatio: "4 / 3",
-    overflow: "hidden",
-    background: "#f8f8fa",
-    flexShrink: 0,
-  },
-  img: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    transition: "transform 0.45s ease",
-    display: "block",
-  },
-  imgHover: { transform: "scale(1.07)" },
+/* ─────────────────────────────────────────────
+   Styles (CSS classes — hover/focus/touch/reduced-motion sab handle)
+───────────────────────────────────────────── */
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
 
-  discountBadge: {
-    position: "absolute",
-    top: "10px",
-    right: "10px",
-    background: "#e84040",
-    color: "#fff",
-    fontSize: "11px",
-    fontWeight: 700,
-    borderRadius: "8px",
-    padding: "4px 9px",
-    zIndex: 5,
-    letterSpacing: "0.02em",
-  },
+.pi { --brand:#e84040; --brand-2:#ff7a45; --ink:#111827; --muted:#6b7280; --line:#eef0f4;
+  font-family:'Sora',sans-serif; position:relative; display:flex; background:#fff;
+  border:1px solid var(--line); border-radius:18px; overflow:hidden;
+  box-shadow:0 1px 3px rgba(17,24,39,.05),0 6px 20px rgba(17,24,39,.06);
+  transition:box-shadow .25s ease, transform .25s ease, border-color .25s ease; }
+.pi:hover { transform:translateY(-4px); border-color:#fde1e1;
+  box-shadow:0 12px 36px rgba(232,64,64,.14),0 2px 8px rgba(17,24,39,.06); }
+.pi--grid { flex-direction:column; }
+.pi--list { flex-direction:row; }
 
-  actions: {
-    position: "absolute",
-    bottom: "10px",
-    right: "10px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-    opacity: 0,
-    transform: "translateX(8px)",
-    transition: "opacity 0.22s ease, transform 0.22s ease",
-    zIndex: 6,
-  },
-  actionsVisible: { opacity: 1, transform: "translateX(0)" },
-  actionBtn: {
-    width: "34px",
-    height: "34px",
-    minWidth: "34px",
-    borderRadius: "50%",
-    background: "#fff",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.13)",
-    border: "none",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "background 0.18s, color 0.18s, transform 0.15s",
-    color: "#222",
-  },
+/* image */
+.pi__media { position:relative; overflow:hidden; background:linear-gradient(135deg,#f6f7fb,#eef0f6); flex-shrink:0; }
+.pi--grid .pi__media { width:100%; aspect-ratio:${IMAGE_RATIO}; }
+.pi--list .pi__media { width:190px; min-width:190px; }
+.pi__link { display:block; width:100%; height:100%; }
+.pi__img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s ease; }
+.pi__img--alt { position:absolute; inset:0; opacity:0; transition:opacity .4s ease, transform .5s ease; }
+.pi:hover .pi__img { transform:scale(1.06); }
+.pi:hover .pi__img--alt { opacity:1; }
 
-  info: {
-    padding: "12px 14px 16px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "5px",
-    flex: 1,
-  },
+.pi__discount { position:absolute; top:10px; left:10px; z-index:5; color:#fff; font-size:11px; font-weight:700;
+  padding:4px 9px; border-radius:999px; background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  box-shadow:0 4px 12px rgba(232,64,64,.35); }
 
-  tagRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    marginBottom: "2px",
-  },
-  tagPill: {
-    display: "inline-flex",
-    alignItems: "center",
-    fontSize: "10px",
-    fontWeight: 700,
-    letterSpacing: "0.05em",
-    textTransform: "uppercase",
-    borderRadius: "20px",
-    padding: "3px 9px",
-  },
+/* badge — image ke bottom-left */
+.pi__badges { position:absolute; left:10px; bottom:10px; z-index:5; display:flex; gap:6px; max-width:calc(100% - 20px); }
+.pi__badge { display:inline-flex; align-items:center; gap:5px; color:#fff; font-size:10.5px; font-weight:700;
+  letter-spacing:.03em; padding:5px 10px; border-radius:999px; white-space:nowrap;
+  box-shadow:0 4px 12px rgba(0,0,0,.22); backdrop-filter:blur(4px); }
+.pi__badge::before { content:""; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.9); }
+.pi__badge--oos   { background:linear-gradient(135deg,#6b7280,#4b5563); }
+.pi__badge--low   { background:linear-gradient(135deg,#f59e0b,#ea580c); }
+.pi__badge--avail { background:linear-gradient(135deg,#0ea5e9,#2563eb); }
+.pi__badge--best  { background:linear-gradient(135deg,#8b5cf6,#6d28d9); }
+.pi__badge--top   { background:linear-gradient(135deg,#10b981,#047857); }
+.pi__badge--trend { background:linear-gradient(135deg,#f43f5e,#be123c); }
+.pi__badge--feat  { background:linear-gradient(135deg,#3b82f6,#4338ca); }
 
-  brand: {
-    fontSize: "10.5px",
-    color: "#9ca3af",
-    fontWeight: 600,
-    textTransform: "uppercase",
-    letterSpacing: "0.07em",
-  },
-  title: {
-    fontSize: "13.5px",
-    fontWeight: 600,
-    color: "#111827",
-    lineHeight: "1.45",
-    textDecoration: "none",
-    display: "-webkit-box",
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: "vertical",
-    overflow: "hidden",
-  },
-  priceRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    marginTop: "4px",
-  },
-  price: {
-    fontSize: "15px",
-    fontWeight: 700,
-    color: "#e84040",
-    fontFamily: font,
-  },
-  oldPrice: {
-    fontSize: "12px",
-    color: "#d1d5db",
-    textDecoration: "line-through",
-    fontWeight: 500,
-  },
-  divider: {
-    height: "1px",
-    background: "#f3f4f6",
-    margin: "6px 0 0",
-  },
-  ratingRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "5px",
-    marginTop: "1px",
-  },
-  ratingBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "3px",
-    background: "#388e3c",
-    color: "#fff",
-    fontSize: "11px",
-    fontWeight: 700,
-    borderRadius: "4px",
-    padding: "2px 6px",
-    lineHeight: 1.2,
-  },
-  ratingCount: {
-    fontSize: "11px",
-    color: "#9ca3af",
-    fontWeight: 500,
-  },
-  addBtn: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "4px",
-    background: "#e84040",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    padding: "8px 14px",
-    fontSize: "12px",
-    fontWeight: 700,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    fontFamily: font,
-    width: "100%",
-    marginTop: "6px",
-  },
-  addBtnDisabled: {
-    background: "#d1d5db",
-    cursor: "not-allowed",
-    opacity: 0.6,
-  },
-};
+/* out of stock */
+.pi--oos .pi__img { filter:grayscale(.85); opacity:.75; }
 
-const formatRatingNumber = (value) => {
-  const n = Number(value) || 0;
-  return Number.isInteger(n) ? String(n) : n.toFixed(1);
-};
+/* hover actions */
+.pi__actions { position:absolute; top:10px; right:10px; z-index:6; display:flex; flex-direction:column; gap:6px;
+  opacity:0; transform:translateX(8px); transition:opacity .22s ease, transform .22s ease; }
+.pi:hover .pi__actions, .pi:focus-within .pi__actions { opacity:1; transform:none; }
+@media (hover:none) { .pi__actions { opacity:1; transform:none; } }
+.pi__action { width:34px; height:34px; border-radius:50%; border:none; cursor:pointer; background:rgba(255,255,255,.95);
+  color:#222; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(0,0,0,.14);
+  transition:background .18s, color .18s, transform .15s; }
+.pi__action:hover { background:#fff0f0; color:var(--brand); transform:scale(1.1); }
+.pi__action--on { background:#fff0f0; color:var(--brand); }
 
-const UserProductRating = ({ item, starSize = "13px" }) => {
-  const reviews = Number(item?.numReviews || 0);
-  const value = Number(item?.rating || 0);
-  if (reviews <= 0 || value <= 0) {
-    return <span style={S.ratingCount}>No ratings yet</span>;
-  }
-  return (
-    <div style={S.ratingRow}>
-      <span style={S.ratingBadge}>
-        {formatRatingNumber(value)} ★
-      </span>
-      <Rating
-        value={value}
-        size="small"
-        precision={0.1}
-        readOnly
-        sx={{ fontSize: starSize }}
-      />
-      <span style={S.ratingCount}>({reviews})</span>
-    </div>
-  );
-};
+/* body */
+.pi__body { display:flex; flex-direction:column; gap:6px; padding:13px 14px 15px; flex:1; min-width:0; }
+.pi--list .pi__body { padding:18px 20px; justify-content:space-between; }
+.pi__brand { font-size:10.5px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:.07em;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* ─────────────────────────────────────────────────────
-   GRID CARD — default export
-───────────────────────────────────────────────────── */
-const ProductItem = (props) => {
-  const [isAddedInMyList, setIsAddedInMyList] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [optionsOpen, setOptionsOpen] = useState(false);
+/* title — sirf 1 line, phir ... */
+.pi__title { display:block; max-width:100%; font-size:13.5px; font-weight:600; color:var(--ink); line-height:1.45;
+  text-decoration:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color .18s; }
+.pi__title:hover { color:var(--brand); }
+.pi--list .pi__title { font-size:15px; }
+.pi__desc { margin:0; font-size:13px; color:var(--muted); line-height:1.55; display:-webkit-box;
+  -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
+/* rating */
+.pi__rating { display:flex; align-items:center; gap:5px; min-height:20px; }
+.pi__rating-chip { background:linear-gradient(135deg,#22c55e,#15803d); color:#fff; font-size:11px; font-weight:700;
+  border-radius:6px; padding:2px 7px; line-height:1.3; }
+.pi__rating-count { font-size:11px; color:#9ca3af; font-weight:500; }
+
+/* price */
+.pi__foot { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:auto;
+  padding-top:10px; border-top:1px dashed var(--line); }
+.pi__prices { display:flex; align-items:baseline; gap:7px; flex-wrap:wrap; min-width:0; }
+.pi__price { font-size:16px; font-weight:700; color:var(--brand); }
+.pi__old { font-size:12px; color:#b6bcc8; text-decoration:line-through; font-weight:500; }
+.pi__save { font-size:10.5px; font-weight:700; color:#15803d; background:#dcfce7; padding:2px 7px; border-radius:999px; }
+
+/* add button */
+.pi__add { display:flex; align-items:center; justify-content:center; gap:5px; border:none; cursor:pointer;
+  color:#fff; font:700 12px 'Sora',sans-serif; padding:9px 14px; border-radius:10px;
+  background:linear-gradient(135deg,var(--brand),var(--brand-2)); box-shadow:0 4px 12px rgba(232,64,64,.28);
+  transition:transform .18s, box-shadow .18s, filter .18s; }
+.pi--grid .pi__add { width:100%; margin-top:8px; }
+.pi__add:hover:not(:disabled) { transform:translateY(-1px); filter:brightness(1.05); box-shadow:0 8px 18px rgba(232,64,64,.35); }
+.pi__add:disabled { background:#d1d5db; box-shadow:none; cursor:not-allowed; opacity:.7; }
+
+.pi__link:focus-visible, .pi__title:focus-visible, .pi__action:focus-visible, .pi__add:focus-visible {
+  outline:2px solid var(--brand); outline-offset:2px; }
+
+@media (max-width:520px) {
+  .pi--list { flex-direction:column; }
+  .pi--list .pi__media { width:100%; min-width:0; aspect-ratio:${IMAGE_RATIO}; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .pi, .pi *, .pi__img { transition:none !important; }
+  .pi:hover { transform:none; }
+}
+`;
+
+/* ─────────────────────────────────────────────
+   Shared logic (grid + list dono use karte hain)
+───────────────────────────────────────────── */
+const OPTION_KEYS = ["size", "weight", "RAM", "colorOptions"];
+
+const useProductCard = (item) => {
   const context = useAppContext();
   const location = useLocation();
+  const [inWishlist, setInWishlist] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
-  const productDetailsUrl = `/product/${props?.item?._id}${
-    location.pathname === "/search" ? location.search : ""
-  }`;
-  const linkState = { product: props?.item };
+  const tag = useMemo(() => getProductTag(item), [item]);
+  const isOutOfStock = tag.key === "oos";
+  const hasOptions = OPTION_KEYS.some((k) => Array.isArray(item?.[k]) && item[k].length > 0);
 
-  const tag = getProductTag(props?.item);
-  const isOutOfStock = tag.label === "Out of Stock";
+  const url = `/product/${item?._id}${location.pathname === "/search" ? location.search : ""}`;
 
   useEffect(() => {
-    const myListItem = context?.myListData?.filter((item) =>
-      item.productId.includes(props?.item?._id)
-    );
-    setIsAddedInMyList(myListItem?.length !== 0);
-  }, [context?.myListData]);
+    const found = context?.myListData?.some((x) => String(x.productId).includes(item?._id));
+    setInWishlist(!!found);
+  }, [context?.myListData, item?._id]);
 
-  const handleAddToMyList = (item) => {
-    if (context?.userData === null) {
+  const toggleWishlist = useCallback(() => {
+    if (!context?.userData) {
       context?.alertBox("error", "Please login to add items to your wishlist");
       return;
     }
-    const obj = {
+    postData("/api/myList/add", {
       productId: item?._id,
       userId: context?.userData?._id,
       productTitle: item?.name,
-      image: item?.images[0],
+      image: item?.images?.[0],
       rating: item?.rating,
       price: item?.price,
       oldPrice: item?.oldPrice,
       brand: item?.brand,
       discount: item?.discount,
-    };
-    postData("/api/myList/add", obj).then((res) => {
+    }).then((res) => {
       if (res?.error === false) {
         context?.alertBox("success", res?.message);
-        setIsAddedInMyList(true);
+        setInWishlist(true);
         context?.getMyListData();
       } else {
         context?.alertBox("error", res?.message);
       }
     });
-  };
+  }, [context, item]);
 
-  const hasOptions = ["size", "weight", "RAM", "colorOptions"].some(
-    (k) => Array.isArray(props?.item?.[k]) && props.item[k].length > 0
+  const addToCart = useCallback(
+    async (selected = {}) => {
+      setAdding(true);
+      const price = item?.price || 0;
+      try {
+        const res = await postData("/api/cart/add", {
+          productId: item?._id,
+          productTitle: item?.name,
+          image: item?.images?.[0],
+          rating: item?.rating,
+          price,
+          oldPrice: item?.oldPrice,
+          quantity: 1,
+          subTotal: Math.round(price),
+          countInStock: item?.countInStock,
+          brand: item?.brand,
+          discount: item?.discount,
+          // backend field names apne schema ke hisab se adjust karo
+          size: selected.size || "",
+          weight: selected.weight || "",
+          ram: selected.ram || "",
+          color: selected.color || "",
+        });
+        if (res?.error === false) {
+          context?.alertBox("success", "Added to cart");
+          context?.getCartItems();
+          setOptionsOpen(false);
+        } else {
+          context?.alertBox("error", res?.message || "Failed to add to cart");
+        }
+      } catch {
+        context?.alertBox("error", "Failed to add to cart");
+      } finally {
+        setAdding(false);
+      }
+    },
+    [context, item],
   );
 
-  const addToCart = async (selectedOptions = {}) => {
-    setIsAddingToCart(true);
-    const quantity = 1;
-    const price = props?.item?.price || 0;
-
-    const productItem = {
-      productId: props?.item?._id,
-      productTitle: props?.item?.name,
-      image: props?.item?.images?.[0],
-      rating: props?.item?.rating,
-      price,
-      oldPrice: props?.item?.oldPrice,
-      quantity,
-      subTotal: Math.round(price * quantity),
-      countInStock: props?.item?.countInStock,
-      brand: props?.item?.brand,
-      discount: props?.item?.discount,
-      // selected options (backend field names apne schema ke hisab se adjust karo)
-      size: selectedOptions.size || "",
-      weight: selectedOptions.weight || "",
-      ram: selectedOptions.ram || "",
-      color: selectedOptions.color || "",
-    };
-
-    try {
-      const res = await postData("/api/cart/add", productItem);
-      if (res?.error === false) {
-        context?.alertBox("success", "Added to cart");
-        context?.getCartItems();
-        setOptionsOpen(false);
-      } else {
-        context?.alertBox("error", res?.message || "Failed to add to cart");
-      }
-    } catch (error) {
-      context?.alertBox("error", "Failed to add to cart");
-    } finally {
-      setIsAddingToCart(false);
-    }
-  };
-
-  const handleAddToCart = (e) => {
+  const handleAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    if (isOutOfStock) {
-      context?.alertBox("error", "Product is out of stock");
-      return;
-    }
-    if (context?.userData === null) {
-      context?.alertBox("error", "Please login to add items to cart");
-      return;
-    }
-
-    if (hasOptions) {
-      setOptionsOpen(true); // options dialog kholo
-      return;
-    }
+    if (isOutOfStock) return context?.alertBox("error", "Product is out of stock");
+    if (!context?.userData) return context?.alertBox("error", "Please login to add items to cart");
+    if (hasOptions) return setOptionsOpen(true);
     addToCart();
   };
 
+  return {
+    context, url, tag, isOutOfStock, inWishlist, adding,
+    optionsOpen, setOptionsOpen, toggleWishlist, addToCart, handleAdd,
+  };
+};
+
+/* ─────────────────────────────────────────────
+   Small building blocks
+───────────────────────────────────────────── */
+const Media = ({ item, url, tag, isOutOfStock, inWishlist, onWishlist, onQuickView }) => (
+  <div className="pi__media">
+    <Link to={url} state={{ product: item }} className="pi__link" aria-label={item?.name}>
+      <img className="pi__img" src={item?.images?.[0]} alt={item?.name || "Product"} loading="lazy" />
+      {item?.images?.length > 1 && (
+        <img className="pi__img pi__img--alt" src={item.images[1]} alt="" loading="lazy" />
+      )}
+    </Link>
+
+    {item?.discount > 0 && <span className="pi__discount">−{item.discount}%</span>}
+
+    <div className="pi__actions">
+      <button type="button" className="pi__action" title="Quick View" aria-label="Quick view" onClick={onQuickView}>
+        <MdZoomOutMap size={15} />
+      </button>
+      <button type="button" className="pi__action" title="Compare" aria-label="Compare">
+        <IoGitCompareOutline size={15} />
+      </button>
+      <button
+        type="button"
+        className={`pi__action ${inWishlist ? "pi__action--on" : ""}`}
+        title={inWishlist ? "In Wishlist" : "Add to Wishlist"}
+        aria-label={inWishlist ? "In wishlist" : "Add to wishlist"}
+        aria-pressed={inWishlist}
+        onClick={onWishlist}
+      >
+        {inWishlist ? <IoMdHeart size={15} /> : <FaRegHeart size={13} />}
+      </button>
+    </div>
+
+    {/* Badge: image ke niche-left */}
+    <div className="pi__badges">
+      <span className={`pi__badge pi__badge--${tag.key}`}>{tag.label}</span>
+    </div>
+  </div>
+);
+
+const RatingRow = ({ item }) => {
+  const reviews = Number(item?.numReviews || 0);
+  const value = Number(item?.rating || 0);
+  if (reviews <= 0 || value <= 0) {
+    return <div className="pi__rating"><span className="pi__rating-count">No ratings yet</span></div>;
+  }
+  return (
+    <div className="pi__rating">
+      <span className="pi__rating-chip">{Number.isInteger(value) ? value : value.toFixed(1)} ★</span>
+      <Rating value={value} size="small" precision={0.1} readOnly sx={{ fontSize: "13px" }} />
+      <span className="pi__rating-count">({reviews})</span>
+    </div>
+  );
+};
+
+const Prices = ({ item }) => (
+  <div className="pi__prices">
+    <span className="pi__price">{inr(item?.price)}</span>
+    {item?.oldPrice > item?.price && <span className="pi__old">{inr(item.oldPrice)}</span>}
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   GRID CARD — default export
+───────────────────────────────────────────── */
+const ProductItem = ({ item }) => {
+  const p = useProductCard(item);
+
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
-        .prod-action-btn:hover { background: #f3f4f6 !important; transform: scale(1.1); }
-        .prod-action-btn.wishlist-active:hover { background: #fff0f0 !important; }
-        .prod-title-link:hover { color: #e84040 !important; }
-        .prod-add-btn:hover:not(:disabled) { background: #d63030 !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232, 64, 64, 0.3); }
-      `}</style>
+      <style>{CSS}</style>
 
-      <div
-        style={{ ...S.card, ...(hovered ? S.cardHover : {}) }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        {/* ── Image ── */}
-        <div style={S.imgWrapper}>
-          <Link to={productDetailsUrl} state={linkState}>
-            <img
-              src={props?.item?.images?.[0]}
-              alt={props?.item?.name}
-              style={{ ...S.img, ...(hovered ? S.imgHover : {}) }}
-            />
-            {/* Second image crossfade on hover */}
-            {props?.item?.images?.length > 1 && (
-              <img
-                src={props?.item?.images[1]}
-                alt=""
-                style={{
-                  ...S.img,
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  opacity: hovered ? 1 : 0,
-                  transition: "opacity 0.4s ease",
-                }}
-              />
-            )}
+      <article className={`pi pi--grid ${p.isOutOfStock ? "pi--oos" : ""}`}>
+        <Media
+          item={item}
+          url={p.url}
+          tag={p.tag}
+          isOutOfStock={p.isOutOfStock}
+          inWishlist={p.inWishlist}
+          onWishlist={p.toggleWishlist}
+          onQuickView={() => p.context?.handleOpenProductDetailsModal(true, item)}
+        />
+
+        <div className="pi__body">
+          {item?.brand && <span className="pi__brand">{item.brand}</span>}
+
+          <Link to={p.url} state={{ product: item }} className="pi__title" title={item?.name}>
+            {item?.name}
           </Link>
 
-          {/* Discount badge */}
-          {props?.item?.discount > 0 && (
-            <span style={S.discountBadge}>−{props?.item?.discount}%</span>
-          )}
+          <RatingRow item={item} />
+          <Prices item={item} />
 
-          {/* Out-of-stock overlay */}
-          {isOutOfStock && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "rgba(255,255,255,0.55)",
-                backdropFilter: "blur(2px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <span
-                style={{
-                  background: "#6b7280",
-                  color: "#fff",
-                  borderRadius: "8px",
-                  padding: "5px 12px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  fontFamily: font,
-                }}
-              >
-                Out of Stock
-              </span>
-            </div>
-          )}
-
-          {/* Hover action buttons */}
-          <div style={{ ...S.actions, ...(hovered ? S.actionsVisible : {}) }}>
-            <button
-              className="prod-action-btn"
-              style={S.actionBtn}
-              title="Quick View"
-              onClick={() => context.handleOpenProductDetailsModal(true, props?.item)}
-            >
-              <MdZoomOutMap size={15} />
-            </button>
-            <button
-              className="prod-action-btn"
-              style={S.actionBtn}
-              title="Compare"
-            >
-              <IoGitCompareOutline size={15} />
-            </button>
-            <button
-              className={`prod-action-btn ${isAddedInMyList ? "wishlist-active" : ""}`}
-              style={{
-                ...S.actionBtn,
-                background: isAddedInMyList ? "#fff0f0" : "#fff",
-                color: isAddedInMyList ? "#e84040" : "#222",
-              }}
-              title={isAddedInMyList ? "In Wishlist" : "Add to Wishlist"}
-              onClick={() => handleAddToMyList(props?.item)}
-            >
-              {isAddedInMyList
-                ? <IoMdHeart size={15} color="#e84040" />
-                : <FaRegHeart size={13} />
-              }
-            </button>
-          </div>
-        </div>
-
-        {/* ── Info (below image) ── */}
-        <div style={S.info}>
-          <div style={S.tagRow}>
-            <span
-              style={{
-                ...S.tagPill,
-                color: tag.color,
-                background: tag.bg,
-              }}
-            >
-              {tag.label}
-            </span>
-            <span style={S.brand}>{props?.item?.brand}</span>
-          </div>
-
-          {/* Title */}
-          <Link
-            to={productDetailsUrl}
-            state={linkState}
-            className="prod-title-link"
-            style={{ ...S.title, transition: "color 0.18s" }}
-          >
-            {props?.item?.name}
-          </Link>
-
-          {/* Rating */}
-          <UserProductRating item={props?.item} />
-
-          <div style={S.divider} />
-
-          {/* Price */}
-          <div style={S.priceRow}>
-            <span style={S.price}>
-              {props?.item?.price?.toLocaleString("en-IN", {
-                style: "currency",
-                currency: "INR",
-                maximumFractionDigits: 0,
-              })}
-            </span>
-            {props?.item?.oldPrice && (
-              <span style={S.oldPrice}>
-                {props?.item?.oldPrice?.toLocaleString("en-IN", {
-                  style: "currency",
-                  currency: "INR",
-                  maximumFractionDigits: 0,
-                })}
-              </span>
-            )}
-          </div>
-
-          {/* Add to Cart Button */}
           <button
-            className="prod-add-btn"
-            style={{
-              ...S.addBtn,
-              ...(isOutOfStock || isAddingToCart ? S.addBtnDisabled : {}),
-            }}
-            onClick={handleAddToCart}
-            disabled={isOutOfStock || isAddingToCart}
+            type="button"
+            className="pi__add"
+            onClick={p.handleAdd}
+            disabled={p.isOutOfStock || p.adding}
           >
-            {isAddingToCart && !optionsOpen ? (
-              "Adding..."
-            ) : (
-              <>
-                <FiPlus size={14} />
-                <span>Add</span>
-              </>
-            )}
+            {p.adding && !p.optionsOpen ? "Adding..." : (<><FiPlus size={14} /><span>Add</span></>)}
           </button>
         </div>
-      </div>
+      </article>
 
-      {/* Options dialog (size / weight / RAM / color) */}
       <ProductOptionsDialog
-        open={optionsOpen}
-        onClose={() => setOptionsOpen(false)}
-        product={props?.item}
-        loading={isAddingToCart}
-        onConfirm={(selected) => addToCart(selected)}
+        open={p.optionsOpen}
+        onClose={() => p.setOptionsOpen(false)}
+        product={item}
+        loading={p.adding}
+        onConfirm={(selected) => p.addToCart(selected)}
       />
     </>
   );
@@ -566,311 +369,58 @@ const ProductItem = (props) => {
 
 export default ProductItem;
 
-
-/* ─────────────────────────────────────────────────────
-   LIST VIEW variant — export as ProductItemList
-───────────────────────────────────────────────────── */
-export const ProductItemList = (props) => {
-  const [isAddedInMyList, setIsAddedInMyList] = useState(false);
-  const [hovered, setHovered] = useState(false);
-
-  const context = useAppContext();
-  const location = useLocation();
-
-  const productDetailsUrl = `/product/${props?.item?._id}${
-    location.pathname === "/search" ? location.search : ""
-  }`;
-  const linkState = { product: props?.item };
-
-  useEffect(() => {
-    const myListItem = context?.myListData?.filter((item) =>
-      item.productId.includes(props?.item?._id)
-    );
-    setIsAddedInMyList(myListItem?.length !== 0);
-  }, [context?.myListData]);
-
-  const handleAddToMyList = (item) => {
-    if (context?.userData === null) {
-      context?.alertBox("error", "Please login to add items to your wishlist");
-      return;
-    }
-    const obj = {
-      productId: item?._id,
-      userId: context?.userData?._id,
-      productTitle: item?.name,
-      image: item?.images[0],
-      rating: item?.rating,
-      price: item?.price,
-      oldPrice: item?.oldPrice,
-      brand: item?.brand,
-      discount: item?.discount,
-    };
-    postData("/api/myList/add", obj).then((res) => {
-      if (res?.error === false) {
-        context?.alertBox("success", res?.message);
-        setIsAddedInMyList(true);
-        context?.getMyListData();
-      } else {
-        context?.alertBox("error", res?.message);
-      }
-    });
-  };
-
-  const tag = getProductTag(props?.item);
-  const isOutOfStock = tag.label === "Out of Stock";
+/* ─────────────────────────────────────────────
+   LIST VIEW — ProductItemList
+───────────────────────────────────────────── */
+export const ProductItemList = ({ item }) => {
+  const p = useProductCard(item);
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
-        .prod-action-btn:hover { background: #f3f4f6 !important; transform: scale(1.1); }
-        .prod-action-btn.wishlist-active:hover { background: #fff0f0 !important; }
-        .prod-title-link:hover { color: #e84040 !important; }
-      `}</style>
+      <style>{CSS}</style>
 
-      <div
-        style={{
-          fontFamily: font,
-          display: "flex",
-          flexDirection: "row",
-          background: "#fff",
-          borderRadius: "18px",
-          overflow: "hidden",
-          border: "1px solid #f0f0f2",
-          boxShadow: hovered
-            ? "0 8px 32px rgba(0,0,0,0.11)"
-            : "0 1px 4px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.05)",
-          transition: "box-shadow 0.28s ease, transform 0.28s ease",
-          transform: hovered ? "translateY(-3px)" : "none",
-        }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        {/* ── Image ── */}
-        <div
-          style={{
-            position: "relative",
-            width: "170px",
-            minWidth: "170px",
-            overflow: "hidden",
-            background: "#f8f8fa",
-            flexShrink: 0,
-          }}
-        >
-          <Link to={productDetailsUrl} state={linkState}>
-            <img
-              src={props?.item?.images?.[0]}
-              alt={props?.item?.name}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                transition: "transform 0.4s ease",
-                transform: hovered ? "scale(1.06)" : "scale(1)",
-                display: "block",
-              }}
-            />
-          </Link>
+      <article className={`pi pi--list ${p.isOutOfStock ? "pi--oos" : ""}`}>
+        <Media
+          item={item}
+          url={p.url}
+          tag={p.tag}
+          isOutOfStock={p.isOutOfStock}
+          inWishlist={p.inWishlist}
+          onWishlist={p.toggleWishlist}
+          onQuickView={() => p.context?.handleOpenProductDetailsModal(true, item)}
+        />
 
-          {/* Discount badge */}
-          {props?.item?.discount > 0 && (
-            <span
-              style={{
-                position: "absolute",
-                top: "10px",
-                left: "10px",
-                background: "#e84040",
-                color: "#fff",
-                fontSize: "11px",
-                fontWeight: 700,
-                borderRadius: "6px",
-                padding: "3px 7px",
-                zIndex: 5,
-                fontFamily: font,
-              }}
-            >
-              −{props?.item?.discount}%
-            </span>
-          )}
-
-          {isOutOfStock && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "rgba(255,255,255,0.55)",
-                backdropFilter: "blur(2px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <span
-                style={{
-                  background: "#6b7280",
-                  color: "#fff",
-                  borderRadius: "6px",
-                  padding: "4px 10px",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  fontFamily: font,
-                }}
-              >
-                Unavailable
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* ── Info ── */}
-        <div
-          style={{
-            flex: 1,
-            padding: "18px 20px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            gap: "6px",
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-            {/* Tag + brand row */}
-            <div style={{ display: "flex", alignItems: "center", gap: "7px", flexWrap: "wrap" }}>
-              <span
-                style={{
-                  ...S.tagPill,
-                  color: tag.color,
-                  background: tag.bg,
-                }}
-              >
-                {tag.label}
-              </span>
-              <span style={S.brand}>{props?.item?.brand}</span>
-            </div>
-
-            {/* Title */}
-            <Link
-              to={productDetailsUrl}
-              state={linkState}
-              className="prod-title-link"
-              style={{
-                fontSize: "15px",
-                fontWeight: 600,
-                color: "#111827",
-                textDecoration: "none",
-                lineHeight: "1.45",
-                display: "block",
-                transition: "color 0.18s",
-                fontFamily: font,
-              }}
-            >
-              {props?.item?.name}
+        <div className="pi__body">
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
+            {item?.brand && <span className="pi__brand">{item.brand}</span>}
+            <Link to={p.url} state={{ product: item }} className="pi__title" title={item?.name}>
+              {item?.name}
             </Link>
-
-            {/* Description */}
-            {props?.item?.description && (
-              <p
-                style={{
-                  fontSize: "13px",
-                  color: "#6b7280",
-                  lineHeight: "1.55",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  margin: 0,
-                  fontFamily: font,
-                }}
-              >
-                {props?.item?.description}
-              </p>
-            )}
-
-            {/* Rating */}
-            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-              <Rating
-                value={Number(props?.item?.rating || 0)}
-                size="small"
-                precision={0.5}
-                readOnly
-                sx={{ fontSize: "13px" }}
-              />
-              {props?.item?.numReviews > 0 && (
-                <span style={S.ratingCount}>({props?.item?.numReviews})</span>
-              )}
-            </div>
+            {item?.description && <p className="pi__desc">{item.description}</p>}
+            <RatingRow item={item} />
           </div>
 
-          {/* Bottom row: price + actions */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginTop: "4px",
-              paddingTop: "10px",
-              borderTop: "1px solid #f3f4f6",
-            }}
-          >
-            {/* Price */}
-            <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
-              <span style={{ ...S.price, fontSize: "17px" }}>
-                {props?.item?.price?.toLocaleString("en-IN", {
-                  style: "currency",
-                  currency: "INR",
-                  maximumFractionDigits: 0,
-                })}
-              </span>
-              {props?.item?.oldPrice && (
-                <span style={S.oldPrice}>
-                  {props?.item?.oldPrice?.toLocaleString("en-IN", {
-                    style: "currency",
-                    currency: "INR",
-                    maximumFractionDigits: 0,
-                  })}
-                </span>
-              )}
-            </div>
-
-            {/* Action buttons */}
-            <div style={{ display: "flex", gap: "7px" }}>
-              <button
-                className="prod-action-btn"
-                style={{ ...S.actionBtn, background: "#f8f8fa", boxShadow: "none" }}
-                title="Quick View"
-                onClick={() => context.handleOpenProductDetailsModal(true, props?.item)}
-              >
-                <MdZoomOutMap size={15} />
-              </button>
-              <button
-                className="prod-action-btn"
-                style={{ ...S.actionBtn, background: "#f8f8fa", boxShadow: "none" }}
-                title="Compare"
-              >
-                <IoGitCompareOutline size={15} />
-              </button>
-              <button
-                className={`prod-action-btn ${isAddedInMyList ? "wishlist-active" : ""}`}
-                style={{
-                  ...S.actionBtn,
-                  background: isAddedInMyList ? "#fff0f0" : "#f8f8fa",
-                  boxShadow: "none",
-                  color: isAddedInMyList ? "#e84040" : "#222",
-                }}
-                title={isAddedInMyList ? "In Wishlist" : "Add to Wishlist"}
-                onClick={() => handleAddToMyList(props?.item)}
-              >
-                {isAddedInMyList
-                  ? <IoMdHeart size={15} color="#e84040" />
-                  : <FaRegHeart size={13} />
-                }
-              </button>
-            </div>
+          <div className="pi__foot">
+            <Prices item={item} />
+            <button
+              type="button"
+              className="pi__add"
+              onClick={p.handleAdd}
+              disabled={p.isOutOfStock || p.adding}
+            >
+              {p.adding && !p.optionsOpen ? "Adding..." : (<><FiPlus size={14} /><span>Add</span></>)}
+            </button>
           </div>
         </div>
-      </div>
+      </article>
+
+      <ProductOptionsDialog
+        open={p.optionsOpen}
+        onClose={() => p.setOptionsOpen(false)}
+        product={item}
+        loading={p.adding}
+        onConfirm={(selected) => p.addToCart(selected)}
+      />
     </>
   );
 };
