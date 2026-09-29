@@ -67,23 +67,14 @@ const CSS = `
 .pi:hover .pi__img { transform:scale(1.06); }
 .pi:hover .pi__img--alt { opacity:1; }
 
-.pi__discount { position:absolute; top:10px; left:10px; z-index:5; color:#fff; font-size:11px; font-weight:700;
-  padding:4px 9px; border-radius:999px; background:linear-gradient(135deg,var(--brand),var(--brand-2));
-  box-shadow:0 4px 12px rgba(232,64,64,.35); }
-
-/* badge — image ke bottom-left */
+/* badge — image ke bottom-left (transparent / glass) */
 .pi__badges { position:absolute; left:10px; bottom:10px; z-index:5; display:flex; gap:6px; max-width:calc(100% - 20px); }
 .pi__badge { display:inline-flex; align-items:center; gap:5px; color:#fff; font-size:10.5px; font-weight:700;
   letter-spacing:.03em; padding:5px 10px; border-radius:999px; white-space:nowrap;
-  box-shadow:0 4px 12px rgba(0,0,0,.22); backdrop-filter:blur(4px); }
+  background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.45);
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  text-shadow:0 1px 2px rgba(0,0,0,.35); }
 .pi__badge::before { content:""; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.9); }
-.pi__badge--oos   { background:linear-gradient(135deg,#6b7280,#4b5563); }
-.pi__badge--low   { background:linear-gradient(135deg,#f59e0b,#ea580c); }
-.pi__badge--avail { background:linear-gradient(135deg,#0ea5e9,#2563eb); }
-.pi__badge--best  { background:linear-gradient(135deg,#8b5cf6,#6d28d9); }
-.pi__badge--top   { background:linear-gradient(135deg,#10b981,#047857); }
-.pi__badge--trend { background:linear-gradient(135deg,#f43f5e,#be123c); }
-.pi__badge--feat  { background:linear-gradient(135deg,#3b82f6,#4338ca); }
 
 /* out of stock */
 .pi--oos .pi__img { filter:grayscale(.85); opacity:.75; }
@@ -125,7 +116,7 @@ const CSS = `
 .pi__prices { display:flex; align-items:baseline; gap:7px; flex-wrap:wrap; min-width:0; }
 .pi__price { font-size:16px; font-weight:700; color:var(--brand); }
 .pi__old { font-size:12px; color:#b6bcc8; text-decoration:line-through; font-weight:500; }
-.pi__save { font-size:10.5px; font-weight:700; color:#15803d; background:#dcfce7; padding:2px 7px; border-radius:999px; }
+.pi__save { font-size:10.5px; font-weight:700; color:#15803d; background:#dcfce7; padding:2px 7px; border-radius:999px; white-space:nowrap; }
 
 /* add button */
 .pi__add { display:flex; align-items:center; justify-content:center; gap:5px; border:none; cursor:pointer;
@@ -264,8 +255,6 @@ const Media = ({ item, url, tag, isOutOfStock, inWishlist, onWishlist, onQuickVi
       )}
     </Link>
 
-    {item?.discount > 0 && <span className="pi__discount">−{item.discount}%</span>}
-
     {/* <div className="pi__actions">
       <button type="button" className="pi__action" title="Quick View" aria-label="Quick view" onClick={onQuickView}>
         <MdZoomOutMap size={15} />
@@ -285,7 +274,7 @@ const Media = ({ item, url, tag, isOutOfStock, inWishlist, onWishlist, onQuickVi
       </button>
     </div> */}
 
-    {/* Badge: image ke niche-left */}
+    {/* Badge: image ke niche-left (transparent) */}
     <div className="pi__badges">
       <span className={`pi__badge pi__badge--${tag.key}`}>{tag.label}</span>
     </div>
@@ -307,10 +296,12 @@ const RatingRow = ({ item }) => {
   );
 };
 
+/* Selling price + MRP + discount (right side) */
 const Prices = ({ item }) => (
   <div className="pi__prices">
     <span className="pi__price">{inr(item?.price)}</span>
     {item?.oldPrice > item?.price && <span className="pi__old">{inr(item.oldPrice)}</span>}
+    {item?.discount > 0 && <span className="pi__save">{item.discount}% OFF</span>}
   </div>
 );
 
