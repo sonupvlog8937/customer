@@ -324,6 +324,20 @@ const ProductItem = (props) => {
       return;
     }
 
+    // Check if product has options (size, weight, RAM, color)
+    const hasOptions = 
+      (props?.item?.size && props?.item?.size.length > 0) ||
+      (props?.item?.weight && props?.item?.weight.length > 0) ||
+      (props?.item?.RAM && props?.item?.RAM.length > 0) ||
+      (props?.item?.colorOptions && props?.item?.colorOptions.length > 0);
+
+    // If product has options, open modal for selection
+    if (hasOptions) {
+      context?.handleOpenProductDetailsModal(true, props?.item);
+      return;
+    }
+
+    // No options - directly add to cart
     setIsAddingToCart(true);
 
     const quantity = 1;
