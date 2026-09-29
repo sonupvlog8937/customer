@@ -8,6 +8,7 @@ import { FiPlus } from "react-icons/fi";
 import { useAppContext } from "../../hooks/useAppContext";
 import { postData } from "../../utils/api";
 import { IoMdHeart } from "react-icons/io";
+import ProductOptionsDialog from "./ProductOptionsDialog";
 
 /* ─────────────────────────────────────────────────────
    Tag logic
@@ -65,7 +66,6 @@ const S = {
   },
   imgHover: { transform: "scale(1.07)" },
 
-  // Discount badge stays on image (top-right)
   discountBadge: {
     position: "absolute",
     top: "10px",
@@ -80,7 +80,6 @@ const S = {
     letterSpacing: "0.02em",
   },
 
-  // Hover action buttons on image
   actions: {
     position: "absolute",
     bottom: "10px",
@@ -110,7 +109,6 @@ const S = {
     color: "#222",
   },
 
-  // Info section below image
   info: {
     padding: "12px 14px 16px",
     display: "flex",
@@ -119,7 +117,6 @@ const S = {
     flex: 1,
   },
 
-  // Tag row — NOW BELOW IMAGE
   tagRow: {
     display: "flex",
     alignItems: "center",
@@ -219,11 +216,6 @@ const S = {
     width: "100%",
     marginTop: "6px",
   },
-  addBtnHover: {
-    background: "#d63030",
-    transform: "translateY(-1px)",
-    boxShadow: "0 4px 12px rgba(232, 64, 64, 0.3)",
-  },
   addBtnDisabled: {
     background: "#d1d5db",
     cursor: "not-allowed",
@@ -265,8 +257,8 @@ const UserProductRating = ({ item, starSize = "13px" }) => {
 const ProductItem = (props) => {
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [addBtnHovered, setAddBtnHovered] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
   const context = useAppContext();
   const location = useLocation();
@@ -275,6 +267,9 @@ const ProductItem = (props) => {
     location.pathname === "/search" ? location.search : ""
   }`;
   const linkState = { product: props?.item };
+
+  const tag = getProductTag(props?.item);
+  const isOutOfStock = tag.label === "Out of Stock";
 
   useEffect(() => {
     const myListItem = context?.myListData?.filter((item) =>
@@ -310,58 +305,40 @@ const ProductItem = (props) => {
     });
   };
 
-  const handleAddToCart = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (isOutOfStock) {
-      context?.alertBox("error", "Product is out of stock");
-      return;
-    }
+  const hasOptions = ["size", "weight", "RAM", "colorOptions"].some(
+    (k) => Array.isArray(props?.item?.[k]) && props.item[k].length > 0
+  );
 
-    if (context?.userData === null) {
-      context?.alertBox("error", "Please login to add items to cart");
-      return;
-    }
-
-    // Check if product has options (size, weight, RAM, color)
-    const hasOptions = 
-      (props?.item?.size && props?.item?.size.length > 0) ||
-      (props?.item?.weight && props?.item?.weight.length > 0) ||
-      (props?.item?.RAM && props?.item?.RAM.length > 0) ||
-      (props?.item?.colorOptions && props?.item?.colorOptions.length > 0);
-
-    // If product has options, open modal for selection
-    if (hasOptions) {
-      context?.handleOpenProductDetailsModal(true, props?.item);
-      return;
-    }
-
-    // No options - directly add to cart
+  const addToCart = async (selectedOptions = {}) => {
     setIsAddingToCart(true);
-
     const quantity = 1;
     const price = props?.item?.price || 0;
-    
+
     const productItem = {
       productId: props?.item?._id,
       productTitle: props?.item?.name,
       image: props?.item?.images?.[0],
       rating: props?.item?.rating,
-      price: price,
+      price,
       oldPrice: props?.item?.oldPrice,
-      quantity: quantity,
+      quantity,
       subTotal: Math.round(price * quantity),
       countInStock: props?.item?.countInStock,
       brand: props?.item?.brand,
       discount: props?.item?.discount,
+      // selected options (backend field names apne schema ke hisab se adjust karo)
+      size: selectedOptions.size || "",
+      weight: selectedOptions.weight || "",
+      ram: selectedOptions.ram || "",
+      color: selectedOptions.color || "",
     };
 
     try {
       const res = await postData("/api/cart/add", productItem);
       if (res?.error === false) {
         context?.alertBox("success", "Added to cart");
-        context?.getCartItems(); // Fixed: was getCartData()
+        context?.getCartItems();
+        setOptionsOpen(false);
       } else {
         context?.alertBox("error", res?.message || "Failed to add to cart");
       }
@@ -372,8 +349,25 @@ const ProductItem = (props) => {
     }
   };
 
-  const tag = getProductTag(props?.item);
-  const isOutOfStock = tag.label === "Out of Stock";
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isOutOfStock) {
+      context?.alertBox("error", "Product is out of stock");
+      return;
+    }
+    if (context?.userData === null) {
+      context?.alertBox("error", "Please login to add items to cart");
+      return;
+    }
+
+    if (hasOptions) {
+      setOptionsOpen(true); // options dialog kholo
+      return;
+    }
+    addToCart();
+  };
 
   return (
     <>
@@ -415,7 +409,7 @@ const ProductItem = (props) => {
             )}
           </Link>
 
-          {/* Discount badge — stays on image */}
+          {/* Discount badge */}
           {props?.item?.discount > 0 && (
             <span style={S.discountBadge}>−{props?.item?.discount}%</span>
           )}
@@ -488,8 +482,6 @@ const ProductItem = (props) => {
 
         {/* ── Info (below image) ── */}
         <div style={S.info}>
-
-          {/* ✅ TAG ROW — moved from image to here */}
           <div style={S.tagRow}>
             <span
               style={{
@@ -547,10 +539,8 @@ const ProductItem = (props) => {
             }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAddingToCart}
-            onMouseEnter={() => setAddBtnHovered(true)}
-            onMouseLeave={() => setAddBtnHovered(false)}
           >
-            {isAddingToCart ? (
+            {isAddingToCart && !optionsOpen ? (
               "Adding..."
             ) : (
               <>
@@ -561,6 +551,15 @@ const ProductItem = (props) => {
           </button>
         </div>
       </div>
+
+      {/* Options dialog (size / weight / RAM / color) */}
+      <ProductOptionsDialog
+        open={optionsOpen}
+        onClose={() => setOptionsOpen(false)}
+        product={props?.item}
+        loading={isAddingToCart}
+        onConfirm={(selected) => addToCart(selected)}
+      />
     </>
   );
 };
@@ -737,8 +736,7 @@ export const ProductItemList = (props) => {
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-
-            {/* ✅ TAG + BRAND ROW — below image area, top of info */}
+            {/* Tag + brand row */}
             <div style={{ display: "flex", alignItems: "center", gap: "7px", flexWrap: "wrap" }}>
               <span
                 style={{
