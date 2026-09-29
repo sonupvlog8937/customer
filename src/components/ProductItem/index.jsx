@@ -4,6 +4,7 @@ import Rating from "@mui/material/Rating";
 import { FaRegHeart } from "react-icons/fa";
 import { IoGitCompareOutline } from "react-icons/io5";
 import { MdZoomOutMap } from "react-icons/md";
+import { FiPlus } from "react-icons/fi";
 import { useAppContext } from "../../hooks/useAppContext";
 import { postData } from "../../utils/api";
 import { IoMdHeart } from "react-icons/io";
@@ -50,7 +51,7 @@ const S = {
   imgWrapper: {
     position: "relative",
     width: "100%",
-    aspectRatio: "1 / 1",
+    aspectRatio: "4 / 3",
     overflow: "hidden",
     background: "#f8f8fa",
     flexShrink: 0,
@@ -200,6 +201,34 @@ const S = {
     color: "#9ca3af",
     fontWeight: 500,
   },
+  addBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "4px",
+    background: "#e84040",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    padding: "8px 14px",
+    fontSize: "12px",
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    fontFamily: font,
+    width: "100%",
+    marginTop: "6px",
+  },
+  addBtnHover: {
+    background: "#d63030",
+    transform: "translateY(-1px)",
+    boxShadow: "0 4px 12px rgba(232, 64, 64, 0.3)",
+  },
+  addBtnDisabled: {
+    background: "#d1d5db",
+    cursor: "not-allowed",
+    opacity: 0.6,
+  },
 };
 
 const formatRatingNumber = (value) => {
@@ -236,6 +265,8 @@ const UserProductRating = ({ item, starSize = "13px" }) => {
 const ProductItem = (props) => {
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [addBtnHovered, setAddBtnHovered] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const context = useAppContext();
   const location = useLocation();
@@ -279,6 +310,50 @@ const ProductItem = (props) => {
     });
   };
 
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isOutOfStock) {
+      context?.alertBox("error", "Product is out of stock");
+      return;
+    }
+
+    if (context?.userData === null) {
+      context?.alertBox("error", "Please login to add items to cart");
+      return;
+    }
+
+    setIsAddingToCart(true);
+
+    const productItem = {
+      _id: props?.item?._id,
+      productTitle: props?.item?.name,
+      image: props?.item?.images?.[0],
+      rating: props?.item?.rating,
+      price: props?.item?.price,
+      oldPrice: props?.item?.oldPrice,
+      quantity: 1,
+      countInStock: props?.item?.countInStock,
+      brand: props?.item?.brand,
+      discount: props?.item?.discount,
+    };
+
+    try {
+      const res = await postData("/api/cart/add", productItem);
+      if (res?.error === false) {
+        context?.alertBox("success", "Added to cart");
+        context?.getCartData();
+      } else {
+        context?.alertBox("error", res?.message || "Failed to add to cart");
+      }
+    } catch (error) {
+      context?.alertBox("error", "Failed to add to cart");
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
   const tag = getProductTag(props?.item);
   const isOutOfStock = tag.label === "Out of Stock";
 
@@ -289,6 +364,7 @@ const ProductItem = (props) => {
         .prod-action-btn:hover { background: #f3f4f6 !important; transform: scale(1.1); }
         .prod-action-btn.wishlist-active:hover { background: #fff0f0 !important; }
         .prod-title-link:hover { color: #e84040 !important; }
+        .prod-add-btn:hover:not(:disabled) { background: #d63030 !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232, 64, 64, 0.3); }
       `}</style>
 
       <div
@@ -443,6 +519,28 @@ const ProductItem = (props) => {
               </span>
             )}
           </div>
+
+          {/* Add to Cart Button */}
+          <button
+            className="prod-add-btn"
+            style={{
+              ...S.addBtn,
+              ...(isOutOfStock || isAddingToCart ? S.addBtnDisabled : {}),
+            }}
+            onClick={handleAddToCart}
+            disabled={isOutOfStock || isAddingToCart}
+            onMouseEnter={() => setAddBtnHovered(true)}
+            onMouseLeave={() => setAddBtnHovered(false)}
+          >
+            {isAddingToCart ? (
+              "Adding..."
+            ) : (
+              <>
+                <FiPlus size={14} />
+                <span>Add</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </>
