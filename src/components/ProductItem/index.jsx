@@ -143,7 +143,7 @@ const CSS = `
 /* ─────────────────────────────────────────────
    Shared logic (grid + list dono use karte hain)
 ───────────────────────────────────────────── */
-const OPTION_KEYS = ["size", "weight", "RAM", "colorOptions"];
+const OPTION_KEYS = ["size", "weight", "RAM", "colorOptions", "productOptions"];
 
 const useProductCard = (item) => {
   const context = useAppContext();
@@ -154,7 +154,12 @@ const useProductCard = (item) => {
 
   const tag = useMemo(() => getProductTag(item), [item]);
   const isOutOfStock = tag.key === "oos";
-  const hasOptions = OPTION_KEYS.some((k) => Array.isArray(item?.[k]) && item[k].length > 0);
+  const hasOptions = OPTION_KEYS.some((k) => {
+    if (k === "productOptions") {
+      return Array.isArray(item?.productOptions) && item.productOptions.length > 0;
+    }
+    return Array.isArray(item?.[k]) && item[k].length > 0;
+  });
 
   const url = `/product/${item?._id}${location.pathname === "/search" ? location.search : ""}`;
 
@@ -192,17 +197,45 @@ const useProductCard = (item) => {
   const addToCart = useCallback(
     async (selected = {}) => {
       setAdding(true);
-      const price = item?.price || 0;
+      
+      // Calculate price based on selected product option
+      let finalPrice = item?.price || 0;
+      let finalOldPrice = item?.oldPrice || 0;
+      
+      if (selected.productOption && Object.keys(selected.productOption).length > 0) {
+        const optionName = Object.keys(selected.productOption)[0];
+        const selectedValue = selected.productOption[optionName];
+        const option = item?.productOptions?.find(opt => opt.name === optionName);
+        if (option) {
+          const valueObj = option.values.find(v => v.value === selectedValue);
+          if (valueObj?.price) {
+            finalPrice = Number(valueObj.price);
+            finalOldPrice = valueObj.mrp && Number(valueObj.mrp) > 0 ? Number(valueObj.mrp) : finalPrice;
+          }
+        }
+      }
+      
       try {
+        // Get selected product option details
+        let selectedOptionData = null;
+        if (selected.productOption && Object.keys(selected.productOption).length > 0) {
+          const optionName = Object.keys(selected.productOption)[0];
+          const selectedValue = selected.productOption[optionName];
+          selectedOptionData = {
+            optionName,
+            optionValue: selectedValue
+          };
+        }
+
         const res = await postData("/api/cart/add", {
           productId: item?._id,
           productTitle: item?.name,
           image: item?.images?.[0],
           rating: item?.rating,
-          price,
-          oldPrice: item?.oldPrice,
+          price: finalPrice,
+          oldPrice: finalOldPrice,
           quantity: 1,
-          subTotal: Math.round(price),
+          subTotal: Math.round(finalPrice),
           countInStock: item?.countInStock,
           brand: item?.brand,
           discount: item?.discount,
@@ -211,6 +244,7 @@ const useProductCard = (item) => {
           weight: selected.weight || "",
           ram: selected.ram || "",
           color: selected.color || "",
+          productOption: selectedOptionData || undefined
         });
         if (res?.error === false) {
           context?.alertBox("success", "Added to cart");

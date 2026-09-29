@@ -29,6 +29,7 @@ const ProductOptionsDialog = ({ open, onClose, product, onConfirm, loading }) =>
   const isMobile = useMediaQuery("(max-width:600px)");
   const [selected, setSelected] = useState({});
   const [showError, setShowError] = useState(false);
+  const [selectedProductOption, setSelectedProductOption] = useState({});
 
   // sirf wahi groups jinke options product me hain
   const groups = GROUPS.map((g) => ({
@@ -38,9 +39,41 @@ const ProductOptionsDialog = ({ open, onClose, product, onConfirm, loading }) =>
       .map(normalize),
   })).filter((g) => g.options.length > 0);
 
+  // Calculate active price based on selected product option
+  const activePrice = React.useMemo(() => {
+    if (Object.keys(selectedProductOption).length > 0) {
+      const optionName = Object.keys(selectedProductOption)[0];
+      const selectedValue = selectedProductOption[optionName];
+      const option = product?.productOptions?.find(opt => opt.name === optionName);
+      if (option) {
+        const valueObj = option.values.find(v => v.value === selectedValue);
+        if (valueObj?.price) {
+          return Number(valueObj.price);
+        }
+      }
+    }
+    return Number(product?.price ?? 0);
+  }, [selectedProductOption, product]);
+
+  const activeOldPrice = React.useMemo(() => {
+    if (Object.keys(selectedProductOption).length > 0) {
+      const optionName = Object.keys(selectedProductOption)[0];
+      const selectedValue = selectedProductOption[optionName];
+      const option = product?.productOptions?.find(opt => opt.name === optionName);
+      if (option) {
+        const valueObj = option.values.find(v => v.value === selectedValue);
+        if (valueObj?.mrp && Number(valueObj.mrp) > 0) {
+          return Number(valueObj.mrp);
+        }
+      }
+    }
+    return Number(product?.oldPrice ?? 0);
+  }, [selectedProductOption, product]);
+
   useEffect(() => {
     if (open) {
       setSelected({});
+      setSelectedProductOption({});
       setShowError(false);
     }
   }, [open, product?._id]);
@@ -50,13 +83,21 @@ const ProductOptionsDialog = ({ open, onClose, product, onConfirm, loading }) =>
     setShowError(false);
   };
 
+  const handleProductOptionSelect = (optionName, value) => {
+    setSelectedProductOption({ [optionName]: value });
+    setShowError(false);
+  };
+
   const handleAdd = () => {
     const missing = groups.filter((g) => !selected[g.key]);
-    if (missing.length > 0) {
+    const hasProductOptions = product?.productOptions?.length > 0;
+    const productOptionMissing = hasProductOptions && Object.keys(selectedProductOption).length === 0;
+    
+    if (missing.length > 0 || productOptionMissing) {
       setShowError(true);
       return;
     }
-    onConfirm(selected);
+    onConfirm({ ...selected, productOption: selectedProductOption });
   };
 
   return (
@@ -101,8 +142,98 @@ const ProductOptionsDialog = ({ open, onClose, product, onConfirm, loading }) =>
         </button>
       </div>
 
+      {/* Price Display */}
+      <div style={styles.priceBar}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={styles.currentPrice}>₹{activePrice.toLocaleString("en-IN")}</span>
+          {activeOldPrice > activePrice && (
+            <>
+              <span style={styles.oldPrice}>₹{activeOldPrice.toLocaleString("en-IN")}</span>
+              <span style={styles.discountBadge}>
+                {Math.round(((activeOldPrice - activePrice) / activeOldPrice) * 100)}% OFF
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Options (scrollable) */}
       <div style={styles.body}>
+        {/* Product Options with Price */}
+        {product?.productOptions?.length > 0 && (
+          <>
+            {product.productOptions.map((option, optionIndex) => {
+              const hasError = showError && Object.keys(selectedProductOption).length === 0;
+              const optionName = option.name;
+              const selectedValue = selectedProductOption[optionName];
+
+              return (
+                <div key={optionIndex} style={{ marginBottom: 18 }}>
+                  <div style={styles.groupTitle}>
+                    {optionName}
+                    {selectedValue && (
+                      <span style={styles.selectedText}>: {selectedValue}</span>
+                    )}
+                    {hasError && <span style={styles.errorText}> — please select</span>}
+                  </div>
+
+                  <div style={styles.chipWrap}>
+                    {option.values.map((valueObj, valueIndex) => {
+                      const active = selectedProductOption[optionName] === valueObj.value;
+                      const hasDiscount = valueObj.mrp && valueObj.mrp > valueObj.price;
+                      const discount = hasDiscount 
+                        ? Math.round(((valueObj.mrp - valueObj.price) / valueObj.mrp) * 100) 
+                        : 0;
+
+                      return (
+                        <button
+                          key={valueIndex}
+                          type="button"
+                          onClick={() => handleProductOptionSelect(optionName, valueObj.value)}
+                          style={{
+                            ...styles.priceOptionChip,
+                            ...(active ? styles.priceOptionChipActive : {}),
+                            ...(hasError && !active ? styles.chipError : {}),
+                          }}
+                        >
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>{valueObj.value}</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                              <span style={{ fontSize: 14, fontWeight: 700 }}>₹{valueObj.price}</span>
+                              {hasDiscount && (
+                                <>
+                                  <span style={{
+                                    fontSize: 11,
+                                    color: active ? "rgba(232,64,64,0.7)" : "rgba(0,0,0,0.4)",
+                                    textDecoration: "line-through"
+                                  }}>
+                                    ₹{valueObj.mrp}
+                                  </span>
+                                  <span style={{
+                                    fontSize: 9,
+                                    fontWeight: 700,
+                                    color: active ? "#e84040" : "#16a34a",
+                                    background: active ? "rgba(232,64,64,0.1)" : "#f0fdf4",
+                                    padding: "2px 4px",
+                                    borderRadius: 3,
+                                    border: active ? "none" : "1px solid #bbf7d0"
+                                  }}>
+                                    {discount}% OFF
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+
         {groups.map((g) => {
           const hasError = showError && !selected[g.key];
           return (
@@ -206,6 +337,35 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
   },
+  priceBar: {
+    boxSizing: "border-box",
+    width: "100%",
+    padding: "12px 18px",
+    background: "linear-gradient(135deg, #fafafa 0%, #f3f3f3 100%)",
+    borderBottom: "1px solid #f3f4f6",
+    fontFamily: font,
+    flexShrink: 0,
+  },
+  currentPrice: {
+    fontSize: 24,
+    fontWeight: 800,
+    color: "#111827",
+    letterSpacing: "-0.5px",
+  },
+  oldPrice: {
+    fontSize: 15,
+    fontWeight: 400,
+    color: "rgba(0,0,0,0.3)",
+    textDecoration: "line-through",
+  },
+  discountBadge: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: "#fff",
+    background: "linear-gradient(135deg, #16a34a, #15803d)",
+    padding: "3px 8px",
+    borderRadius: 5,
+  },
   body: {
     boxSizing: "border-box",
     width: "100%",
@@ -238,6 +398,21 @@ const styles = {
   },
   chipActive: { borderColor: "#e84040", background: "#fff0f0", color: "#e84040" },
   chipError: { borderColor: "#fecaca" },
+  priceOptionChip: {
+    boxSizing: "border-box",
+    display: "inline-flex",
+    alignItems: "flex-start",
+    padding: "10px 12px",
+    minWidth: 95,
+    borderRadius: 10,
+    border: "1.5px solid #e5e7eb",
+    background: "#fff",
+    color: "#374151",
+    cursor: "pointer",
+    fontFamily: font,
+    transition: "all 0.15s ease",
+  },
+  priceOptionChipActive: { borderColor: "#e84040", background: "#fff0f0", color: "#e84040" },
   swatch: {
     width: 16,
     height: 16,

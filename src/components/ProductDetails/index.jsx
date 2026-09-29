@@ -36,6 +36,9 @@ export const ProductDetailsComponent = (props) => {
   const [isBuyingNow, setIsBuyingNow] = useState(false);
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   
+  // Product Options with Price state
+  const [selectedProductOption, setSelectedProductOption] = useState({});
+  
   // Ref for product options section
   const productOptionsRef = useRef(null);
 
@@ -71,18 +74,31 @@ export const ProductDetailsComponent = (props) => {
   }, [selectedStyle, selectedColor, props?.item?.images]);
 
   const activePrice = useMemo(() => {
-    // 1. Style/color variant price (admin & seller both)
+    // 1. Product Options with Price (new feature - highest priority for grocery/ecommerce items)
+    if (Object.keys(selectedProductOption).length > 0) {
+      const optionName = Object.keys(selectedProductOption)[0];
+      const selectedValue = selectedProductOption[optionName];
+      const option = props?.item?.productOptions?.find(opt => opt.name === optionName);
+      if (option) {
+        const valueObj = option.values.find(v => v.value === selectedValue);
+        if (valueObj?.price) {
+          return Number(valueObj.price);
+        }
+      }
+    }
+
+    // 2. Style/color variant price (admin & seller both)
     const variantPrice = selectedStyle?.price ?? selectedColor?.price;
     if (variantPrice !== undefined && variantPrice !== null && Number(variantPrice) > 0) {
       return Number(variantPrice);
     }
 
-    // 2. sizePriceMap (admin products)
+    // 3. sizePriceMap (admin products)
     if (selectedTabName && props?.item?.sizePriceMap?.[selectedTabName]?.price) {
       return Number(props.item.sizePriceMap[selectedTabName].price);
     }
 
-    // 3. priceVariants array (some seller product structures)
+    // 4. priceVariants array (some seller product structures)
     if (selectedTabName && Array.isArray(props?.item?.priceVariants)) {
       const match = props.item.priceVariants.find(
         (v) => v?.size === selectedTabName || v?.label === selectedTabName || v?.name === selectedTabName
@@ -90,23 +106,36 @@ export const ProductDetailsComponent = (props) => {
       if (match?.price) return Number(match.price);
     }
 
-    // 4. Fallback: root-level price
+    // 5. Fallback: root-level price
     return Number(props?.item?.price ?? 0);
-  }, [selectedStyle, selectedColor, selectedTabName, props?.item?.sizePriceMap, props?.item?.priceVariants, props?.item?.price]);
+  }, [selectedProductOption, selectedStyle, selectedColor, selectedTabName, props?.item?.sizePriceMap, props?.item?.priceVariants, props?.item?.price, props?.item?.productOptions]);
 
   const activeOldPrice = useMemo(() => {
-    // 1. Style/color variant oldPrice (admin & seller both)
+    // 1. Product Options with MRP (new feature)
+    if (Object.keys(selectedProductOption).length > 0) {
+      const optionName = Object.keys(selectedProductOption)[0];
+      const selectedValue = selectedProductOption[optionName];
+      const option = props?.item?.productOptions?.find(opt => opt.name === optionName);
+      if (option) {
+        const valueObj = option.values.find(v => v.value === selectedValue);
+        if (valueObj?.mrp && Number(valueObj.mrp) > 0) {
+          return Number(valueObj.mrp);
+        }
+      }
+    }
+
+    // 2. Style/color variant oldPrice (admin & seller both)
     const variantOldPrice = selectedStyle?.oldPrice ?? selectedColor?.oldPrice;
     if (variantOldPrice !== undefined && variantOldPrice !== null && Number(variantOldPrice) > 0) {
       return Number(variantOldPrice);
     }
 
-    // 2. sizePriceMap (admin products)
+    // 3. sizePriceMap (admin products)
     if (selectedTabName && props?.item?.sizePriceMap?.[selectedTabName]?.oldPrice) {
       return Number(props.item.sizePriceMap[selectedTabName].oldPrice);
     }
 
-    // 3. priceVariants array (some seller product structures)
+    // 4. priceVariants array (some seller product structures)
     if (selectedTabName && Array.isArray(props?.item?.priceVariants)) {
       const match = props.item.priceVariants.find(
         (v) => v?.size === selectedTabName || v?.label === selectedTabName || v?.name === selectedTabName
@@ -114,9 +143,9 @@ export const ProductDetailsComponent = (props) => {
       if (match?.oldPrice) return Number(match.oldPrice);
     }
 
-    // 4. Fallback: root-level oldPrice
+    // 5. Fallback: root-level oldPrice
     return Number(props?.item?.oldPrice ?? 0);
-  }, [selectedStyle, selectedColor, selectedTabName, props?.item?.sizePriceMap, props?.item?.priceVariants, props?.item?.oldPrice]);
+  }, [selectedProductOption, selectedStyle, selectedColor, selectedTabName, props?.item?.sizePriceMap, props?.item?.priceVariants, props?.item?.oldPrice, props?.item?.productOptions]);
 
   const activeDiscount = useMemo(() => {
     if (activeOldPrice > activePrice && activeOldPrice > 0) {
@@ -161,14 +190,16 @@ export const ProductDetailsComponent = (props) => {
       props?.item?.productWeight?.length !== 0 || 
       props?.item?.productRam?.length !== 0 || 
       props?.item?.productAge?.length !== 0 ||
-      props?.item?.colorOptions?.length !== 0;
+      props?.item?.colorOptions?.length !== 0 ||
+      props?.item?.productOptions?.length !== 0;
 
     // If product has options, user must select one
     if (hasOptions) {
       // Check if any option is selected
       const hasSelection = 
         selectedTabName !== null || 
-        (props?.item?.colorOptions?.length > 0 && selectedColorIndex !== null);
+        (props?.item?.colorOptions?.length > 0 && selectedColorIndex !== null) ||
+        Object.keys(selectedProductOption).length > 0;
 
       if (!hasSelection) {
         setTabError(true);
@@ -185,32 +216,46 @@ export const ProductDetailsComponent = (props) => {
     return true;
   }
 
-  const createProductItem = (product, selectedQty) => ({
-    _id: product?._id,
-    productTitle: product?.name,
-    image: selectedVariantImages?.[0] || product?.images?.[0],
-    rating: product?.rating,
-    price: activePrice,
-    oldPrice: activeOldPrice,
-    discount: activeDiscount,
-    quantity: selectedQty,
-    subTotal: parseInt(activePrice * selectedQty),
-    productId: product?._id,
-    countInStock: product?.countInStock,
-    brand: product?.brand,
-    size: props?.item?.size?.length > 0 ? selectedTabName : '',
-    weight: props?.item?.productWeight?.length > 0 ? selectedTabName : '',
-    ram: props?.item?.productRam?.length > 0 ? selectedTabName : '',
-    age: props?.item?.productAge?.length > 0 ? selectedTabName : '',
-    color:
-      props?.item?.colorOptions?.length > 0
-        ? props?.item?.colorOptions?.[selectedColorIndex]?.name || ''
-        : '',
-    style:
-      props?.item?.styleOptions?.length > 0
-        ? props?.item?.styleOptions?.[selectedStyleIndex]?.name || ''
-        : '',
-  });
+  const createProductItem = (product, selectedQty) => {
+    // Get selected product option details
+    let selectedOptionData = null;
+    if (Object.keys(selectedProductOption).length > 0) {
+      const optionName = Object.keys(selectedProductOption)[0];
+      const selectedValue = selectedProductOption[optionName];
+      selectedOptionData = {
+        optionName,
+        optionValue: selectedValue
+      };
+    }
+
+    return {
+      _id: product?._id,
+      productTitle: product?.name,
+      image: selectedVariantImages?.[0] || product?.images?.[0],
+      rating: product?.rating,
+      price: activePrice,
+      oldPrice: activeOldPrice,
+      discount: activeDiscount,
+      quantity: selectedQty,
+      subTotal: parseInt(activePrice * selectedQty),
+      productId: product?._id,
+      countInStock: product?.countInStock,
+      brand: product?.brand,
+      size: props?.item?.size?.length > 0 ? selectedTabName : '',
+      weight: props?.item?.productWeight?.length > 0 ? selectedTabName : '',
+      ram: props?.item?.productRam?.length > 0 ? selectedTabName : '',
+      age: props?.item?.productAge?.length > 0 ? selectedTabName : '',
+      color:
+        props?.item?.colorOptions?.length > 0
+          ? props?.item?.colorOptions?.[selectedColorIndex]?.name || ''
+          : '',
+      style:
+        props?.item?.styleOptions?.length > 0
+          ? props?.item?.styleOptions?.[selectedStyleIndex]?.name || ''
+          : '',
+      productOption: selectedOptionData || undefined
+    };
+  };
 
 
   const addToCart = (product, userId, quantity) => {
@@ -752,6 +797,81 @@ export const ProductDetailsComponent = (props) => {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* PRODUCT OPTIONS WITH PRICE */}
+          {props?.item?.productOptions?.length > 0 && (
+            <div>
+              {props.item.productOptions.map((option, optionIndex) => (
+                <div key={optionIndex} style={{ marginBottom: optionIndex < props.item.productOptions.length - 1 ? "18px" : 0 }}>
+                  <span style={S.label}>{option.name}</span>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {option.values.map((valueObj, valueIndex) => {
+                      const isSelected = selectedProductOption[option.name] === valueObj.value;
+                      const hasDiscount = valueObj.mrp && valueObj.mrp > valueObj.price;
+                      const discount = hasDiscount ? Math.round(((valueObj.mrp - valueObj.price) / valueObj.mrp) * 100) : 0;
+                      
+                      return (
+                        <button 
+                          key={valueIndex} 
+                          className="pdc-vbtn" 
+                          style={{
+                            ...S.variantBtn(isSelected, tabError),
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-start",
+                            gap: "2px",
+                            padding: "8px 12px",
+                            minWidth: "90px",
+                            height: "auto",
+                          }}
+                          onClick={() => {
+                            setSelectedProductOption({ [option.name]: valueObj.value });
+                            setTabError(false);
+                          }}
+                        >
+                          <span style={{ fontSize: "13px", fontWeight: 600 }}>{valueObj.value}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                            <span style={{ fontSize: "14px", fontWeight: 700, color: isSelected ? "#fff" : "#111" }}>
+                              ₹{valueObj.price}
+                            </span>
+                            {hasDiscount && (
+                              <>
+                                <span style={{ 
+                                  fontSize: "11px", 
+                                  fontWeight: 400, 
+                                  color: isSelected ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)", 
+                                  textDecoration: "line-through" 
+                                }}>
+                                  ₹{valueObj.mrp}
+                                </span>
+                                <span style={{
+                                  fontSize: "9px",
+                                  fontWeight: 700,
+                                  color: isSelected ? "#fff" : "#16a34a",
+                                  background: isSelected ? "rgba(255,255,255,0.2)" : "#f0fdf4",
+                                  padding: "1px 4px",
+                                  borderRadius: "3px",
+                                  border: isSelected ? "none" : "1px solid #bbf7d0"
+                                }}>
+                                  {discount}% OFF
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {tabError && Object.keys(selectedProductOption).length === 0 && (
+                    <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "8px", display: "flex", alignItems: "center", gap: "4px", animation: "pdc-fadeIn 0.2s ease" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                      Please select {option.name.toLowerCase()}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
