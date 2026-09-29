@@ -326,14 +326,18 @@ const ProductItem = (props) => {
 
     setIsAddingToCart(true);
 
+    const quantity = 1;
+    const price = props?.item?.price || 0;
+    
     const productItem = {
       productId: props?.item?._id,
       productTitle: props?.item?.name,
       image: props?.item?.images?.[0],
       rating: props?.item?.rating,
-      price: props?.item?.price,
+      price: price,
       oldPrice: props?.item?.oldPrice,
-      quantity: 1,
+      quantity: quantity,
+      subTotal: Math.round(price * quantity),
       countInStock: props?.item?.countInStock,
       brand: props?.item?.brand,
       discount: props?.item?.discount,
