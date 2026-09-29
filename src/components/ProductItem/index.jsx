@@ -266,7 +266,7 @@ const Media = ({ item, url, tag, isOutOfStock, inWishlist, onWishlist, onQuickVi
 
     {item?.discount > 0 && <span className="pi__discount">−{item.discount}%</span>}
 
-    <div className="pi__actions">
+    {/* <div className="pi__actions">
       <button type="button" className="pi__action" title="Quick View" aria-label="Quick view" onClick={onQuickView}>
         <MdZoomOutMap size={15} />
       </button>
@@ -283,7 +283,7 @@ const Media = ({ item, url, tag, isOutOfStock, inWishlist, onWishlist, onQuickVi
       >
         {inWishlist ? <IoMdHeart size={15} /> : <FaRegHeart size={13} />}
       </button>
-    </div>
+    </div> */}
 
     {/* Badge: image ke niche-left */}
     <div className="pi__badges">
