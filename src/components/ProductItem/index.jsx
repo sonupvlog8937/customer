@@ -361,7 +361,7 @@ const ProductItem = (props) => {
       const res = await postData("/api/cart/add", productItem);
       if (res?.error === false) {
         context?.alertBox("success", "Added to cart");
-        context?.getCartData();
+        context?.getCartItems(); // Fixed: was getCartData()
       } else {
         context?.alertBox("error", res?.message || "Failed to add to cart");
       }
