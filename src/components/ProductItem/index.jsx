@@ -327,7 +327,7 @@ const ProductItem = (props) => {
     setIsAddingToCart(true);
 
     const productItem = {
-      _id: props?.item?._id,
+      productId: props?.item?._id,
       productTitle: props?.item?.name,
       image: props?.item?.images?.[0],
       rating: props?.item?.rating,
