@@ -700,9 +700,9 @@ const Footer = () => {
       </button> */}
 
       {/* ── Scroll to Top ────────────────────────────────────────────── */}
-      <button className="zd-scroll-top" onClick={scrollTop} title="Back to top" aria-label="Scroll to top">
+      {/* <button className="zd-scroll-top" onClick={scrollTop} title="Back to top" aria-label="Scroll to top">
         ↑
-      </button>
+      </button> */}
 
       {/* ── Cart Panel ────────────────────────────────────────────────── */}
       <Drawer
