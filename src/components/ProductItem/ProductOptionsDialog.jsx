@@ -133,6 +133,11 @@ const ProductOptionsDialog = ({ open, onClose, product, onConfirm, loading }) =>
 
       {/* Header */}
       <div style={styles.header}>
+        <img 
+          src={product?.images?.[0] || product?.image} 
+          alt={product?.name} 
+          style={styles.productImage}
+        />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={styles.title}>Select Options</div>
           <div style={styles.subtitle}>{product?.name}</div>
@@ -314,6 +319,15 @@ const styles = {
     padding: "14px 18px 12px",
     borderBottom: "1px solid #f3f4f6",
     fontFamily: font,
+    flexShrink: 0,
+  },
+  productImage: {
+    width: 56,
+    height: 56,
+    minWidth: 56,
+    objectFit: "cover",
+    borderRadius: 10,
+    backgroundColor: "#f5f5f5",
     flexShrink: 0,
   },
   title: { fontSize: 16, fontWeight: 700, color: "#111827" },
