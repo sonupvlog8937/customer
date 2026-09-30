@@ -43,15 +43,19 @@ const inr = (n) =>
 
 /* ─────────────────────────────────────────────
    Styles (CSS classes — hover/focus/touch/reduced-motion sab handle)
+   MOBILE: 2 cards per row ke liye card width:100% + min-width:0 hai,
+   aur 640px / 400px pe sab kuch compact hota hai.
 ───────────────────────────────────────────── */
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
 
 .pi { --brand:#e84040; --brand-2:#ff7a45; --ink:#111827; --muted:#6b7280; --line:#eef0f4;
   font-family:'Sora',sans-serif; position:relative; display:flex; background:#fff;
+  width:100%; min-width:0; height:100%; box-sizing:border-box;
   border:1px solid var(--line); border-radius:18px; overflow:hidden;
   box-shadow:0 1px 3px rgba(17,24,39,.05),0 6px 20px rgba(17,24,39,.06);
   transition:box-shadow .25s ease, transform .25s ease, border-color .25s ease; }
+.pi *, .pi *::before, .pi *::after { box-sizing:border-box; }
 .pi:hover { transform:translateY(-4px); border-color:#fde1e1;
   box-shadow:0 12px 36px rgba(232,64,64,.14),0 2px 8px rgba(17,24,39,.06); }
 .pi--grid { flex-direction:column; }
@@ -71,10 +75,11 @@ const CSS = `
 .pi__badges { position:absolute; left:10px; bottom:10px; z-index:5; display:flex; gap:6px; max-width:calc(100% - 20px); }
 .pi__badge { display:inline-flex; align-items:center; gap:5px; color:#fff; font-size:10.5px; font-weight:700;
   letter-spacing:.03em; padding:5px 10px; border-radius:999px; white-space:nowrap;
+  max-width:100%; overflow:hidden; text-overflow:ellipsis;
   background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.45);
   -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
   text-shadow:0 1px 2px rgba(0,0,0,.35); }
-.pi__badge::before { content:""; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.9); }
+.pi__badge::before { content:""; flex-shrink:0; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.9); }
 
 /* out of stock */
 .pi--oos .pi__img { filter:grayscale(.85); opacity:.75; }
@@ -105,22 +110,22 @@ const CSS = `
   -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
 /* rating */
-.pi__rating { display:flex; align-items:center; gap:5px; min-height:20px; }
-.pi__rating-chip { background:linear-gradient(135deg,#22c55e,#15803d); color:#fff; font-size:11px; font-weight:700;
-  border-radius:6px; padding:2px 7px; line-height:1.3; }
-.pi__rating-count { font-size:11px; color:#9ca3af; font-weight:500; }
+.pi__rating { display:flex; align-items:center; gap:5px; min-height:20px; min-width:0; overflow:hidden; }
+.pi__rating-chip { flex-shrink:0; background:linear-gradient(135deg,#22c55e,#15803d); color:#fff; font-size:11px; font-weight:700;
+  border-radius:6px; padding:2px 7px; line-height:1.3; white-space:nowrap; }
+.pi__rating-count { font-size:11px; color:#9ca3af; font-weight:500; white-space:nowrap; }
 
 /* price */
 .pi__foot { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:auto;
   padding-top:10px; border-top:1px dashed var(--line); }
-.pi__prices { display:flex; align-items:baseline; gap:7px; flex-wrap:wrap; min-width:0; }
-.pi__price { font-size:16px; font-weight:700; color:var(--brand); }
-.pi__old { font-size:12px; color:#b6bcc8; text-decoration:line-through; font-weight:500; }
+.pi__prices { display:flex; align-items:baseline; gap:4px 7px; flex-wrap:wrap; min-width:0; }
+.pi__price { font-size:16px; font-weight:700; color:var(--brand); white-space:nowrap; }
+.pi__old { font-size:12px; color:#b6bcc8; text-decoration:line-through; font-weight:500; white-space:nowrap; }
 .pi__save { font-size:10.5px; font-weight:700; color:#15803d; background:#dcfce7; padding:2px 7px; border-radius:999px; white-space:nowrap; }
 
 /* add button */
 .pi__add { display:flex; align-items:center; justify-content:center; gap:5px; border:none; cursor:pointer;
-  color:#fff; font:700 12px 'Sora',sans-serif; padding:9px 14px; border-radius:10px;
+  color:#fff; font:700 12px 'Sora',sans-serif; padding:9px 14px; border-radius:10px; white-space:nowrap;
   background:linear-gradient(135deg,var(--brand),var(--brand-2)); box-shadow:0 4px 12px rgba(232,64,64,.28);
   transition:transform .18s, box-shadow .18s, filter .18s; }
 .pi--grid .pi__add { width:100%; margin-top:8px; }
@@ -130,10 +135,61 @@ const CSS = `
 .pi__link:focus-visible, .pi__title:focus-visible, .pi__action:focus-visible, .pi__add:focus-visible {
   outline:2px solid var(--brand); outline-offset:2px; }
 
-@media (max-width:520px) {
+/* ═════════════ MOBILE — ek row me 2 product ═════════════ */
+@media (max-width:640px) {
+  .pi { border-radius:14px; box-shadow:0 1px 3px rgba(17,24,39,.05),0 3px 10px rgba(17,24,39,.06); }
+  /* touch pe hover-lift/zoom band (tap pe atakta hai) */
+  .pi:hover { transform:none; }
+  .pi:hover .pi__img { transform:none; }
+  .pi:hover .pi__img--alt { opacity:0; }
+
+  /* list view mobile pe bhi column card ban jata hai, taaki 2 per row fit ho */
   .pi--list { flex-direction:column; }
   .pi--list .pi__media { width:100%; min-width:0; aspect-ratio:${IMAGE_RATIO}; }
+  .pi--list .pi__body { padding:10px 10px 12px; justify-content:flex-start; }
+  .pi--list .pi__title { font-size:12.5px; }
+  .pi__desc { display:none; }
+
+  .pi__badges { left:6px; bottom:6px; max-width:calc(100% - 12px); }
+  .pi__badge { font-size:9px; padding:3px 7px; gap:4px; letter-spacing:.02em; }
+  .pi__badge::before { width:5px; height:5px; }
+
+  .pi__actions { top:6px; right:6px; gap:5px; }
+  .pi__action { width:28px; height:28px; }
+
+  .pi__body { padding:10px 10px 12px; gap:4px; }
+  .pi__brand { font-size:9px; letter-spacing:.05em; }
+  .pi__title { font-size:12.5px; line-height:1.4; }
+
+  .pi__rating { gap:4px; min-height:18px; }
+  .pi__rating-chip { font-size:10px; padding:1px 5px; border-radius:5px; }
+  .pi__rating-count { font-size:10px; }
+  /* MUI stars mobile pe hide — chip + count kaafi hai, jagah bachti hai */
+  .pi__rating .MuiRating-root { display:none; }
+
+  .pi__foot { flex-direction:column; align-items:stretch; gap:8px; padding-top:8px; }
+  .pi__prices { gap:2px 6px; }
+  .pi__price { font-size:14px; }
+  .pi__old { font-size:11px; }
+  .pi__save { font-size:9.5px; padding:2px 6px; }
+
+  .pi__add { font-size:11.5px; padding:8px 10px; border-radius:9px; gap:4px; }
+  .pi--grid .pi__add { margin-top:6px; }
+  .pi--list .pi__add { width:100%; margin-top:0; }
 }
+
+/* bahut chhote phones (<= 380px, jaise iPhone SE / chhote Android) */
+@media (max-width:380px) {
+  .pi { border-radius:12px; }
+  .pi__body, .pi--list .pi__body { padding:8px 8px 10px; }
+  .pi__badge { font-size:8.5px; padding:3px 6px; }
+  .pi__title, .pi--list .pi__title { font-size:12px; }
+  .pi__price { font-size:13px; }
+  .pi__old { font-size:10.5px; }
+  .pi__save { font-size:9px; padding:1px 5px; }
+  .pi__add { font-size:11px; padding:7px 8px; }
+}
+
 @media (prefers-reduced-motion:reduce) {
   .pi, .pi *, .pi__img { transition:none !important; }
   .pi:hover { transform:none; }
@@ -197,24 +253,24 @@ const useProductCard = (item) => {
   const addToCart = useCallback(
     async (selected = {}) => {
       setAdding(true);
-      
+
       // Calculate price based on selected product option
       let finalPrice = item?.price || 0;
       let finalOldPrice = item?.oldPrice || 0;
-      
+
       if (selected.productOption && Object.keys(selected.productOption).length > 0) {
         const optionName = Object.keys(selected.productOption)[0];
         const selectedValue = selected.productOption[optionName];
-        const option = item?.productOptions?.find(opt => opt.name === optionName);
+        const option = item?.productOptions?.find((opt) => opt.name === optionName);
         if (option) {
-          const valueObj = option.values.find(v => v.value === selectedValue);
+          const valueObj = option.values.find((v) => v.value === selectedValue);
           if (valueObj?.price) {
             finalPrice = Number(valueObj.price);
             finalOldPrice = valueObj.mrp && Number(valueObj.mrp) > 0 ? Number(valueObj.mrp) : finalPrice;
           }
         }
       }
-      
+
       try {
         // Get selected product option details
         let selectedOptionData = null;
@@ -223,7 +279,7 @@ const useProductCard = (item) => {
           const selectedValue = selected.productOption[optionName];
           selectedOptionData = {
             optionName,
-            optionValue: selectedValue
+            optionValue: selectedValue,
           };
         }
 
@@ -244,7 +300,7 @@ const useProductCard = (item) => {
           weight: selected.weight || "",
           ram: selected.ram || "",
           color: selected.color || "",
-          productOption: selectedOptionData || undefined
+          productOption: selectedOptionData || undefined,
         });
         if (res?.error === false) {
           context?.alertBox("success", "Added to cart");
@@ -330,7 +386,7 @@ const RatingRow = ({ item }) => {
   );
 };
 
-/* Selling price + MRP + discount (right side) */
+/* Selling price + MRP + discount */
 const Prices = ({ item }) => (
   <div className="pi__prices">
     <span className="pi__price">{inr(item?.price)}</span>
