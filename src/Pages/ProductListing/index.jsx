@@ -219,17 +219,26 @@ const CSS = `
   .pl-grid {
     display: grid; gap: 16px;
     grid-template-columns: repeat(5, 1fr);
+    width: 100%;
   }
   .pl-grid.pl-list { grid-template-columns: 1fr; }
+  
+  /* Wrapper for pl-item to ensure proper sizing */
+  .pl-item {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+  }
+  
   @media (max-width:1280px){ .pl-grid { grid-template-columns: repeat(4,1fr); } }
   @media (max-width:900px) { .pl-grid { grid-template-columns: repeat(3,1fr); } }
   @media (max-width:640px) { 
     .pl-grid { 
-      grid-template-columns: repeat(2, 1fr); 
+      grid-template-columns: repeat(2, 1fr) !important; 
       gap: 12px; 
     }
     .pl-grid.pl-list { 
-      grid-template-columns: repeat(2, 1fr); 
+      grid-template-columns: repeat(2, 1fr) !important; 
     }
   }
   @media (max-width:380px) { 
@@ -302,6 +311,17 @@ const CSS = `
     .pl-toolbar-inner {
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.10), 0 1px 6px rgba(0,0,0,0.06);
+    }
+    
+    /* Mobile me proper container padding */
+    .container {
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+    }
+    
+    /* Grid wrapper mobile spacing */
+    .pl-grid {
+      margin-top: 20px !important;
     }
   }
 `;

@@ -92,17 +92,25 @@ const CSS = `
   .sp-menu .MuiMenuItem-root.Mui-selected { background:#f8f8fb !important; font-weight:700 !important; }
   .sp-menu .MuiMenuItem-root:hover { background:#f8f8fb !important; }
 
-  .sp-grid { display:grid; gap:16px; grid-template-columns:repeat(5,1fr); }
+  .sp-grid { display:grid; gap:16px; grid-template-columns:repeat(5,1fr); width:100%; }
   .sp-grid.sp-list { grid-template-columns:1fr; }
+  
+  /* Wrapper for sp-item to ensure proper sizing */
+  .sp-item {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+  }
+  
   @media (max-width:1280px){ .sp-grid { grid-template-columns:repeat(4,1fr); } }
   @media (max-width:900px)  { .sp-grid { grid-template-columns:repeat(3,1fr); } }
   @media (max-width:640px)  { 
     .sp-grid { 
-      grid-template-columns:repeat(2,1fr); 
+      grid-template-columns:repeat(2,1fr) !important; 
       gap:12px; 
     }
     .sp-grid.sp-list { 
-      grid-template-columns:repeat(2,1fr); 
+      grid-template-columns:repeat(2,1fr) !important; 
     }
   }
   @media (max-width:380px) { 
@@ -158,6 +166,17 @@ const CSS = `
     .sp-toolbar-inner {
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.10), 0 1px 6px rgba(0,0,0,0.06);
+    }
+    
+    /* Mobile me proper container padding */
+    .container {
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+    }
+    
+    /* Grid wrapper mobile spacing */
+    .sp-grid {
+      margin-top: 20px !important;
     }
   }
 `;
