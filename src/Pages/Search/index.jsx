@@ -96,7 +96,18 @@ const CSS = `
   .sp-grid.sp-list { grid-template-columns:1fr; }
   @media (max-width:1280px){ .sp-grid { grid-template-columns:repeat(4,1fr); } }
   @media (max-width:900px)  { .sp-grid { grid-template-columns:repeat(3,1fr); } }
-  @media (max-width:640px)  { .sp-grid { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:640px)  { 
+    .sp-grid { 
+      grid-template-columns:repeat(2,1fr); 
+      gap:12px; 
+    }
+    .sp-grid.sp-list { 
+      grid-template-columns:repeat(2,1fr); 
+    }
+  }
+  @media (max-width:380px) { 
+    .sp-grid { gap:10px; }
+  }
 
   .sp-item { animation:sp-fadeUp 0.38s cubic-bezier(0.22,0.61,0.36,1) both; }
   .sp-item:nth-child(1){animation-delay:.02s} .sp-item:nth-child(2){animation-delay:.05s}
