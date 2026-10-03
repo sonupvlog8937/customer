@@ -520,7 +520,11 @@ export const Sidebar = (props) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       const { props: p, internalCat: cat, internalRating: rat, internalColors: col, price: pr } = latestRef.current;
-      const isLoadMore = p.page > 1;
+      
+      // ✅ FIX: Pagination should replace data, not append
+      // Only append if explicitly using load more feature (not implemented here)
+      const isLoadMore = false; // Pagination always replaces data
+      
       if (isLoadMore) p.setLoadingMore?.(true);
       else p.setIsLoading(true);
       
@@ -540,14 +544,8 @@ export const Sidebar = (props) => {
       const apiUrl = p.searchQuery ? null : `/api/product/filters`;
 
       const handleResponse = (res) => {
-        if (isLoadMore) {
-          p.setProductsData(prev => ({
-            ...res,
-            products: [...(prev?.products || []), ...(res?.products || [])]
-          }));
-        } else {
-          p.setProductsData(res);
-        }
+        // ✅ Always replace data for pagination
+        p.setProductsData(res);
         p.setIsLoading(false);
         p.setLoadingMore?.(false);
         p.setTotalPages(res?.totalPages || 1);
