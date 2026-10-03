@@ -528,6 +528,13 @@ export const Sidebar = (props) => {
       if (isLoadMore) p.setLoadingMore?.(true);
       else p.setIsLoading(true);
       
+      // ✅ Safety timeout: stop loading after 10 seconds if no response
+      const safetyTimeout = setTimeout(() => {
+        console.warn('API request timeout - stopping loader');
+        p.setIsLoading(false);
+        p.setLoadingMore?.(false);
+      }, 10000);
+      
       const minPrice = (p.selectedMinPrice !== null && p.selectedMinPrice !== undefined) ? p.selectedMinPrice : pr[0];
       const maxPrice = (p.selectedMaxPrice !== null && p.selectedMaxPrice !== undefined) ? p.selectedMaxPrice : pr[1];
       const payload = {
@@ -544,13 +551,23 @@ export const Sidebar = (props) => {
       const apiUrl = p.searchQuery ? null : `/api/product/filters`;
 
       const handleResponse = (res) => {
+        clearTimeout(safetyTimeout); // Clear safety timeout
         // ✅ Always replace data for pagination
-        p.setProductsData(res);
+        if (res && typeof res === 'object') {
+          p.setProductsData(res);
+          p.setTotalPages(res?.totalPages || 1);
+          if (p.setTotalProducts) p.setTotalProducts(res?.totalProducts || res?.total || 0);
+        }
         p.setIsLoading(false);
         p.setLoadingMore?.(false);
-        p.setTotalPages(res?.totalPages || 1);
-        if (p.setTotalProducts) p.setTotalProducts(res?.totalProducts || res?.total || 0);
-        if (!isLoadMore) window.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+      
+      const handleError = (error) => {
+        clearTimeout(safetyTimeout); // Clear safety timeout
+        console.error('Fetch products error:', error);
+        p.setIsLoading(false);
+        p.setLoadingMore?.(false);
       };
 
       if (p.searchQuery) {
@@ -578,25 +595,31 @@ export const Sidebar = (props) => {
         if (payload.stockStatus === "inStock") params.set("inStock", "true");
 
         fetchDataFromApi(`/api/search?${params}`)
-          .then((res) => handleResponse({
-            ...res,
-            correctedQuery: res.didYouMean,
-            total: res.totalProducts,
-            filterOptions: res.filterOptions,
-          }))
-          .catch(() => {
-            p.setIsLoading(false);
-            p.setLoadingMore?.(false);
-          });
+          .then((res) => {
+            if (res) {
+              handleResponse({
+                ...res,
+                correctedQuery: res.didYouMean,
+                total: res.totalProducts,
+                filterOptions: res.filterOptions,
+              });
+            } else {
+              handleError(new Error('No response from search API'));
+            }
+          })
+          .catch(handleError);
         return;
       }
 
       postData(apiUrl, payload)
-        .then(handleResponse)
-        .catch(() => {
-          p.setIsLoading(false);
-          p.setLoadingMore?.(false);
-        });
+        .then((res) => {
+          if (res) {
+            handleResponse(res);
+          } else {
+            handleError(new Error('No response from product filters API'));
+          }
+        })
+        .catch(handleError);
     }, 150);
   }, []);
 
