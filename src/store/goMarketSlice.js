@@ -3,8 +3,19 @@ import { fetchDataFromApi, postData } from "../utils/api";
 import { setUserData } from "./appSlice";
 
 export const fetchMarkets = createAsyncThunk("goMarket/fetchMarkets", async ({ search = "", page = 1 } = {}) => {
-  const url = search ? `/api/go-market/markets/search?q=${encodeURIComponent(search)}&page=${page}&limit=20` : `/api/go-market/markets?page=${page}&limit=20&status=active`;
-  return fetchDataFromApi(url);
+  const urlForPage = (pageNumber) => search
+    ? `/api/go-market/markets/search?q=${encodeURIComponent(search)}&page=${pageNumber}&limit=100`
+    : `/api/go-market/markets?page=${pageNumber}&limit=100&status=active`;
+  const firstPage = await fetchDataFromApi(urlForPage(page));
+  const totalPages = firstPage?.pagination?.totalPages || 1;
+  if (page !== 1 || totalPages <= 1) return firstPage;
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) => fetchDataFromApi(urlForPage(index + 2))),
+  );
+  return {
+    ...firstPage,
+    data: [firstPage.data || [], ...remainingPages.map((response) => response?.data || [])].flat(),
+  };
 });
 export const fetchNearbyMarkets = createAsyncThunk("goMarket/fetchNearbyMarkets", async ({ latitude, longitude }) => fetchDataFromApi(`/api/go-market/markets/nearby?latitude=${latitude}&longitude=${longitude}&limit=10`));
 export const fetchMarketDetail = createAsyncThunk("goMarket/fetchMarketDetail", async (marketId) => fetchDataFromApi(`/api/go-market/markets/${marketId}`));
@@ -17,6 +28,7 @@ export const unfollowGoMarketRestaurant = createAsyncThunk("goMarket/unfollowRes
 export const savePreferredMarket = createAsyncThunk("goMarket/savePreferredMarket", async ({ marketId, location, address, forceLocationUpdate = false } = {}, { dispatch, getState }) => {
   const result = await postData("/api/go-market/set-preferred-market", { marketId, location, address, forceLocationUpdate });
   if (result?.success || result?.error === false) {
+    localStorage.setItem("preferredMarketId", marketId);
     const state = getState();
     const userData = state.app.userData;
     if (userData) {

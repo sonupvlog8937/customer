@@ -9,7 +9,6 @@ const GoMarketHome = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { markets, nearbyMarkets, loading } = useSelector((s) => s.goMarket);
-  const isLogin = useSelector((s) => s.app.isLogin);
   const userData = useSelector((s) => s.app.userData);
 
   const [search, setSearch] = useState("");
@@ -17,26 +16,6 @@ const GoMarketHome = () => {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [collections, setCollections] = useState([]);
   const [showNearby, setShowNearby] = useState(false);
-  const queryParams = useMemo(() => new URLSearchParams(window.location.search), []);
-  const updateLocationMode = queryParams.get("updateLocation") === "true";
-
-  // Redirect to login if not logged in
-  useEffect(() => {
-    if (!isLogin) {
-      navigate("/login");
-    }
-  }, [isLogin, navigate]);
-
-  // Auto-navigate to preferred market if exists (skip if coming from edit)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const isFromEdit = params.get("edit") === "true" || params.get("updateLocation") === "true";
-    
-    if (isLogin && userData?.preferredMarketId && !isFromEdit) {
-      console.log("🎯 Auto-navigating to preferred market:", userData.preferredMarketId);
-      navigate(`/go-market/market/${userData.preferredMarketId}`);
-    }
-  }, [isLogin, userData, navigate]);
 
   useEffect(() => {
     dispatch(fetchMarkets({ search: "" }));
@@ -169,17 +148,41 @@ const GoMarketHome = () => {
             <button type="button" className="gmp-btn gmp-btn-outline" onClick={useLocation}>
             📍 Use current location
             </button>
-            </div>
+          </div>
         </div>
       </section>
 
       {collections.length > 0 && <div className="gmp-container" style={{ marginTop: 24 }}><p style={{ fontSize: 12, fontWeight: 800, color: "#64748b", marginBottom: 10 }}>Collections</p><div className="gmp-chip-row">{collections.map((c, i) => <button key={`${c.title}-${i}`} className="gmp-chip active" type="button">{c.image ? <img src={c.image} alt="" style={{ width: 22, height: 22, borderRadius: 999, objectFit: "cover", marginRight: 6 }} /> : null}{c.title}</button>)}</div></div>}
 
       <div className="gmp-container" style={{ marginTop: 24 }}>
-        <div className="gmp-empty">
-          <span className="gmp-empty-icon">📍</span>
-          Tap Use current location to save your Go Market delivery location and open the nearest market.
+        <div className="gmp-tools" style={{ gridTemplateColumns: "1fr" }}>
+          <input
+            className="gmp-input"
+            aria-label="Search markets"
+            placeholder="Search market, city or PIN code"
+            value={search}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
+          />
         </div>
+        <h2 style={{ marginTop: 22, fontSize: 18, fontWeight: 800 }}>Markets near you</h2>
+        {loading && !allMarkets.length ? <div className="gmp-empty">Loading markets...</div> : filtered.length ? (
+          <div className="gmp-market-pick">
+            {filtered.map((market) => (
+              <button className="gmp-market-row" key={market._id} type="button" onClick={() => openMarket(market._id)}>
+                <span>
+                  <span className="gmp-market-row-name">{market.name}</span>
+                  <span className="gmp-market-row-sub">
+                    {[market.city, market.state, market.pincode].filter(Boolean).join(", ")}
+                  </span>
+                </span>
+                <span aria-hidden="true">→</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="gmp-empty">No markets match your search.</div>
+        )}
       </div>
     </div>
   );

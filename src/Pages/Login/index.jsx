@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../hooks/useAppContext";
 import { postData } from "../../utils/api";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -50,6 +50,12 @@ const Login = () => {
 
   const context = useAppContext();
   const history = useNavigate();
+  const location = useLocation();
+  const navigateAfterLogin = () => {
+    const requested = new URLSearchParams(location.search).get("redirect") || "/";
+    const destination = requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
+    history(`/select-location?redirect=${encodeURIComponent(destination)}`);
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -148,7 +154,7 @@ const Login = () => {
           context.setIsLogin(true);
           context.alertBox("success", "✅ Welcome back!");
           setPhone(""); setOtp(""); setName(""); setStep("phone");
-          setTimeout(() => history("/"), 800);
+          setTimeout(navigateAfterLogin, 800);
         }
       } else {
         context.alertBox("error", `❌ ${res?.message || "Invalid OTP"}`);
@@ -189,7 +195,7 @@ const Login = () => {
         context.setIsLogin(true);
         context.alertBox("success", `🎉 Welcome ${name.trim()}!`);
         setPhone(""); setOtp(""); setName(""); setStep("phone");
-        setTimeout(() => history("/"), 800);
+        setTimeout(navigateAfterLogin, 800);
       } else {
         context.alertBox("error", `❌ ${res?.message || "Registration failed"}`);
         triggerShake();

@@ -12,6 +12,13 @@ const apiUrl = getApiUrl();
 
 const apiCache = new Map();
 
+const withMarketId = (url) => {
+    if (!url.includes('/api/product/') || /[?&]marketId=/.test(url)) return url;
+    const marketId = localStorage.getItem("preferredMarketId");
+    if (!marketId) return url;
+    return `${url}${url.includes("?") ? "&" : "?"}marketId=${encodeURIComponent(marketId)}`;
+};
+
 const getCacheKey = (url) => `${localStorage.getItem("accessToken") || "guest"}:${url}`;
 
 const getCachedResponse = (url) => {
@@ -34,6 +41,9 @@ const getAuthHeaders = (contentType = 'application/json') => ({
 
 export const postData = async (url, formData) => {
     try {
+        if (["/api/product/filters", "/api/product/search/get"].includes(url) && !formData?.marketId) {
+            formData = { ...formData, marketId: localStorage.getItem("preferredMarketId") || undefined };
+        }
         
         const response = await fetch(apiUrl + url, {
             method: 'POST',
@@ -55,6 +65,7 @@ export const postData = async (url, formData) => {
 
 
 export const fetchDataFromApi = async (url, options = {}) => {
+    url = withMarketId(url);
     const { useCache = false, ttl = 120000, forceRefresh = false } = options;
     try {
         // ✅ OPTIMIZATION: Auto-enable cache for specific endpoints

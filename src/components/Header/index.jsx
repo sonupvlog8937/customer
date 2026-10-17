@@ -568,6 +568,8 @@ const Header = () => {
   const context = useAppContext();
   const location = useLocation();
   const navigate = useNavigate();
+  const preferredMarketId = context?.userData?.preferredMarketId;
+  const [preferredMarket, setPreferredMarket] = useState(null);
   const isHomePage = location.pathname === "/";
 
   // Replace with real count from context / API
@@ -576,6 +578,16 @@ const Header = () => {
   const open = Boolean(anchorEl);
   const hideNavigationOnPage = [""].includes(location.pathname);
   const isDesktop = context?.windowWidth > 992;
+
+  useEffect(() => {
+    if (!preferredMarketId) {
+      setPreferredMarket(null);
+      return;
+    }
+    fetchDataFromApi(`/api/go-market/markets/${preferredMarketId}`).then((res) => {
+      setPreferredMarket(res?.data?.market || null);
+    });
+  }, [preferredMarketId]);
 
   const handleClose = useCallback(() => setAnchorEl(null), []);
   const handleUserClick = useCallback((e) => setAnchorEl(e.currentTarget), []);
@@ -720,6 +732,19 @@ const Header = () => {
                   )}
                 </div>
               </Link>
+              {preferredMarket && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/select-location?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`)}
+                  aria-label="Change delivery market"
+                  style={{ border: 0, background: "transparent", textAlign: "left", cursor: "pointer", padding: "0 8px", maxWidth: 145 }}
+                >
+                  <span style={{ display: "block", fontSize: 10, color: "#64748b" }}>Delivering in</span>
+                  <span style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {preferredMarket.name} · {preferredMarket.city}
+                  </span>
+                </button>
+              )}
               <Link to="/go-market" className="go-market-btn">
                 <span className="gm-icon">🛒</span>
 

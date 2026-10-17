@@ -50,6 +50,7 @@ import NotificationSettings from "./Pages/NotificationSettings";
 import ScrollToTop from "./components/ScrollToTop";
 import { goBack } from "./utils/goBack";
 import PrivacyPolicy from "./Pages/PrivacyPolicy";
+import SelectLocation from "./Pages/SelectLocation";
 import {
   GoMarketHome,
   GoMarketMarket,
@@ -145,7 +146,10 @@ const GlobalBackButton = () => {
 ───────────────────────────────────────── */
 const AppContent = () => {
   const dispatch  = useDispatch();
+  const navigate = useNavigate();
   const location  = useLocation();
+  const isLogin = useSelector((state) => state.app.isLogin);
+  const hasAccessToken = Boolean(localStorage.getItem("accessToken"));
   const timerRef  = useRef(null);
   const prevPath  = useRef(location.pathname);
 
@@ -179,6 +183,22 @@ const AppContent = () => {
     return () => clearTimeout(timerRef.current);
   }, [location.pathname, dispatch]);
 
+  useEffect(() => {
+    if (isLogin || hasAccessToken || ["/login", "/register", "/verify", "/forgot-password"].includes(location.pathname)) return;
+    const destination = location.pathname === "/select-location"
+      ? "/"
+      : `${location.pathname}${location.search}`;
+    navigate(`/login?redirect=${encodeURIComponent(destination)}`, { replace: true });
+  }, [hasAccessToken, isLogin, location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    if (!isLogin || ["/login", "/register", "/verify", "/forgot-password", "/select-location"].includes(location.pathname)) return;
+    if (!localStorage.getItem("preferredMarketId")) {
+      const destination = `${location.pathname}${location.search}`;
+      navigate(`/select-location?redirect=${encodeURIComponent(destination)}`, { replace: true });
+    }
+  }, [isLogin, location.pathname, location.search, navigate]);
+
   return (
     <>
       <GlobalLoader />
@@ -189,6 +209,7 @@ const AppContent = () => {
         <Route path="/products"        exact={true} element={<ProductListing />} />
         <Route path="/product/:id"     exact={true} element={<ProductDetails />} />
         <Route path="/login"           exact={true} element={<Login />} />
+        <Route path="/select-location" exact={true} element={<SelectLocation />} />
         <Route path="/register"        exact={true} element={<Register />} />
         <Route path="/cart"            exact={true} element={<CartPage />} />
         <Route path="/verify"          exact={true} element={<Verify />} />

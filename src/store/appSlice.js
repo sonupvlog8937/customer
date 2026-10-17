@@ -35,7 +35,9 @@ export const fetchUserDetails = createAsyncThunk("app/fetchUserDetails", async (
     dispatch(setIsLogin(false));
     return null;
   }
-  return res?.data ?? null;
+  const userData = res?.data ?? null;
+  if (userData?.preferredMarketId) localStorage.setItem("preferredMarketId", userData.preferredMarketId);
+  return userData;
 });
 
 export const fetchCartItems = createAsyncThunk("app/fetchCartItems", async () => {
