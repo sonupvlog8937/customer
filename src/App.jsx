@@ -46,12 +46,10 @@ import {
   setIsLogin,
   setWindowWidth,
 } from "./store/appSlice";
-import { fetchNearbyMarkets, savePreferredMarket } from "./store/goMarketSlice";
 import NotificationSettings from "./Pages/NotificationSettings";
 import ScrollToTop from "./components/ScrollToTop";
 import { goBack } from "./utils/goBack";
 import PrivacyPolicy from "./Pages/PrivacyPolicy";
-import SelectLocation from "./Pages/SelectLocation";
 import {
   GoMarketHome,
   GoMarketMarket,
@@ -147,21 +145,9 @@ const GlobalBackButton = () => {
 ───────────────────────────────────────── */
 const AppContent = () => {
   const dispatch  = useDispatch();
-  const navigate = useNavigate();
   const location  = useLocation();
-  const isLogin = useSelector((state) => state.app.isLogin);
-  const userData = useSelector((state) => state.app.userData);
-  const hasAccessToken = Boolean(localStorage.getItem("accessToken"));
   const timerRef  = useRef(null);
   const prevPath  = useRef(location.pathname);
-  const marketRestoreRef = useRef("");
-
-  useEffect(() => {
-    if (!hasAccessToken && !isLogin) {
-      localStorage.removeItem("preferredMarketId");
-      marketRestoreRef.current = "";
-    }
-  }, [hasAccessToken, isLogin]);
 
   useEffect(() => {
     const isProductPage = location.pathname.startsWith("/product/");
@@ -193,60 +179,6 @@ const AppContent = () => {
     return () => clearTimeout(timerRef.current);
   }, [location.pathname, dispatch]);
 
-  useEffect(() => {
-    if (isLogin || hasAccessToken || ["/login", "/register", "/verify", "/forgot-password"].includes(location.pathname)) return;
-    const destination = location.pathname === "/select-location"
-      ? "/"
-      : `${location.pathname}${location.search}`;
-    navigate(`/login?redirect=${encodeURIComponent(destination)}`, { replace: true });
-  }, [hasAccessToken, isLogin, location.pathname, location.search, navigate]);
-
-  useEffect(() => {
-    if (!isLogin || !userData || ["/register", "/verify", "/forgot-password", "/select-location"].includes(location.pathname)) return;
-
-    const coordinates = userData.goMarketLocation?.coordinates;
-    const hasSavedLocation = Array.isArray(coordinates)
-      && coordinates.length === 2
-      && Number.isFinite(Number(coordinates[0]))
-      && Number.isFinite(Number(coordinates[1]))
-      && Math.abs(Number(coordinates[0])) <= 180
-      && Math.abs(Number(coordinates[1])) <= 90
-      && ((Number(coordinates[0]) !== 0 || Number(coordinates[1]) !== 0)
-        || Boolean(userData.goMarketLocation?.updatedAt));
-
-    if (hasSavedLocation) {
-      if (location.pathname === "/login") navigate("/", { replace: true });
-      const [longitude, latitude] = coordinates.map(Number);
-      const restoreKey = `${userData._id || ""}:${latitude}:${longitude}`;
-      if (marketRestoreRef.current === restoreKey) return;
-      marketRestoreRef.current = restoreKey;
-
-      dispatch(fetchNearbyMarkets({ latitude, longitude })).unwrap()
-        .then((result) => {
-          const nearestMarket = result?.data?.[0];
-          if (!nearestMarket?._id) {
-            if (!userData.preferredMarketId) {
-              navigate(`/select-location?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`, { replace: true });
-            }
-            return null;
-          }
-          if (String(nearestMarket._id) === String(userData.preferredMarketId || "")) return null;
-          return dispatch(savePreferredMarket({ marketId: nearestMarket._id })).unwrap();
-        })
-        .catch((error) => {
-          marketRestoreRef.current = "";
-          console.error("Unable to restore nearest market from saved location:", error);
-        });
-      return;
-    }
-
-    if (!userData.preferredMarketId && location.pathname !== "/login") {
-      const destination = `${location.pathname}${location.search}`;
-      navigate(`/select-location?redirect=${encodeURIComponent(destination)}`, { replace: true });
-    }
-    if (isLogin && userData && location.pathname === "/login") navigate("/", { replace: true });
-  }, [dispatch, isLogin, location.pathname, location.search, navigate, userData]);
-
   return (
     <>
       <GlobalLoader />
@@ -257,7 +189,6 @@ const AppContent = () => {
         <Route path="/products"        exact={true} element={<ProductListing />} />
         <Route path="/product/:id"     exact={true} element={<ProductDetails />} />
         <Route path="/login"           exact={true} element={<Login />} />
-        <Route path="/select-location" exact={true} element={<SelectLocation />} />
         <Route path="/register"        exact={true} element={<Register />} />
         <Route path="/cart"            exact={true} element={<CartPage />} />
         <Route path="/verify"          exact={true} element={<Verify />} />

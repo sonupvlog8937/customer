@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchNearbyMarkets, fetchMarkets, saveCurrentLocation, savePreferredMarket } from "../../store/goMarketSlice";
+import { fetchNearbyMarkets, fetchMarkets, savePreferredMarket } from "../../store/goMarketSlice";
 import CircularProgress from "@mui/material/CircularProgress";
 import toast from "react-hot-toast";
 
 const SelectLocation = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const routeLocation = useLocation();
   
   const isLogin = useSelector((s) => s.app.isLogin);
+  const userData = useSelector((s) => s.app.userData);
   const { nearbyMarkets, markets, loading } = useSelector((s) => s.goMarket);
   
   const [geoLoading, setGeoLoading] = useState(false);
@@ -25,9 +25,15 @@ const SelectLocation = () => {
       return;
     }
     
+    // If user already has a preferred market, skip to that market
+    if (userData?.preferredMarketId) {
+      navigate(`/go-market/market/${userData.preferredMarketId}`);
+      return;
+    }
+    
     // Fetch all markets as fallback
     dispatch(fetchMarkets({ search: "", page: 1 }));
-  }, [isLogin, navigate, dispatch]);
+  }, [isLogin, userData, navigate, dispatch]);
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -39,29 +45,23 @@ const SelectLocation = () => {
     setGeoError(false);
     
     navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
+      ({ coords }) => {
         const lat = coords.latitude;
         const lng = coords.longitude;
-        const coordsToSave = { lat, lng };
-        const address = `Current location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-        setUserCoords(coordsToSave);
-
-        try {
-          await dispatch(saveCurrentLocation({ location: coordsToSave, address })).unwrap();
-          const result = await dispatch(fetchNearbyMarkets({ latitude: lat, longitude: lng })).unwrap();
-          const nearestMarket = result?.data?.[0];
-          if (!nearestMarket) {
-            toast.error("No nearby markets found. Your location has been saved.");
+        setUserCoords({ lat, lng });
+        
+        dispatch(fetchNearbyMarkets({ latitude: lat, longitude: lng }))
+          .unwrap()
+          .then(() => {
+            toast.success("📍 Nearby markets loaded");
             setGeoLoading(false);
-            return;
-          }
-          await handleSelectMarket(nearestMarket, coordsToSave);
-        } catch (error) {
-          console.error("Error saving location or finding nearby markets:", error);
-          toast.error(error?.message || "Failed to find a nearby market");
-          setGeoLoading(false);
-          setGeoError(true);
-        }
+          })
+          .catch((error) => {
+            console.error("Error fetching nearby markets:", error);
+            toast.error("Failed to load nearby markets");
+            setGeoLoading(false);
+            setGeoError(true);
+          });
       },
       (error) => {
         console.error("Geolocation error:", error);
@@ -73,35 +73,33 @@ const SelectLocation = () => {
     );
   };
 
-  const handleSelectMarket = async (market, selectedCoords = userCoords) => {
+  const handleSelectMarket = (market) => {
     setSavingMarket(market._id);
     
-    const location = selectedCoords
-      ? { lat: selectedCoords.lat, lng: selectedCoords.lng }
+    const location = userCoords 
+      ? { lat: userCoords.lat, lng: userCoords.lng }
       : undefined;
     
-    const address = selectedCoords
-      ? `Current location: ${selectedCoords.lat.toFixed(6)}, ${selectedCoords.lng.toFixed(6)}`
+    const address = userCoords
+      ? `Current location: ${userCoords.lat.toFixed(6)}, ${userCoords.lng.toFixed(6)}`
       : "";
-
-    try {
-      await dispatch(savePreferredMarket({
+    
+    dispatch(savePreferredMarket({ 
       marketId: market._id, 
       location, 
       address,
-      forceLocationUpdate: !!selectedCoords,
-      })).unwrap();
-      toast.success(`Nearest market selected: ${market.name}`);
-      const requested = new URLSearchParams(routeLocation.search).get("redirect") || "/";
-      const destination = requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
-      navigate(selectedCoords && destination === "/"
-        ? `/go-market/market/${market._id}`
-        : destination, { replace: true });
-    } catch (error) {
-      console.error("Error saving preferred market:", error);
-      toast.error(error?.message || "Failed to save market preference");
-      setSavingMarket(null);
-    }
+      forceLocationUpdate: !!userCoords 
+    }))
+      .unwrap()
+      .then(() => {
+        toast.success(`Market selected: ${market.name}`);
+        navigate(`/go-market/market/${market._id}`);
+      })
+      .catch((error) => {
+        console.error("Error saving preferred market:", error);
+        toast.error("Failed to save market preference");
+        setSavingMarket(null);
+      });
   };
 
   const allMarkets = nearbyMarkets.length > 0 ? nearbyMarkets : markets;

@@ -50,9 +50,6 @@ const Login = () => {
 
   const context = useAppContext();
   const history = useNavigate();
-  const navigateAfterLogin = () => {
-    history("/", { replace: true });
-  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -151,7 +148,7 @@ const Login = () => {
           context.setIsLogin(true);
           context.alertBox("success", "✅ Welcome back!");
           setPhone(""); setOtp(""); setName(""); setStep("phone");
-          setTimeout(navigateAfterLogin, 800);
+          setTimeout(() => history("/go-market"), 800);
         }
       } else {
         context.alertBox("error", `❌ ${res?.message || "Invalid OTP"}`);
@@ -192,7 +189,7 @@ const Login = () => {
         context.setIsLogin(true);
         context.alertBox("success", `🎉 Welcome ${name.trim()}!`);
         setPhone(""); setOtp(""); setName(""); setStep("phone");
-        setTimeout(navigateAfterLogin, 800);
+        setTimeout(() => history("/go-market"), 800);
       } else {
         context.alertBox("error", `❌ ${res?.message || "Registration failed"}`);
         triggerShake();
