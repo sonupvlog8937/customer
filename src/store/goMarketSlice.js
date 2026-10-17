@@ -19,6 +19,14 @@ export const fetchMarkets = createAsyncThunk("goMarket/fetchMarkets", async ({ s
 });
 export const fetchNearbyMarkets = createAsyncThunk("goMarket/fetchNearbyMarkets", async ({ latitude, longitude }) => fetchDataFromApi(`/api/go-market/markets/nearby?latitude=${latitude}&longitude=${longitude}&limit=10`));
 export const fetchMarketDetail = createAsyncThunk("goMarket/fetchMarketDetail", async (marketId) => fetchDataFromApi(`/api/go-market/markets/${marketId}`));
+export const saveCurrentLocation = createAsyncThunk("goMarket/saveCurrentLocation", async ({ location, address } = {}, { dispatch, getState }) => {
+  const result = await postData("/api/go-market/save-location", { location, address });
+  if (result?.error !== false) throw new Error(result?.message || "Unable to save current location");
+
+  const userData = getState().app.userData;
+  if (userData) dispatch(setUserData({ ...userData, goMarketLocation: result?.data?.goMarketLocation || null }));
+  return result;
+});
 export const fetchGroceryShopDetail = createAsyncThunk("goMarket/fetchGroceryShopDetail", async (shopId) => fetchDataFromApi(`/api/go-market/grocery-shops/${shopId}`));
 export const fetchRestaurantDetail = createAsyncThunk("goMarket/fetchRestaurantDetail", async (restaurantId) => fetchDataFromApi(`/api/go-market/restaurants/${restaurantId}`));
 export const followGoMarketShop = createAsyncThunk("goMarket/followShop", async (shopId) => postData("/api/go-market/follow-shop", { shopId }));
@@ -27,17 +35,16 @@ export const followGoMarketRestaurant = createAsyncThunk("goMarket/followRestaur
 export const unfollowGoMarketRestaurant = createAsyncThunk("goMarket/unfollowRestaurant", async (restaurantId) => postData("/api/go-market/unfollow-restaurant", { restaurantId }));
 export const savePreferredMarket = createAsyncThunk("goMarket/savePreferredMarket", async ({ marketId, location, address, forceLocationUpdate = false } = {}, { dispatch, getState }) => {
   const result = await postData("/api/go-market/set-preferred-market", { marketId, location, address, forceLocationUpdate });
-  if (result?.success || result?.error === false) {
-    localStorage.setItem("preferredMarketId", marketId);
-    const state = getState();
-    const userData = state.app.userData;
-    if (userData) {
-      dispatch(setUserData({
-        ...userData,
-        preferredMarketId: marketId,
-        goMarketLocation: result?.data?.goMarketLocation || userData?.goMarketLocation || null,
-      }));
-    }
+  if (result?.error !== false) throw new Error(result?.message || "Unable to save market preference");
+
+  localStorage.setItem("preferredMarketId", marketId);
+  const userData = getState().app.userData;
+  if (userData) {
+    dispatch(setUserData({
+      ...userData,
+      preferredMarketId: marketId,
+      goMarketLocation: result?.data?.goMarketLocation || userData?.goMarketLocation || null,
+    }));
   }
   return result;
 });

@@ -37,6 +37,7 @@ export const fetchUserDetails = createAsyncThunk("app/fetchUserDetails", async (
   }
   const userData = res?.data ?? null;
   if (userData?.preferredMarketId) localStorage.setItem("preferredMarketId", userData.preferredMarketId);
+  else localStorage.removeItem("preferredMarketId");
   return userData;
 });
 
@@ -109,6 +110,7 @@ const appSlice = createSlice({
     },
     setIsLogin: (state, action) => {
       state.isLogin = action.payload;
+      if (!action.payload) state.userData = null;
     },
     setUserData: (state, action) => {
       state.userData = action.payload;

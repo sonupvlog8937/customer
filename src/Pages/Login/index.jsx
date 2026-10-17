@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../hooks/useAppContext";
 import { postData } from "../../utils/api";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -50,11 +50,8 @@ const Login = () => {
 
   const context = useAppContext();
   const history = useNavigate();
-  const location = useLocation();
   const navigateAfterLogin = () => {
-    const requested = new URLSearchParams(location.search).get("redirect") || "/";
-    const destination = requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
-    history(`/select-location?redirect=${encodeURIComponent(destination)}`);
+    history("/", { replace: true });
   };
 
   useEffect(() => {

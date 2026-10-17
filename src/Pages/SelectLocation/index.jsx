@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchNearbyMarkets, fetchMarkets, savePreferredMarket } from "../../store/goMarketSlice";
+import { fetchNearbyMarkets, fetchMarkets, saveCurrentLocation, savePreferredMarket } from "../../store/goMarketSlice";
 import CircularProgress from "@mui/material/CircularProgress";
 import toast from "react-hot-toast";
 
@@ -39,23 +39,29 @@ const SelectLocation = () => {
     setGeoError(false);
     
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
+      async ({ coords }) => {
         const lat = coords.latitude;
         const lng = coords.longitude;
-        setUserCoords({ lat, lng });
-        
-        dispatch(fetchNearbyMarkets({ latitude: lat, longitude: lng }))
-          .unwrap()
-          .then(() => {
-            toast.success("📍 Nearby markets loaded");
+        const coordsToSave = { lat, lng };
+        const address = `Current location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        setUserCoords(coordsToSave);
+
+        try {
+          await dispatch(saveCurrentLocation({ location: coordsToSave, address })).unwrap();
+          const result = await dispatch(fetchNearbyMarkets({ latitude: lat, longitude: lng })).unwrap();
+          const nearestMarket = result?.data?.[0];
+          if (!nearestMarket) {
+            toast.error("No nearby markets found. Your location has been saved.");
             setGeoLoading(false);
-          })
-          .catch((error) => {
-            console.error("Error fetching nearby markets:", error);
-            toast.error("Failed to load nearby markets");
-            setGeoLoading(false);
-            setGeoError(true);
-          });
+            return;
+          }
+          await handleSelectMarket(nearestMarket, coordsToSave);
+        } catch (error) {
+          console.error("Error saving location or finding nearby markets:", error);
+          toast.error(error?.message || "Failed to find a nearby market");
+          setGeoLoading(false);
+          setGeoError(true);
+        }
       },
       (error) => {
         console.error("Geolocation error:", error);
@@ -67,35 +73,35 @@ const SelectLocation = () => {
     );
   };
 
-  const handleSelectMarket = (market) => {
+  const handleSelectMarket = async (market, selectedCoords = userCoords) => {
     setSavingMarket(market._id);
     
-    const location = userCoords 
-      ? { lat: userCoords.lat, lng: userCoords.lng }
+    const location = selectedCoords
+      ? { lat: selectedCoords.lat, lng: selectedCoords.lng }
       : undefined;
     
-    const address = userCoords
-      ? `Current location: ${userCoords.lat.toFixed(6)}, ${userCoords.lng.toFixed(6)}`
+    const address = selectedCoords
+      ? `Current location: ${selectedCoords.lat.toFixed(6)}, ${selectedCoords.lng.toFixed(6)}`
       : "";
-    
-    dispatch(savePreferredMarket({ 
+
+    try {
+      await dispatch(savePreferredMarket({
       marketId: market._id, 
       location, 
       address,
-      forceLocationUpdate: !!userCoords 
-    }))
-      .unwrap()
-      .then(() => {
-        toast.success(`Market selected: ${market.name}`);
-        const requested = new URLSearchParams(routeLocation.search).get("redirect") || "/";
-        const destination = requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
-        navigate(destination);
-      })
-      .catch((error) => {
-        console.error("Error saving preferred market:", error);
-        toast.error("Failed to save market preference");
-        setSavingMarket(null);
-      });
+      forceLocationUpdate: !!selectedCoords,
+      })).unwrap();
+      toast.success(`Nearest market selected: ${market.name}`);
+      const requested = new URLSearchParams(routeLocation.search).get("redirect") || "/";
+      const destination = requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
+      navigate(selectedCoords && destination === "/"
+        ? `/go-market/market/${market._id}`
+        : destination, { replace: true });
+    } catch (error) {
+      console.error("Error saving preferred market:", error);
+      toast.error(error?.message || "Failed to save market preference");
+      setSavingMarket(null);
+    }
   };
 
   const allMarkets = nearbyMarkets.length > 0 ? nearbyMarkets : markets;
