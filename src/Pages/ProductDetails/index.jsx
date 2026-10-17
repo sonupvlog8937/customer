@@ -233,7 +233,7 @@ export const ProductDetails = () => {
 
         {/* ── Breadcrumb ── */}
         <div className="pd-breadcrumb-bar">
-          <div className="container" style={{ marginTop: "38px" }}>
+          <div className="pd-container" style={{ marginTop: "38px" }}>
             <Breadcrumbs
               aria-label="breadcrumb"
               separator={<span style={{ color: "#d1d5db", fontSize: 12 }}>/</span>}
@@ -258,7 +258,7 @@ export const ProductDetails = () => {
           ) : (
             <>
               {/* ── Hero: Image + Details ── */}
-              <div className="container">
+              <div className="pd-container">
                 <div className="pd-hero">
                   <div className="pd-image-wrapper">
                     <ProductZoom
@@ -320,7 +320,7 @@ export const ProductDetails = () => {
               </div>
 
               {/* ── Seller Store Card ── */}
-              <div className="container" style={{ marginTop: "14px" }}>
+              <div className="pd-container" style={{ marginTop: "14px" }}>
                 <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
                   <div>
                     <p style={{ fontSize: 12, color: "#64748b", marginBottom: 2 }}>Sold by</p>
@@ -342,7 +342,7 @@ export const ProductDetails = () => {
 
               {/* ── More From This Seller ── */}
               {sellerProductsPreview?.length > 0 && (
-                <div className="container" style={{ marginTop: "14px" }}>
+                <div className="pd-container" style={{ marginTop: "14px" }}>
                   <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: "16px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                       <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>More from this seller</h3>
@@ -362,7 +362,7 @@ export const ProductDetails = () => {
               )}
 
               {/* ── Product Specifications ── */}
-              <div className="container pd-section" ref={specSec}>
+              <div className="pd-container pd-section" ref={specSec}>
                 <style>{`
                   @keyframes specFadeIn { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
                   .pd-spec-block { animation: specFadeIn 0.38s cubic-bezier(0.22,1,0.36,1) both; }
@@ -447,7 +447,7 @@ export const ProductDetails = () => {
               </div>
 
               {/* ── Reviews ── */}
-              <div className="container pd-section" ref={reviewSec}>
+              <div className="pd-container pd-section" ref={reviewSec}>
                 <h2 className="pd-section-title">Customer Reviews</h2>
                 <div className="pd-reviews-wrapper">
                   {productData && (
@@ -466,7 +466,7 @@ export const ProductDetails = () => {
               </div>
 
               {/* ── Related Products ── */}
-              <div className="container pd-section-last">
+              <div className="pd-container pd-section-last">
                 <div className="pd-related-header">
                   <h2 className="pd-related-title">Related Products</h2>
                   <div className="pd-related-line" />
