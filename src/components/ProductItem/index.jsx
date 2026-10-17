@@ -2,9 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Rating from "@mui/material/Rating";
 import { FaRegHeart } from "react-icons/fa";
-import { IoGitCompareOutline } from "react-icons/io5";
-import { MdZoomOutMap } from "react-icons/md";
-import { FiPlus } from "react-icons/fi";
 import { IoMdHeart } from "react-icons/io";
 import { useAppContext } from "../../hooks/useAppContext";
 import { postData } from "../../utils/api";
@@ -73,6 +70,11 @@ const CSS = `
 
 /* badge — image ke bottom-left (transparent / glass) */
 .pi__badges { position:absolute; left:10px; bottom:10px; z-index:5; display:flex; gap:6px; max-width:calc(100% - 20px); }
+.pi__wishlist { position:absolute; top:10px; left:10px; z-index:6; width:34px; height:34px; border:none; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.92); color:#374151; box-shadow:0 2px 10px rgba(0,0,0,.14);
+  cursor:pointer; transition:transform .18s ease, background .18s ease, color .18s ease; }
+.pi__wishlist:hover { transform:scale(1.06); }
+.pi__wishlist--on { background:#fff0f0; color:var(--brand); }
 .pi__sponsored { position:absolute; top:10px; right:10px; z-index:5; border-radius:999px; padding:5px 9px;
   color:#fff; font-size:10px; font-weight:700; background:rgba(17,24,39,.78); }
 .pi__badge { display:inline-flex; align-items:center; gap:5px; color:#fff; font-size:10.5px; font-weight:700;
@@ -347,24 +349,20 @@ const Media = ({ item, url, tag, isOutOfStock, inWishlist, onWishlist, onQuickVi
       )}
     </Link>
 
-    {/* <div className="pi__actions">
-      <button type="button" className="pi__action" title="Quick View" aria-label="Quick view" onClick={onQuickView}>
-        <MdZoomOutMap size={15} />
-      </button>
-      <button type="button" className="pi__action" title="Compare" aria-label="Compare">
-        <IoGitCompareOutline size={15} />
-      </button>
-      <button
-        type="button"
-        className={`pi__action ${inWishlist ? "pi__action--on" : ""}`}
-        title={inWishlist ? "In Wishlist" : "Add to Wishlist"}
-        aria-label={inWishlist ? "In wishlist" : "Add to wishlist"}
-        aria-pressed={inWishlist}
-        onClick={onWishlist}
-      >
-        {inWishlist ? <IoMdHeart size={15} /> : <FaRegHeart size={13} />}
-      </button>
-    </div> */}
+    <button
+      type="button"
+      className={`pi__wishlist ${inWishlist ? "pi__wishlist--on" : ""}`}
+      title={inWishlist ? "In Wishlist" : "Add to Wishlist"}
+      aria-label={inWishlist ? "In wishlist" : "Add to wishlist"}
+      aria-pressed={inWishlist}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onWishlist?.();
+      }}
+    >
+      {inWishlist ? <IoMdHeart size={15} /> : <FaRegHeart size={13} />}
+    </button>
 
     {/* Badge: image ke niche-left (transparent) */}
     <div className="pi__badges">
@@ -428,15 +426,6 @@ const ProductItem = ({ item }) => {
 
           <RatingRow item={item} />
           <Prices item={item} />
-
-          <button
-            type="button"
-            className="pi__add"
-            onClick={p.handleAdd}
-            disabled={p.isOutOfStock || p.adding}
-          >
-            {p.adding && !p.optionsOpen ? "Adding..." : (<><FiPlus size={14} /><span>Add</span></>)}
-          </button>
         </div>
       </article>
 
@@ -486,14 +475,6 @@ export const ProductItemList = ({ item }) => {
 
           <div className="pi__foot">
             <Prices item={item} />
-            <button
-              type="button"
-              className="pi__add"
-              onClick={p.handleAdd}
-              disabled={p.isOutOfStock || p.adding}
-            >
-              {p.adding && !p.optionsOpen ? "Adding..." : (<><FiPlus size={14} /><span>Add</span></>)}
-            </button>
           </div>
         </div>
       </article>
