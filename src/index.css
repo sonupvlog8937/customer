@@ -25,6 +25,9 @@ h1, h2, h3, h4, h5, h6{font-weight: 600;}
 .overflow-x-auto::-webkit-scrollbar-thumb{background: #ccc;}
 
 .container{width: 95%; margin: auto;}
+@media (min-width: 993px){
+  .container{width: calc(100% - 48px); max-width: none; margin-inline: auto;}
+}
 
 .btn-org{background: #ff5252 !important; color: #fff !important; font-weight: 500; font-size: 16px; padding: 7px 20px !important; border:1px solid transparent !important; }
 .btn-org:hover{background: #171717 !important;}

@@ -21,7 +21,7 @@
 
   .pd-root { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface); }
   .pd-container {
-    width: calc(100% - 64px);
+    width: calc(100% - 48px);
     max-width: none;
     margin-inline: auto;
   }
