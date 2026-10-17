@@ -73,6 +73,8 @@ const CSS = `
 
 /* badge — image ke bottom-left (transparent / glass) */
 .pi__badges { position:absolute; left:10px; bottom:10px; z-index:5; display:flex; gap:6px; max-width:calc(100% - 20px); }
+.pi__sponsored { position:absolute; top:10px; right:10px; z-index:5; border-radius:999px; padding:5px 9px;
+  color:#fff; font-size:10px; font-weight:700; background:rgba(17,24,39,.78); }
 .pi__badge { display:inline-flex; align-items:center; gap:5px; color:#fff; font-size:10.5px; font-weight:700;
   letter-spacing:.03em; padding:5px 10px; border-radius:999px; white-space:nowrap;
   max-width:100%; overflow:hidden; text-overflow:ellipsis;
@@ -368,6 +370,7 @@ const Media = ({ item, url, tag, isOutOfStock, inWishlist, onWishlist, onQuickVi
     <div className="pi__badges">
       <span className={`pi__badge pi__badge--${tag.key}`}>{tag.label}</span>
     </div>
+    {item?.isSponsored && <span className="pi__sponsored">Sponsored</span>}
   </div>
 );
 
