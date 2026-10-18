@@ -538,7 +538,7 @@ const Footer = () => {
             {/* Brand + Contact */}
             <div>
               <p className="zd-brand__logo">Zee<span>daddy</span></p>
-              <p className="zd-brand__tagline">Mega Super Store · Est. 2020</p>
+              <p className="zd-brand__tagline">Mega Super Store · Est. 2026</p>
               <p className="zd-brand__desc">
                 Bihar's premier destination for quality products at unbeatable prices.
                 Serving over 50,000 happy customers across India.
