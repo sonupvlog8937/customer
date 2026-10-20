@@ -450,7 +450,7 @@ const GoMarketMarket = () => {
           </div>
         )}
 
-        <div className="gmp-chip-row" style={{ marginTop: 16 }}>
+       {/* <div className="gmp-chip-row" style={{ marginTop: 16 }}>
           {[
             { k: "all", l: "🏪 All Shops", icon: "🏪" },
             { k: "grocery", l: "🛒 Grocery", icon: "🛒" },
@@ -476,7 +476,6 @@ const GoMarketMarket = () => {
             </button>
           ))}
           
-          {/* Clear filters button */}
           {activeFiltersCount > 0 && (
             <button
               type="button"
@@ -492,7 +491,7 @@ const GoMarketMarket = () => {
               ✕ Clear {activeFiltersCount} filter{activeFiltersCount > 1 ? "s" : ""}
             </button>
           )}
-        </div>
+        </div> */}
 
         <CatalogToolbar
           search={search}
