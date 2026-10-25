@@ -270,37 +270,40 @@ function App() {
           duration: 3200,
           style: {
             fontFamily: "'Outfit', sans-serif",
-            fontSize: "14px",
+            fontSize: "12.5px",
             fontWeight: 500,
             letterSpacing: "0.01em",
             borderRadius: "12px",
             border: "1px solid rgba(0,0,0,0.08)",
             boxShadow: "0 10px 40px rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.08)",
-            padding: "14px 16px",
+            padding: "10px 14px",
             color: "#111",
             background: "#fff",
             backdropFilter: "blur(8px)",
           },
           success: { 
             style: {
-              background: "#F0FDF4",
+              background: "linear-gradient(135deg,#F0FDF4,#CCFBF1)",
               border: "1px solid #86EFAC",
+              borderLeft: "4px solid #14b8a6",
               color: "#166534",
             },
             iconTheme: { primary: "#16a34a", secondary: "#F0FDF4" } 
           },
           error: { 
             style: {
-              background: "#FEF2F2",
+              background: "linear-gradient(135deg,#FEF2F2,#FFE4E6)",
               border: "1px solid #FECACA",
+              borderLeft: "4px solid #ec4899",
               color: "#7F1D1D",
             },
             iconTheme: { primary: "#dc2626", secondary: "#FEF2F2" } 
           },
           loading: {
             style: {
-              background: "#F0F9FF",
-              border: "1px solid #93C5FD",
+              background: "linear-gradient(135deg,#F0F9FF,#EDE9FE)",
+              border: "1px solid #C4B5FD",
+              borderLeft: "4px solid #8b5cf6",
               color: "#1E3A8A",
             },
           },

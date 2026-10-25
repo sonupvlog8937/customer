@@ -8,18 +8,18 @@
 body{
   font-family: "Montserrat", sans-serif;
   font-optical-sizing: auto;
-  background: #f5f0f0;
+  background: #f7f5ff;
   color: #3e3e3e;
   overflow-x: hidden;
 }
 
-p{font-size: 14px; line-height: 25px; margin-bottom: 10px; margin-top: 10px;}
+p{font-size: 13px; line-height: 22px; margin-bottom: 10px; margin-top: 10px;}
 
 h1, h2, h3, h4, h5, h6{font-weight: 600;}
 
 
 ::-webkit-scrollbar{width: 8px !important; height: 8px !important;}
-::-webkit-scrollbar-thumb{background: #ff5252;}
+::-webkit-scrollbar-thumb{background: linear-gradient(180deg,#ff6b2b,#ec4899,#8b5cf6); border-radius: 8px;}
 ::-webkit-scrollbar-track{background: #fff;}
 
 .overflow-x-auto::-webkit-scrollbar-thumb{background: #ccc;}
@@ -29,22 +29,22 @@ h1, h2, h3, h4, h5, h6{font-weight: 600;}
   .container{width: calc(100% - 48px); max-width: none; margin-inline: auto;}
 }
 
-.btn-org{background: #ff5252 !important; color: #fff !important; font-weight: 500; font-size: 16px; padding: 7px 20px !important; border:1px solid transparent !important; }
-.btn-org:hover{background: #171717 !important;}
+.btn-org{background: linear-gradient(135deg,#ff6b2b,#ec4899) !important; color: #fff !important; font-weight: 600; font-size: 13px; padding: 7px 18px !important; border:1px solid transparent !important; border-radius: 10px; }
+.btn-org:hover{background: linear-gradient(135deg,#8b5cf6,#ec4899) !important;}
 
-.btn-org.btn-border{background: none !important; color: #ff5252 !important; border:1px solid #ff5252 !important; font-weight: 500; font-size: 16px; padding: 7px 20px !important;}
+.btn-org.btn-border{background: none !important; color: #ff5252 !important; border:1px solid #ff5252 !important; font-weight: 600; font-size: 13px; padding: 7px 18px !important;}
 .btn-org.btn-border:hover{background: #171717 !important; color: #fff !important;  border:1px solid #171717 !important;}
 
 .btn-dark{background: #363636 !important; color: #fff !important;  border:1px solid #171717 !important;}
 .btn-dark:hover{background: #171717 !important; }
 
 
-.btn-lg{ font-size: 18px; padding: 10px 20px !important;}
+.btn-lg{ font-size: 14px; padding: 9px 20px !important;}
 .btn-sm{ font-size: 12px !important; padding: 5px 20px !important;}
 
 .link:hover,.Mui-checked{color: #ff5252 !important;}
 
-.MuiBadge-badge{background-color: #ff5252 !important;}
+.MuiBadge-badge{background-color: #ec4899 !important;}
 
 nav ul button{text-transform: capitalize !important;}
 
@@ -55,10 +55,10 @@ nav ul button:hover{background: none !important;}
 
 .sliderHome{overflow: inherit !important;}
 
-.swiper-button-prev,.swiper-button-next{display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 100%; width: 45px; height: 45px; min-width: 45px;
+.swiper-button-prev,.swiper-button-next{display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 100%; width: 36px; height: 36px; min-width: 36px;
   box-shadow: 0 1px 3px #0000001f, 0 1px 2px #0000003d !important; transition:all 0.2s;}
 
-.swiper-button-prev:after,.swiper-button-next:after{font-size: 22px !important; color: #000;}
+.swiper-button-prev:after,.swiper-button-next:after{font-size: 15px !important; color: #000;}
 
 
 .smlBtn .swiper-button-prev,.smlBtn .swiper-button-next{width: 30px !important; height: 30px !important; min-width: 30px !important; top: 55% !important;}
@@ -74,13 +74,13 @@ nav ul button:hover{background: none !important;}
 
 .homeCatSlider .item{border: 1px solid rgba(0,0,0,0.1);}
 
-.swiper-button-prev:hover,.swiper-button-next:hover{background: #ff5252 !important;}
+.swiper-button-prev:hover,.swiper-button-next:hover{background: linear-gradient(135deg,#8b5cf6,#ec4899) !important;}
 .swiper-button-prev:hover::after,.swiper-button-next:hover::after{color: #fff !important;}
 
 .homeCatSlider .item:hover img{transform:scale(1.1);}
 
 
-.MuiTabs-indicator{background-color: #ff5252 !important;}
+.MuiTabs-indicator{background: linear-gradient(90deg,#ff6b2b,#ec4899,#8b5cf6) !important; height:3px !important; border-radius:3px;}
 .MuiTab-textColorPrimary.Mui-selected{color:#ff5252 !important;}
 
 .productsSlider .swiper-wrapper{padding: 15px 8px; margin-left: -15px; margin-right: -15px;}
@@ -194,6 +194,6 @@ header{box-shadow: 0px 1px 5px #0000001a;}
 #paypal-button-container{width: 100% !important;}
 
 
-table td{padding: 8px 17px !important; font-size: 13px !important;}
+table td{padding: 8px 17px !important; font-size: 12px !important;}
 
 .searchBox .MuiCircularProgress-root{width: 20px !important; height: 20px !important;}
