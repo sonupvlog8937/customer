@@ -9,7 +9,7 @@ import { useAppContext } from "../../hooks/useAppContext";
 
 /* ─── Skeleton Loader ─────────────────────────────────────── */
 const SliderSkeleton = () => (
-  <div className="w-full h-[200px] sm:h-[320px] lg:h-[460px] bg-gray-200 animate-pulse rounded-2xl overflow-hidden relative">
+  <div className="w-full h-[120px] sm:h-[180px] lg:h-[230px] bg-gray-200 animate-pulse rounded-2xl overflow-hidden relative">
     <div className="absolute inset-0 animate-shimmer" />
   </div>
 );
@@ -33,8 +33,7 @@ const HomeSlider = (props) => {
   const handleSlideClick = (item) => {
     if (isDragging) return;
 
-    const url = "/products" ||
-      item?.link ||
+    const url = item?.link ||
       item?.url ||
       item?.redirectUrl ||
       item?.href ||
@@ -78,8 +77,11 @@ const HomeSlider = (props) => {
         }
         .home-swiper .swiper-pagination { bottom: 14px; }
 
-        .slide-clickable img { transition: transform 0.5s ease; }
+        .slide-clickable img { transition: transform 0.7s cubic-bezier(.22,.61,.36,1); }
         .slide-clickable:hover img { transform: scale(1.02); }
+        @media (prefers-reduced-motion: reduce) {
+          .slide-clickable img { transition: none; }
+        }
       `}</style>
 
       <section className="homeSlider w-full py-3 lg:py-4">
@@ -94,7 +96,8 @@ const HomeSlider = (props) => {
               spaceBetween={0}
               slidesPerView={1}
               modules={[Navigation, Autoplay, Pagination]}
-              autoplay={{ delay: 4000, disableOnInteraction: false }}
+              autoplay={{ delay: 4500, disableOnInteraction: false, pauseOnMouseEnter: true }}
+              speed={750}
               pagination={{ clickable: true }}
               onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
               onTouchStart={() => setIsDragging(false)}
@@ -114,7 +117,7 @@ const HomeSlider = (props) => {
                       tabIndex={hasLink ? 0 : undefined}
                       aria-label={hasLink ? (item?.title || `Banner ${index + 1}`) : undefined}
                       className={`
-                        relative w-full h-[200px] sm:h-[320px] lg:h-[460px] overflow-hidden
+                        relative w-full h-[120px] sm:h-[180px] lg:h-[230px] overflow-hidden
                         ${hasLink ? "slide-clickable cursor-pointer" : "cursor-default"}
                       `}
                     >
@@ -224,12 +227,12 @@ const HomeSlider = (props) => {
                   className={`
                     relative rounded-lg overflow-hidden flex-shrink-0 transition-all duration-300
                     ${activeIndex === index
-                      ? "w-20 h-12 ring-2 ring-blue-500 opacity-100 scale-105"
+                      ? "w-20 h-12 ring-2 ring-[#FF6B2B] opacity-100 scale-105"
                       : "w-16 h-10 opacity-50 hover:opacity-80 hover:scale-105"}
                   `}
                 >
                   <img src={item?.images?.[0]} alt={`Thumb ${index + 1}`} className="w-full h-full object-cover" />
-                  {activeIndex === index && <div className="absolute inset-0 bg-blue-500/10" />}
+                  {activeIndex === index && <div className="absolute inset-0 bg-[#FF6B2B]/10" />}
                 </button>
               ))}
             </div>

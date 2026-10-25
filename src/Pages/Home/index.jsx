@@ -29,7 +29,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/free-mode";
-import { Navigation, FreeMode, Autoplay, Pagination } from "swiper/modules";
+import { Navigation, FreeMode } from "swiper/modules";
 // EffectFade remove kiya — use nahi ho raha tha, extra KB load ho raha tha
 
 
@@ -259,7 +259,6 @@ const Home = () => {
   const [couponMessage, setCouponMessage]       = useState("");
   const [activeFaq, setActiveFaq]               = useState(0);
   const [timeLeft, setTimeLeft]                 = useState({ hours: 0, minutes: 0, seconds: 0 });
-  const [activeSlide, setActiveSlide]           = useState(0);
   const [initialLoading, setInitialLoading]     = useState(true);
 
   const context  = useAppContext();
@@ -420,24 +419,12 @@ const Home = () => {
       )}
 
       {/* ─── HERO BANNER ─────────────────────────────────────────────────── */}
-      <section className="hero-bg relative overflow-hidden" style={{ background: "linear-gradient(135deg, #FFF8F4 0%, #FFF4EE 100%)" }}>
-        <div className="container relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center py-2 lg:py-4">
-
-            {/* Right: Slider — ✅ FIX 7: first image eager load, baaki lazy */}
-            <div className="lg:col-span-12 anim-slide-right">
-              <Swiper loop spaceBetween={0} modules={[Autoplay, Pagination]}
-                autoplay={{ delay: 3500, disableOnInteraction: false }}
-                pagination={{ clickable: true }} className="hero-swiper"
-                style={{ borderRadius: "20px", overflow: "hidden", boxShadow: "0 20px 60px rgba(255,107,43,0.15)" }}
-                onSlideChange={(s) => setActiveSlide(s.realIndex)}>
-                {
-                        homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />
-                      }
-              </Swiper>
-            </div>
-          </div>
-        </div>
+      <section className="hero-bg relative overflow-hidden anim-slide-right">
+        {homeSlidesData?.length > 0 && (
+          <Suspense fallback={<div className="mx-3 sm:mx-4 lg:mx-6 h-[120px] sm:h-[180px] lg:h-[230px] rounded-xl bg-gray-100 animate-pulse" aria-hidden="true" />}>
+            <HomeSlider data={homeSlidesData} />
+          </Suspense>
+        )}
       </section>
 
       {/* ─── Category Slider ─────────────────────────────────────────────── */}
