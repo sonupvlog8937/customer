@@ -41,6 +41,48 @@ const FAQS = [
 ];
 
 const TIMER_LABELS = ["HRS", "MIN", "SEC"];
+
+// 🎨 Colourful palette — har section / tab / card ko alag colour (CSS: style.css → .theme-*)
+const THEMES     = ["theme-orange", "theme-violet", "theme-teal", "theme-pink", "theme-blue", "theme-amber", "theme-green"];
+const TAB_COLORS = ["#FF6B2B", "#7C3AED", "#0D9488", "#EC4899", "#2563EB", "#D97706", "#059669"];
+
+// ✨ Scroll reveal — .scroll-reveal / .reveal-stagger elements jaise hi screen pe aate hain "visible" class lagti hai.
+// MutationObserver se baad mein load hone wale sections (API data ke baad) bhi automatically pakde jaate hain.
+const useScrollReveal = (rootRef) => {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const targets = ".scroll-reveal, .reveal-stagger";
+
+    if (!("IntersectionObserver" in window)) {
+      const showAll = () => root.querySelectorAll(targets).forEach((el) => el.classList.add("visible"));
+      showAll();
+      const fallbackMo = new MutationObserver(showAll);
+      fallbackMo.observe(root, { childList: true, subtree: true });
+      return () => fallbackMo.disconnect();
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add("visible"); io.unobserve(e.target); }
+      }),
+      { threshold: 0.05, rootMargin: "0px 0px -6% 0px" }
+    );
+    const seen = new WeakSet();
+    let raf = 0;
+    const scan = () => {
+      raf = 0;
+      root.querySelectorAll(targets).forEach((el) => {
+        if (!seen.has(el)) { seen.add(el); io.observe(el); }
+      });
+    };
+    scan();
+    const mo = new MutationObserver(() => { if (!raf) raf = requestAnimationFrame(scan); });
+    mo.observe(root, { childList: true, subtree: true });
+
+    return () => { mo.disconnect(); io.disconnect(); if (raf) cancelAnimationFrame(raf); };
+  }, [rootRef]);
+};
 const REVIEWS = [
   { text: "Amazing quality and super fast delivery. Will definitely order again!", author: "Priya S.", location: "Mumbai", avatar: "P", rating: 5 },
   { text: "Packaging was premium and product exactly as shown. No surprises at all!", author: "Rahul M.", location: "Delhi", avatar: "R", rating: 5 },
@@ -83,20 +125,20 @@ const AllProductsSection = () => {
   const hasMore = allProducts.length < totalProducts;
 
   return (
-    <section className="py-6 bg-white" style={{ borderTop: "1.5px solid #F1F3F5" }}>
+    <section className="py-6 theme-pink scroll-reveal" style={{ borderTop: "1.5px solid #FCE7F3", background: "linear-gradient(180deg, #FFF7FB 0%, #FFFFFF 45%)" }}>
       <div className="container">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="section-heading text-[22px] font-[800] text-gray-900 mb-0"
+            <h2 className="section-heading text-[17px] font-[800] text-gray-900 mb-0"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>All Products</h2>
             {!loading && (
-              <p className="text-[13px] text-gray-400 mt-0.5 mb-0">
+              <p className="text-[12px] text-gray-400 mt-0.5 mb-0">
                 Showing {allProducts.length} of {totalProducts} products
               </p>
             )}
           </div>
           <Link to="/products">
-            <button className="cta-orange group flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-[700] text-white">
+            <button className="cta-orange group flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-[700] text-white">
               View All <span className="inline-flex items-center justify-center w-5 h-5 rounded-full" style={{ background: "rgba(255,255,255,0.2)" }}><MdArrowRightAlt size={15} /></span>
             </button>
           </Link>
@@ -106,7 +148,7 @@ const AllProductsSection = () => {
           <ProductLoading />
         ) : (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="reveal-stagger grid grid-cols-2 lg:grid-cols-5 gap-3">
               {allProducts.map((item, index) => (
                 <Suspense key={item?._id || index} fallback={null}>
                   <ProductItem item={item} />
@@ -119,11 +161,11 @@ const AllProductsSection = () => {
                 <button
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="flex items-center gap-2 px-8 py-3 rounded-xl font-[700] text-[14px] transition-all active:scale-95"
+                  className="flex items-center gap-2 px-8 py-3 rounded-xl font-[700] text-[13px] transition-all active:scale-95"
                   style={{
-                    background: loadingMore ? "#F5F5F5" : "linear-gradient(135deg, #FF6B2B, #FF9A5C)",
+                    background: loadingMore ? "#F5F5F5" : "linear-gradient(135deg, var(--a), var(--b))",
                     color: loadingMore ? "#9CA3AF" : "#fff",
-                    boxShadow: loadingMore ? "none" : "0 6px 20px rgba(255,107,43,0.3)",
+                    boxShadow: loadingMore ? "none" : "0 6px 20px var(--glow)",
                     border: "none",
                     cursor: loadingMore ? "not-allowed" : "pointer",
                   }}>
@@ -140,8 +182,8 @@ const AllProductsSection = () => {
             )}
 
             {!hasMore && totalProducts > 0 && (
-              <p className="text-center text-[13px] text-gray-400 mt-6 mb-0">
-                🎉 Saare products dekh liye! <Link to="/products" style={{ color: "#FF6B2B", fontWeight: 700 }}>Browse categories</Link>
+              <p className="text-center text-[12px] text-gray-400 mt-6 mb-0">
+                🎉 Saare products dekh liye! <Link to="/products" style={{ color: "var(--a)", fontWeight: 700 }}>Browse categories</Link>
               </p>
             )}
           </>
@@ -183,20 +225,20 @@ const FeaturedProductsSection = ({ featuredProducts, bannerList2Data }) => {
   }, [featuredProducts]);
 
   return (
-    <section className="py-2 pb-5 bg-white">
+    <section className="py-3 pb-5 theme-teal scroll-reveal">
       <div className="container">
         <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
           <div>
-            <h2 className="section-heading text-[22px] font-[800] text-gray-900 flex-shrink-0 mb-0"
+            <h2 className="section-heading text-[17px] font-[800] text-gray-900 flex-shrink-0 mb-0"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Featured Products</h2>
             {allItems.length > 0 && (
-              <p className="text-[13px] text-gray-400 mt-0.5 mb-0">
+              <p className="text-[12px] text-gray-400 mt-0.5 mb-0">
                 Showing {visibleItems.length} of {allItems.length} featured products
               </p>
             )}
           </div>
           <Link to="/products" className="flex-shrink-0">
-            <button className="cta-orange group flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-[700] text-white">
+            <button className="cta-orange group flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-[700] text-white">
               View All <span className="inline-flex items-center justify-center w-5 h-5 rounded-full group-hover:translate-x-0.5 transition-transform" style={{ background: "rgba(255,255,255,0.2)" }}><MdArrowRightAlt size={15} /></span>
             </button>
           </Link>
@@ -206,7 +248,7 @@ const FeaturedProductsSection = ({ featuredProducts, bannerList2Data }) => {
           <ProductLoading />
         ) : (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="reveal-stagger grid grid-cols-2 lg:grid-cols-5 gap-3">
               {visibleItems.map((item, index) => (
                 <Suspense key={item?._id || index} fallback={null}>
                   <ProductItem item={item} />
@@ -219,15 +261,15 @@ const FeaturedProductsSection = ({ featuredProducts, bannerList2Data }) => {
               <div ref={sentinelRef} className="flex justify-center items-center py-8">
                 <div className="flex items-center gap-3">
                   <span className="inline-block w-5 h-5 border-[2.5px] rounded-full animate-spin"
-                    style={{ borderColor: "rgba(255,107,43,0.15)", borderTopColor: "#FF6B2B" }} />
-                  <span className="text-[13px] font-[600]" style={{ color: "#FF6B2B" }}>Loading more featured products...</span>
+                    style={{ borderColor: "var(--soft2)", borderTopColor: "var(--a)" }} />
+                  <span className="text-[12px] font-[600]" style={{ color: "var(--a)" }}>Loading more featured products...</span>
                 </div>
               </div>
             )}
 
             {!hasMore && allItems.length > FEATURED_PER_BATCH && (
-              <p className="text-center text-[13px] text-gray-400 mt-6 mb-0">
-                ✨ Saare featured products dekh liye! <Link to="/products" style={{ color: "#FF6B2B", fontWeight: 700 }}>Browse more</Link>
+              <p className="text-center text-[12px] text-gray-400 mt-6 mb-0">
+                ✨ Saare featured products dekh liye! <Link to="/products" style={{ color: "var(--a)", fontWeight: 700 }}>Browse more</Link>
               </p>
             )}
           </>
@@ -281,15 +323,9 @@ const Home = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Scroll reveal
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); }),
-      { threshold: 0.12 }
-    );
-    document.querySelectorAll(".scroll-reveal").forEach(el => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
+  // Scroll reveal (smooth animations)
+  const rootRef = useRef(null);
+  useScrollReveal(rootRef);
 
   // ✅ FIX 4: Main data fetch — getAllProducts ek baar call ho raha tha?
   // NAHI — pehle SAME API /getAllProducts DO baar call ho rahi thi!
@@ -384,7 +420,7 @@ const Home = () => {
   }, [newsletterEmail]);
 
   return (
-    <div className="home-root" style={{ background: "#ffffff" }}>
+    <div ref={rootRef} className="home-root" style={{ background: "#ffffff" }}>
 
       {/* ✅ Initial Page Loading Skeleton */}
       {initialLoading && <HomePageSkeleton />}
@@ -396,30 +432,33 @@ const Home = () => {
           {showLoginPopup && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}>
           <div className="popup-card w-full max-w-[420px] rounded-2xl overflow-hidden shadow-2xl">
-            <div className="relative overflow-hidden p-7" style={{ background: "linear-gradient(135deg, #FF6B2B 0%, #FF9A5C 100%)" }}>
+            <div className="relative overflow-hidden p-7" style={{ background: "linear-gradient(135deg, #FF6B2B 0%, #EC4899 55%, #7C3AED 100%)" }}>
               <div className="float-1 absolute top-3 right-6 w-20 h-20 rounded-full opacity-20" style={{ background: "rgba(255,255,255,0.4)" }} />
               <div className="float-2 absolute bottom-2 right-16 w-10 h-10 rounded-full opacity-15" style={{ background: "rgba(255,255,255,0.3)" }} />
               <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full opacity-10" style={{ background: "white" }} />
-              <span className="inline-block text-[11px] uppercase tracking-[0.18em] px-3 py-1 rounded-full mb-4 text-white font-[600]" style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)" }}>Welcome</span>
-              <h3 className="text-[26px] font-[800] text-white leading-tight mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Exclusive access<br/>awaits you ✨</h3>
-              <p className="text-[14px] mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>Login for faster checkout, wishlist sync, premium offers & smart order tracking.</p>
+              <span className="inline-block text-[10px] uppercase tracking-[0.18em] px-3 py-1 rounded-full mb-4 text-white font-[600]" style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)" }}>Welcome</span>
+              <h3 className="text-[20px] font-[800] text-white leading-tight mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Exclusive access<br/>awaits you ✨</h3>
+              <p className="text-[13px] mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>Login for faster checkout, wishlist sync, premium offers & smart order tracking.</p>
             </div>
             <div className="p-6 bg-white">
               <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-3">
-                <button className="h-[46px] rounded-xl font-[700] text-[14px] text-white transition-all cta-orange"
+                <button className="h-[46px] rounded-xl font-[700] text-[13px] text-white transition-all cta-orange"
                   onClick={() => { setShowLoginPopup(false); navigate("/login"); }}>Login Now</button>
-                {/* <button className="h-[46px] rounded-xl font-[700] text-[14px] transition-all cta-outline"
+                {/* <button className="h-[46px] rounded-xl font-[700] text-[13px] transition-all cta-outline"
                   onClick={() => { setShowLoginPopup(false); navigate("/register"); }}>Register</button> */}
               </div>
-              <button className="w-full text-[13px] py-1 transition-colors text-gray-400 hover:text-gray-600"
-                onClick={() => setShowLoginPopup(false)}>Canel</button>
+              <button className="w-full text-[12px] py-1 transition-colors text-gray-400 hover:text-gray-600"
+                onClick={() => setShowLoginPopup(false)}>Cancel</button>
             </div>
           </div>
         </div>
       )}
 
       {/* ─── HERO BANNER ─────────────────────────────────────────────────── */}
-      <section className="hero-bg relative overflow-hidden anim-slide-right">
+      <section className="hero-bg relative overflow-hidden anim-hero">
+        <span className="aurora-blob aurora-1" aria-hidden="true" />
+        <span className="aurora-blob aurora-2" aria-hidden="true" />
+        <span className="aurora-blob aurora-3" aria-hidden="true" />
         {homeSlidesData?.length > 0 && (
           <Suspense fallback={<div className="mx-3 sm:mx-4 lg:mx-6 h-[120px] sm:h-[180px] lg:h-[230px] rounded-xl bg-gray-100 animate-pulse" aria-hidden="true" />}>
             <HomeSlider data={homeSlidesData} />
@@ -429,7 +468,7 @@ const Home = () => {
 
       {/* ─── Category Slider ─────────────────────────────────────────────── */}
       {context?.catData?.length !== 0 && (
-        <div style={{ background: "#FAFAFA", borderTop: "1.5px solid #F1F3F5", borderBottom: "1.5px solid #F1F3F5" }}>
+        <div className="cat-strip">
           <Suspense fallback={null}>
             <HomeCatSlider data={context?.catData} />
           </Suspense>
@@ -439,12 +478,12 @@ const Home = () => {
       {/* <GoMarketPromoCard /> */}
 
       {/* ─── Popular Products ────────────────────────────────────────────── */}
-      <section className="bg-white py-6">
+      <section className="py-6 theme-orange scroll-reveal">
         <div className="container">
           <div className="flex items-start justify-between gap-3 mb-5 flex-wrap">
-            <h2 className="section-heading text-[22px] font-[800] text-gray-900 flex-shrink-0" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Popular Products</h2>
+            <h2 className="section-heading text-[17px] font-[800] text-gray-900 flex-shrink-0" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Popular Products</h2>
             <Link to="/products" className="flex-shrink-0">
-              <button className="cta-orange group flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-[700] text-white">
+              <button className="cta-orange group flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-[700] text-white">
                 View All <span className="inline-flex items-center justify-center w-5 h-5 rounded-full" style={{ background: "rgba(255,255,255,0.2)" }}><MdArrowRightAlt size={15} /></span>
               </button>
             </Link>
@@ -454,13 +493,9 @@ const Home = () => {
               {context?.catData?.map((cat, index) => (
                 <button key={index}
                   onClick={() => { setValue(index); filterByCatId(cat?._id); }}
-                  className="flex-shrink-0 text-[13px] px-4 py-1.5 rounded-full transition-all font-[500]"
-                  style={{
-                    background: value === index ? "#FF6B2B" : "#F5F5F5",
-                    color:      value === index ? "#fff"    : "#374151",
-                    fontWeight: value === index ? 700       : 500,
-                    border: "none", cursor: "pointer",
-                  }}>
+                  className="tab-pill flex-shrink-0 text-[12px] px-3.5 py-1.5 rounded-full"
+                  style={{ "--tab": TAB_COLORS[index % TAB_COLORS.length] }}
+                  data-active={value === index}>
                   {cat?.name}
                 </button>
               ))}
@@ -469,7 +504,7 @@ const Home = () => {
           {popularProductsData?.length === 0
             ? <ProductLoading />
             : (
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="reveal-stagger grid grid-cols-2 lg:grid-cols-5 gap-3">
                 {popularProductsData.slice(0, 8).map((item, index) => (
                   <Suspense key={item?._id || index} fallback={null}>
                     <ProductItem item={item} />
@@ -482,27 +517,27 @@ const Home = () => {
       </section>
 
       {/* ─── Flash Sale Banner ───────────────────────────────────────────── */}
-      {/* <section className="py-4 bg-white">
+      {/* <section className="py-4 bg-white scroll-reveal">
         <div className="container">
-          <div className="relative overflow-hidden rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 flex-wrap"
-            style={{ background: "linear-gradient(135deg, #FF6B2B 0%, #FF8C55 50%, #FFB347 100%)", boxShadow: "0 12px 40px rgba(255,107,43,0.3)" }}>
+          <div className="promo-gradient relative overflow-hidden rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 flex-wrap"
+            style={{ boxShadow: "0 12px 40px rgba(236,72,153,0.28)" }}>
             <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 pointer-events-none" style={{ background: "white", transform: "translate(30%, -30%)" }} />
             <div className="dot-pattern absolute inset-0 opacity-30 pointer-events-none rounded-2xl" />
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-1">
-                <FaBolt className="text-yellow-200 text-[14px]" />
-                <span className="text-[11px] uppercase tracking-[0.18em] text-white/80 font-[600]">Limited time</span>
+                <FaBolt className="text-yellow-200 text-[13px]" />
+                <span className="text-[10px] uppercase tracking-[0.18em] text-white/80 font-[600]">Limited time</span>
               </div>
-              <h3 className="text-[24px] font-[800] text-white mb-0.5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flash Sale ends tonight 🔥</h3>
-              <p className="text-[13px] text-white/80 mb-0">Hurry up — prices reset at midnight!</p>
+              <h3 className="text-[18px] font-[800] text-white mb-0.5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flash Sale ends tonight 🔥</h3>
+              <p className="text-[12px] text-white/80 mb-0">Hurry up — prices reset at midnight!</p>
             </div>
             <div className="relative z-10 flex items-center gap-3">
               {[{ val: timeLeft.hours, label: TIMER_LABELS[0] }, { val: timeLeft.minutes, label: TIMER_LABELS[1] }, { val: timeLeft.seconds, label: TIMER_LABELS[2] }]
                 .map((t, idx) => (
                   <React.Fragment key={idx}>
-                    {idx !== 0 && <span className="text-white/50 text-[20px] font-light mb-3">:</span>}
+                    {idx !== 0 && <span className="text-white/50 text-[16px] font-light mb-3">:</span>}
                     <div className="flex flex-col items-center gap-1">
-                      <div className="timer-digit w-14 h-14 rounded-xl flex items-center justify-center text-[22px]"
+                      <div className="timer-digit w-14 h-14 rounded-xl flex items-center justify-center text-[17px]"
                         style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
                         {String(t.val).padStart(2, "0")}
                       </div>
@@ -512,8 +547,8 @@ const Home = () => {
                 ))}
             </div>
             <div className="relative z-10">
-              <button onClick={copyCouponCode} className="flex items-center gap-2 px-5 py-3 rounded-xl font-[700] text-[14px] transition-all hover:scale-105 active:scale-95"
-                style={{ background: "white", color: "#FF6B2B", boxShadow: "0 4px 14px rgba(0,0,0,0.15)" }}>
+              <button onClick={copyCouponCode} className="flex items-center gap-2 px-5 py-3 rounded-xl font-[700] text-[13px] transition-all hover:scale-105 active:scale-95"
+                style={{ background: "white", color: "#7C3AED", boxShadow: "0 4px 14px rgba(0,0,0,0.15)" }}>
                 Copy SAVE20 <FaRegCopy />
               </button>
               {couponMessage && <p className="text-[12px] text-white/90 mt-1.5 mb-0 font-[600]">{couponMessage}</p>}
@@ -523,7 +558,7 @@ const Home = () => {
       </section> */}
 
       {/* ─── Product Banner V2 + Side Banners ───────────────────────────── */}
-      <section className="py-4 pt-0 bg-white">
+      <section className="py-4 pt-0 bg-white scroll-reveal">
         <div className="container flex flex-col lg:flex-row gap-5">
           <div className="w-full lg:w-[70%]">
             {productsBanners?.length > 0 && (
@@ -545,15 +580,15 @@ const Home = () => {
       
 
       {/* ─── Latest Products ─────────────────────────────────────────────── */}
-      <section className="py-5 pt-0 bg-white">
+      <section className="py-5 pt-0 theme-violet scroll-reveal">
         <div className="container">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="section-heading text-[22px] font-[800] text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Latest Products</h2>
+            <h2 className="section-heading text-[17px] font-[800] text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Latest Products</h2>
             <Link to="/products">
-              <button className="flex items-center gap-1.5 text-[13px] font-[600] px-4 py-2.5 rounded-xl transition-all"
-                style={{ color: "#FF6B2B", border: "1.5px solid rgba(255,107,43,0.2)", background: "rgba(255,107,43,0.04)" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,107,43,0.08)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,107,43,0.04)"; }}>
+              <button className="btn-soft flex items-center gap-1.5 text-[12px] font-[600] px-4 py-2.5 rounded-xl"
+                
+                
+                >
                 View All <MdArrowRightAlt size={18} />
               </button>
             </Link>
@@ -561,7 +596,7 @@ const Home = () => {
           {filteredProducts?.length === 0
             ? <ProductLoading />
             : (
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="reveal-stagger grid grid-cols-2 lg:grid-cols-5 gap-3">
                 {filteredProducts.slice(0, 8).map((item, index) => (
                   <Suspense key={item?._id || index} fallback={null}>
                     <ProductItem item={item} />
@@ -575,27 +610,27 @@ const Home = () => {
       <GoMarketPromoCard />
 
       {/* timer */}
-      <section className="py-4 bg-white">
+      <section className="py-4 bg-white scroll-reveal">
         <div className="container">
-          <div className="relative overflow-hidden rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 flex-wrap"
-            style={{ background: "linear-gradient(135deg, #FF6B2B 0%, #FF8C55 50%, #FFB347 100%)", boxShadow: "0 12px 40px rgba(255,107,43,0.3)" }}>
+          <div className="promo-gradient relative overflow-hidden rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 flex-wrap"
+            style={{ boxShadow: "0 12px 40px rgba(236,72,153,0.28)" }}>
             <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 pointer-events-none" style={{ background: "white", transform: "translate(30%, -30%)" }} />
             <div className="dot-pattern absolute inset-0 opacity-30 pointer-events-none rounded-2xl" />
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-1">
-                <FaBolt className="text-yellow-200 text-[14px]" />
-                <span className="text-[11px] uppercase tracking-[0.18em] text-white/80 font-[600]">Limited time</span>
+                <FaBolt className="text-yellow-200 text-[13px]" />
+                <span className="text-[10px] uppercase tracking-[0.18em] text-white/80 font-[600]">Limited time</span>
               </div>
-              <h3 className="text-[24px] font-[800] text-white mb-0.5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flash Sale ends tonight 🔥</h3>
-              <p className="text-[13px] text-white/80 mb-0">Hurry up — prices reset at midnight!</p>
+              <h3 className="text-[18px] font-[800] text-white mb-0.5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Flash Sale ends tonight 🔥</h3>
+              <p className="text-[12px] text-white/80 mb-0">Hurry up — prices reset at midnight!</p>
             </div>
             <div className="relative z-10 flex items-center gap-3">
               {[{ val: timeLeft.hours, label: TIMER_LABELS[0] }, { val: timeLeft.minutes, label: TIMER_LABELS[1] }, { val: timeLeft.seconds, label: TIMER_LABELS[2] }]
                 .map((t, idx) => (
                   <React.Fragment key={idx}>
-                    {idx !== 0 && <span className="text-white/50 text-[20px] font-light mb-3">:</span>}
+                    {idx !== 0 && <span className="text-white/50 text-[16px] font-light mb-3">:</span>}
                     <div className="flex flex-col items-center gap-1">
-                      <div className="timer-digit w-14 h-14 rounded-xl flex items-center justify-center text-[22px]"
+                      <div className="timer-digit w-14 h-14 rounded-xl flex items-center justify-center text-[17px]"
                         style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
                         {String(t.val).padStart(2, "0")}
                       </div>
@@ -605,8 +640,8 @@ const Home = () => {
                 ))}
             </div>
             <div className="relative z-10">
-              <button onClick={copyCouponCode} className="flex items-center gap-2 px-5 py-3 rounded-xl font-[700] text-[14px] transition-all hover:scale-105 active:scale-95"
-                style={{ background: "white", color: "#FF6B2B", boxShadow: "0 4px 14px rgba(0,0,0,0.15)" }}>
+              <button onClick={copyCouponCode} className="flex items-center gap-2 px-5 py-3 rounded-xl font-[700] text-[13px] transition-all hover:scale-105 active:scale-95"
+                style={{ background: "white", color: "#7C3AED", boxShadow: "0 4px 14px rgba(0,0,0,0.15)" }}>
                 Copy SAVE20 <FaRegCopy />
               </button>
               {couponMessage && <p className="text-[12px] text-white/90 mt-1.5 mb-0 font-[600]">{couponMessage}</p>}
@@ -616,36 +651,36 @@ const Home = () => {
       </section>
 
       {/* ─── Shipping Banner ─────────────────────────────────────────────── */}
-      <section className="py-4 pt-0 bg-white">
+      <section className="py-4 pt-0 bg-white scroll-reveal">
         <div className="container">
-          <div className="shipping-banner relative overflow-hidden rounded-2xl" style={{ minHeight: "280px" }}>
+          <div className="shipping-banner theme-teal relative overflow-hidden rounded-2xl" style={{ minHeight: "280px" }}>
             {/* ✅ FIX 9: Unsplash image — loading lazy + width/height for CLS */}
             <img src="https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?q=80&w=1200&auto=format&fit=crop"
               alt="Fast delivery" loading="lazy" width="1200" height="280"
               className="shipping-banner-img absolute inset-0 w-full h-full object-cover scale-[1.02]"
             />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(100deg, rgba(20,10,5,0.88) 0%, rgba(20,10,5,0.6) 55%, rgba(20,10,5,0.18) 100%)" }} />
-            <div className="absolute bottom-0 left-0 right-0 h-1 opacity-60" style={{ background: "linear-gradient(90deg, #FF6B2B, transparent)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(100deg, rgba(15,23,60,0.9) 0%, rgba(20,60,90,0.62) 55%, rgba(124,58,237,0.2) 100%)" }} />
+            <div className="absolute bottom-0 left-0 right-0 h-1 opacity-60" style={{ background: "linear-gradient(90deg, #FF6B2B, #EC4899, #7C3AED, #0EA5E9, transparent)" }} />
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 px-7 md:px-14 py-10 text-white">
               <div className="flex items-start gap-5 max-w-[560px]">
-                <div className="pulse-ring flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "#FF6B2B" }}>
-                  <LiaShippingFastSolid className="text-[28px]" />
+                <div className="pulse-ring flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #14B8A6, #0EA5E9)" }}>
+                  <LiaShippingFastSolid className="text-[22px]" />
                 </div>
                 <div>
-                  <span className="text-[11px] uppercase tracking-[0.18em] text-white/50 mb-2 block">Delivery promise</span>
-                  <h2 className="text-[24px] md:text-[36px] font-[800] leading-tight mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Free & Fast<br />Shipping</h2>
-                  <p className="text-[14px] md:text-[15px] leading-relaxed mb-0" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-white/50 mb-2 block">Delivery promise</span>
+                  <h2 className="text-[18px] md:text-[28px] font-[800] leading-tight mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Free & Fast<br />Shipping</h2>
+                  <p className="text-[13px] md:text-[13px] leading-relaxed mb-0" style={{ color: "rgba(255,255,255,0.6)" }}>
                     First order & all orders above ₹200 — safe packaging, fast dispatch & trusted delivery partners.
                   </p>
                 </div>
               </div>
               <div className="flex flex-col items-center md:items-end gap-4 flex-shrink-0">
                 <div className="text-center md:text-right">
-                  <span className="block text-[11px] uppercase tracking-widest text-white/40 mb-1">starting from</span>
-                  <p className="text-[38px] md:text-[52px] font-[900] leading-none mb-0" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#FF8C55" }}>₹200*</p>
+                  <span className="block text-[10px] uppercase tracking-widest text-white/40 mb-1">starting from</span>
+                  <p className="text-[30px] md:text-[40px] font-[900] leading-none mb-0" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#5EEAD4" }}>₹200*</p>
                 </div>
                 <Link to="/products">
-                  <button className="cta-orange h-[46px] px-8 rounded-xl font-[700] text-[14px] text-white">Shop Now</button>
+                  <button className="cta-orange h-[46px] px-8 rounded-xl font-[700] text-[13px] text-white">Shop Now</button>
                 </Link>
               </div>
             </div>
@@ -669,21 +704,21 @@ const Home = () => {
       {randomCatProducts?.map((productRow, index) => {
         if (!productRow?.catName || !productRow?.data?.length) return null;
         return (
-          <section className="py-3 pt-0 bg-white" key={index}>
+          <section className={`py-3 pt-0 bg-white scroll-reveal ${THEMES[(index + 3) % THEMES.length]}`} key={index}>
             <div className="container">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="section-heading text-[20px] font-[800] text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{productRow.catName}</h2>
+                <h2 className="section-heading text-[16px] font-[800] text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{productRow.catName}</h2>
                 {productRow.data.length > 6 && (
                   <Link to={`products?catId=${productRow.data[0]?.catId}`}>
-                    <button className="flex items-center gap-1.5 text-[13px] font-[600] px-4 py-2 rounded-xl transition-all"
-                      style={{ color: "#FF6B2B", border: "1.5px solid rgba(255,107,43,0.2)", background: "rgba(255,107,43,0.04)" }}>
+                    <button className="btn-soft flex items-center gap-1.5 text-[12px] font-[600] px-4 py-2 rounded-xl"
+                      >
                       View All <MdArrowRightAlt size={18} />
                     </button>
                   </Link>
                 )}
               </div>
               <Suspense fallback={<ProductLoading />}>
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                <div className="reveal-stagger grid grid-cols-2 lg:grid-cols-5 gap-3">
                   {productRow.data.slice(0, 8).map((item, idx) => (
                     <Suspense key={item?._id || idx} fallback={null}>
                       <ProductItem item={item} />
@@ -702,23 +737,23 @@ const Home = () => {
       {/* ─── Reviews ─────────────────────────────────────────────────────── */}
       <section className="py-6 bg-white scroll-reveal">
         <div className="container">
-          <div className="rounded-2xl p-6 lg:p-8" style={{ background: "linear-gradient(135deg, #FFF8F4 0%, #FFF4EE 100%)", border: "1.5px solid rgba(255,107,43,0.12)" }}>
+          <div className="rounded-2xl p-6 lg:p-8" style={{ background: "linear-gradient(135deg, #FFF7ED 0%, #F5F3FF 50%, #ECFEFF 100%)", border: "1.5px solid rgba(124,58,237,0.12)" }}>
             <div className="flex items-center gap-3 mb-6">
-              <h3 className="section-heading text-[22px] font-[800] text-gray-900 mb-0" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>What Our Customers Say</h3>
+              <h3 className="section-heading text-[17px] font-[800] text-gray-900 mb-0" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>What Our Customers Say</h3>
             </div>
             <div className="grid md:grid-cols-3 gap-4">
               {REVIEWS.map((review, index) => (
-                <div key={index} className="review-card bg-white rounded-2xl p-5" style={{ border: "1.5px solid rgba(255,107,43,0.1)", boxShadow: "0 4px 16px rgba(255,107,43,0.06)" }}>
+                <div key={index} className={`review-card bg-white rounded-2xl p-5 ${THEMES[(index + 1) % THEMES.length]}`} style={{ border: "1.5px solid var(--soft2)", borderTop: "3px solid var(--a)", boxShadow: "0 4px 16px var(--soft)" }}>
                   <div className="flex gap-0.5 mb-3">
-                    {[...Array(review.rating)].map((_, i) => <FaStar key={i} className="text-[13px]" style={{ color: "#f59e0b" }} />)}
+                    {[...Array(review.rating)].map((_, i) => <FaStar key={i} className="text-[12px]" style={{ color: "#f59e0b" }} />)}
                   </div>
-                  <p className="text-[14px] text-gray-700 leading-relaxed mb-4">"{review.text}"</p>
+                  <p className="text-[13px] text-gray-700 leading-relaxed mb-4">"{review.text}"</p>
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-[800] text-white flex-shrink-0"
-                      style={{ background: "linear-gradient(135deg, #FF6B2B, #FF9A5C)" }}>{review.avatar}</div>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-[800] text-white flex-shrink-0"
+                      style={{ background: "linear-gradient(135deg, var(--a), var(--b))" }}>{review.avatar}</div>
                     <div>
-                      <span className="text-[13px] font-[700] text-gray-800 block">{review.author}</span>
-                      <span className="text-[11px] text-gray-400">{review.location}</span>
+                      <span className="text-[12px] font-[700] text-gray-800 block">{review.author}</span>
+                      <span className="text-[10px] text-gray-400">{review.location}</span>
                     </div>
                   </div>
                 </div>
@@ -729,25 +764,25 @@ const Home = () => {
       </section>
 
       {/* ─── Newsletter ──────────────────────────────────────────────────── */}
-      <section className="py-4 bg-white">
+      <section className="py-4 bg-white scroll-reveal">
         <div className="container">
-          <div className="relative overflow-hidden rounded-2xl p-6 lg:p-10" style={{ background: "linear-gradient(135deg, #FF6B2B 0%, #FF9A5C 60%, #FFB347 100%)", boxShadow: "0 16px 48px rgba(255,107,43,0.3)" }}>
+          <div className="promo-gradient-2 relative overflow-hidden rounded-2xl p-6 lg:p-10" style={{ boxShadow: "0 16px 48px rgba(59,130,246,0.28)" }}>
             <div className="float-1 absolute top-0 right-10 w-56 h-56 rounded-full opacity-15 pointer-events-none" style={{ background: "white", filter: "blur(30px)" }} />
             <div className="dot-pattern absolute inset-0 opacity-20 pointer-events-none rounded-2xl" />
             <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div>
                 <span className="inline-block text-[10px] uppercase tracking-[0.22em] mb-3 px-3 py-1 rounded-full text-white font-[600]"
                   style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)" }}>Stay updated</span>
-                <h3 className="text-[24px] lg:text-[28px] font-[800] text-white mb-1.5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Exclusive deals, just for you 🎁</h3>
-                <p className="text-[14px] mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>Join our newsletter and never miss a flash sale or drop.</p>
+                <h3 className="text-[18px] lg:text-[22px] font-[800] text-white mb-1.5" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Exclusive deals, just for you 🎁</h3>
+                <p className="text-[13px] mb-0" style={{ color: "rgba(255,255,255,0.85)" }}>Join our newsletter and never miss a flash sale or drop.</p>
               </div>
               <div className="w-full lg:w-[440px]">
                 <form onSubmit={subscribeNewsletter} className="flex gap-2">
                   <input type="email" value={newsletterEmail} onChange={(e) => setNewsletterEmail(e.target.value)}
-                    placeholder="Enter your email address" className="newsletter-input flex-1 rounded-xl px-4 py-3 text-[14px] text-gray-800 bg-white"
+                    placeholder="Enter your email address" className="newsletter-input flex-1 rounded-xl px-4 py-3 text-[13px] text-gray-800 bg-white"
                     style={{ border: "2px solid rgba(255,255,255,0.5)", outline: "none" }} />
-                  <button type="submit" className="px-5 py-3 rounded-xl font-[700] text-[14px] flex-shrink-0 transition-all hover:scale-105"
-                    style={{ background: "white", color: "#FF6B2B", boxShadow: "0 4px 14px rgba(0,0,0,0.15)" }}>Subscribe</button>
+                  <button type="submit" className="px-5 py-3 rounded-xl font-[700] text-[13px] flex-shrink-0 transition-all hover:scale-105"
+                    style={{ background: "white", color: "#7C3AED", boxShadow: "0 4px 14px rgba(0,0,0,0.15)" }}>Subscribe</button>
                 </form>
                 {newsletterMessage && <p className="text-[12px] mt-2 mb-0 text-white font-[600]">{newsletterMessage}</p>}
               </div>
@@ -757,26 +792,26 @@ const Home = () => {
       </section>
 
       {/* ─── FAQ ─────────────────────────────────────────────────────────── */}
-      <section className="py-6 bg-white">
+      <section className="py-6 bg-white scroll-reveal">
         <div className="container">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-7">
-              <h3 className="text-[24px] font-[800] text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Frequently Asked Questions</h3>
-              <p className="text-[14px] text-gray-500 mt-1">Everything you need to know about shopping with us.</p>
+              <h3 className="text-[18px] font-[800] text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Frequently Asked Questions</h3>
+              <p className="text-[13px] text-gray-500 mt-1">Everything you need to know about shopping with us.</p>
             </div>
             <div className="space-y-3">
               {FAQS.map((item, index) => (
-                <div key={index} className="rounded-2xl overflow-hidden transition-all"
-                  style={{ border: `1.5px solid ${activeFaq === index ? "rgba(255,107,43,0.3)" : "#F1F3F5"}`, background: activeFaq === index ? "rgba(255,107,43,0.02)" : "#FAFAFA", boxShadow: activeFaq === index ? "0 4px 20px rgba(255,107,43,0.08)" : "none" }}>
+                <div key={index} className={`faq-item rounded-2xl overflow-hidden ${THEMES[index % THEMES.length]}`}
+                  data-open={activeFaq === index}>
                   <button onClick={() => setActiveFaq(activeFaq === index ? -1 : index)}
-                    className="w-full text-left font-[700] text-[14px] text-gray-800 flex justify-between items-center px-5 py-4 transition-all"
+                    className="w-full text-left font-[700] text-[13px] text-gray-800 flex justify-between items-center px-5 py-4 transition-all"
                     style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                     {item.q}
-                    <span className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[18px] font-[400] transition-all"
-                      style={{ background: activeFaq === index ? "#FF6B2B" : "#F1F3F5", color: activeFaq === index ? "white" : "#9CA3AF", transform: activeFaq === index ? "rotate(45deg)" : "rotate(0)" }}>+</span>
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[16px] font-[400] transition-all"
+                      style={{ background: activeFaq === index ? "linear-gradient(135deg, var(--a), var(--b))" : "#F1F3F5", color: activeFaq === index ? "white" : "#9CA3AF", transform: activeFaq === index ? "rotate(45deg)" : "rotate(0)" }}>+</span>
                   </button>
                   <div className={`faq-answer ${activeFaq === index ? "open" : ""}`}>
-                    <p className="text-[14px] text-gray-500 px-5 pb-5 mb-0 leading-relaxed">{item.a}</p>
+                    <p className="text-[13px] text-gray-500 px-5 pb-5 mb-0 leading-relaxed">{item.a}</p>
                   </div>
                 </div>
               ))}
@@ -787,10 +822,10 @@ const Home = () => {
 
       {/* ─── Blog ────────────────────────────────────────────────────────── */}
       {blogData?.length !== 0 && (
-        <section className="py-6 pb-10 bg-white blogSection" style={{ borderTop: "1.5px solid #F1F3F5" }}>
+        <section className="py-6 pb-10 theme-amber scroll-reveal blogSection" style={{ borderTop: "1.5px solid #FEF3C7", background: "linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 45%)" }}>
           <div className="container">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="section-heading text-[22px] font-[800] text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>From The Blog</h2>
+              <h2 className="section-heading text-[17px] font-[800] text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>From The Blog</h2>
             </div>
             <Swiper slidesPerView={4} spaceBetween={20} navigation={context?.windowWidth < 992 ? false : true}
               modules={[Navigation, FreeMode]} freeMode
